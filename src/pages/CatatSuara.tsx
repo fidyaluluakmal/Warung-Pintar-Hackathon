@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState } from "react"
+import { Icon } from "../components/Icon"
+import { Modal } from "../components/Modal"
 import { useWarung } from "../lib/store"
 import { ekstrakSuara } from "../lib/api"
 import { parseKalimat } from "../lib/parser"
@@ -20,7 +22,7 @@ interface BarisKonfirmasi {
  * Hasil AI SELALU ditampilkan untuk dikonfirmasi sebelum disimpan.
  * Kalau AI gagal, parser lokal dipakai supaya pencatatan tetap jalan.
  */
-export function CatatSuara() {
+export function CatatSuara({ onClose }: { onClose?: () => void }) {
   const { barang, alias, simpanTransaksi } = useWarung()
   const [teks, setTeks] = useState("")
   const [merekam, setMerekam] = useState(false)
@@ -162,60 +164,64 @@ export function CatatSuara() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Catat penjualan</h1>
-      <p className="form-note">
-        Ucapkan apa yang terjual. Hasilnya dicek dulu sebelum disimpan.
+    <Modal label="Catat penjualan dengan suara" onClose={() => onClose?.()}>
+      <span className="modal-kicker">CATAT DULU, LALU SIMPAN</span>
+      <h2>Catat penjualan dengan suara</h2>
+      <p>
+        Ucapkan apa yang terjual. Hasilnya dicek dulu sebelum disimpan — tidak
+        ada yang langsung masuk stok tanpa Anda setujui.
       </p>
 
-      <section className="panel">
+      <div className="modal-actions" style={{ justifyContent: "center" }}>
         <button
           type="button"
-          className="primary-action" style={{ width: "100%", height: 56 }}
+          className="secondary-action"
           onClick={merekam ? stopRekam : mulaiRekam}
           disabled={sibuk}
         >
-          {merekam ? "⏹ Berhenti rekam" : "🎙️ Rekam suara"}
+          <Icon name="mic" size={17} />
+          {merekam ? "Berhenti rekam" : "Rekam suara"}
         </button>
+      </div>
 
+      <div className="manual-entry">
+        <label htmlFor="teks-suara">Atau ketik kalimatnya</label>
         <div>
-          <label className="label" htmlFor="teks-suara">
-            Atau ketik kalimatnya
-          </label>
-          <textarea
+          <input
             id="teks-suara"
-            className="input" style={{ minHeight: 92, padding: "10px 12px" }}
-            placeholder="mis. terjual 3 kilo beras dan 2 bungkus kopi"
             value={teks}
             onChange={(event) => setTeks(event.target.value)}
+            placeholder="mis. terjual 3 kilo beras dan 2 bungkus kopi"
           />
+          <button
+            type="button"
+            onClick={() => void proses(teks)}
+            disabled={sibuk || teks.trim().length === 0}
+          >
+            Baca
+          </button>
         </div>
+        <small>Contoh: “terjual 3 kilo beras dan 2 bungkus kopi”.</small>
+      </div>
 
-        <button
-          type="button"
-          className="secondary-action" style={{ width: "100%" }}
-          disabled={sibuk || teks.trim().length === 0}
-          onClick={() => void proses(teks)}
-        >
-          {sibuk ? "Memproses…" : "Baca kalimat ini"}
-        </button>
-      </section>
-
-      {galat && (
-        <p className="text-sm" >
-          {galat}
-        </p>
-      )}
+      {galat && <div className="form-error">{galat}</div>}
 
       {baris.length > 0 && (
-        <section className="panel">
-          <h2 className="text-sm font-semibold">Cek dulu sebelum disimpan</h2>
-          <ul className="mt-3 space-y-3">
+        <>
+          <span className="modal-kicker" style={{ marginTop: 22, display: "block" }}>
+            PERIKSA DULU, LALU SIMPAN
+          </span>
+          <div className="confirm-editor">
+            <div className="confirm-head">
+              <span>Barang</span>
+              <span>Jumlah</span>
+              <span>Harga</span>
+              <span />
+            </div>
             {baris.map((item, index) => (
-              <li key={`${item.nama}-${index}`} className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
+              <div className="confirm-row" key={`${item.nama}-${index}`}>
+                <div className="confirm-product">
                   <input
-                    className="input" style={{ flex: 1 }}
                     value={item.nama}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -223,19 +229,21 @@ export function CatatSuara() {
                       )
                     }
                   />
-                  {item.perluDicek && (
-                    <span className="chip warn shrink-0">
-                      periksa
-                    </span>
-                  )}
+                  <div className="confirm-meta">
+                    {item.perluDicek ? (
+                      <span className="confidence low">periksa lagi</span>
+                    ) : (
+                      <span className="confidence">yakin</span>
+                    )}
+                    <span>{item.satuan}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="confirm-qty">
                   <input
                     type="number"
                     inputMode="decimal"
                     min="0"
                     step="any"
-                    className="input" style={{ width: 78 }}
                     value={item.jumlah}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -244,15 +252,14 @@ export function CatatSuara() {
                         ),
                       )
                     }
+                    aria-label={`Jumlah ${item.nama}`}
                   />
-                  <span className="form-note">
-                    {item.satuan}
-                  </span>
+                </div>
+                <div className="confirm-price">
                   <input
                     type="number"
                     inputMode="numeric"
                     min="0"
-                    className="input" style={{ flex: 1 }}
                     value={item.hargaSatuan}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -261,37 +268,48 @@ export function CatatSuara() {
                         ),
                       )
                     }
+                    aria-label={`Harga ${item.nama}`}
                   />
-                  <button
-                    type="button"
-                    className="confirm-remove"
-                    onClick={() => setBaris((prev) => prev.filter((_, i) => i !== index))}
-                    aria-label={`Hapus ${item.nama}`}
-                  >
-                    ✕
-                  </button>
                 </div>
-              </li>
+                <button
+                  type="button"
+                  className="confirm-remove"
+                  onClick={() => setBaris((prev) => prev.filter((_, i) => i !== index))}
+                  aria-label={`Hapus ${item.nama}`}
+                >
+                  <Icon name="close" size={16} />
+                </button>
+              </div>
             ))}
-          </ul>
-
-          <div className="mt-4 flex items-center justify-between border-t pt-3">
-            <span className="form-note">
-              Total
-            </span>
-            <span className="font-semibold">
-              {rupiah(
-                baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0),
-              )}
-            </span>
+            <div className="confirm-total">
+              <span>Total</span>
+              <strong>
+                {rupiah(baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0))}
+              </strong>
+            </div>
           </div>
 
-          <button type="button" className="primary-action" style={{ width: "100%", marginTop: 14 }} onClick={() => void simpan()} disabled={sibuk}>
-            Simpan penjualan
-          </button>
-        </section>
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={() => setBaris([])}
+              disabled={sibuk}
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              className="primary-action"
+              onClick={() => void simpan()}
+              disabled={sibuk}
+            >
+              <Icon name="check" size={16} /> Simpan penjualan
+            </button>
+          </div>
+        </>
       )}
-    </div>
+    </Modal>
   )
 }
 

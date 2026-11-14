@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { PenyediaWarung, useWarung } from "./lib/store"
 import { AppHeader } from "./components/AppHeader"
+import { MobileMenu } from "./components/MobileMenu"
 import { MobileNav } from "./components/MobileNav"
 import { Sidebar } from "./components/Sidebar"
 import { LayarMasuk } from "./pages/LayarMasuk"
@@ -35,6 +36,8 @@ export default function App() {
 function Kerangka() {
   const { siap, sesi } = useWarung()
   const [nav, setNav] = useState<NavLabel>("Beranda")
+  const [modal, setModal] = useState<"suara" | "nota" | null>(null)
+  const [menuHp, setMenuHp] = useState(false)
   const [cari, setCari] = useState("")
   const { aktif, ganti } = useTema()
   const [sidebarCiut, setSidebarCiut] = useState(() => {
@@ -46,6 +49,15 @@ function Kerangka() {
   })
 
   function buka(navigasi: NavLabel) {
+    // Suara dan nota dibuka sebagai modal, bukan halaman terpisah.
+    if (navigasi === "Catat Suara") {
+      setModal("suara")
+      return
+    }
+    if (navigasi === "Foto Nota") {
+      setModal("nota")
+      return
+    }
     setNav(navigasi)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -98,13 +110,12 @@ function Kerangka() {
           warung={warung}
           tema={aktif}
           onGantiTema={() => ganti(aktif === "terang" ? "gelap" : "terang")}
+          onBukaMenu={() => setMenuHp(true)}
         />
 
         <div className="content">
           {nav === "Beranda" && <Beranda onPindah={buka} />}
           {nav === "Kasir" && <Kasir />}
-          {nav === "Catat Suara" && <CatatSuara />}
-          {nav === "Foto Nota" && <PindaiNota />}
           {nav === "Tanya AI" && <TanyaAi />}
           {nav === "Stok Barang" && <StokBarang cari={cari} onPindah={buka} />}
           {nav === "Simpen Dulu" && <SimpenDulu />}
@@ -113,13 +124,20 @@ function Kerangka() {
           {nav === "Pelanggan" && <Pelanggan />}
           {nav === "Harga Pasar" && <HargaPasar />}
           {nav === "Modal Awal" && <ModalAwal />}
-          {nav === "Tutup Buku" && <TutupBuku />}
+          {nav === "Tutup Buku" && <TutupBuku onPindah={buka} />}
           {nav === "Riwayat" && <Riwayat />}
           {nav === "Pengaturan" && <Pengaturan />}
         </div>
       </main>
 
       <MobileNav activeNav={nav} onNavigate={buka} />
+
+      {menuHp && (
+        <MobileMenu activeNav={nav} onNavigate={buka} onClose={() => setMenuHp(false)} />
+      )}
+
+      {modal === "suara" && <CatatSuara onClose={() => setModal(null)} />}
+      {modal === "nota" && <PindaiNota onClose={() => setModal(null)} />}
     </div>
   )
 }

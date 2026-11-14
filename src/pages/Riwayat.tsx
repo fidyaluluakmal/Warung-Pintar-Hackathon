@@ -1,108 +1,240 @@
 import { useMemo, useState } from "react"
+import { Icon } from "../components/Icon"
 import { useWarung } from "../lib/store"
-import { rupiah, tanggalPanjang, jam } from "../lib/format"
+import { angka, rupiah } from "../lib/format"
+import { jamWib, selisihHari, tanggalWib } from "../lib/calendar"
+import type { BarisTransaksi, Transaksi } from "../lib/types"
+
+type Filter = "semua" | "jual" | "beli" | "sesuaikan"
+
+interface ItemRiwayat {
+  nama: string
+  jumlah: number
+  satuan: string
+}
+
+interface BarisRiwayat {
+  transaksi: Transaksi
+  item: ItemRiwayat[]
+}
 
 /**
  * Riwayat — jejak setiap transaksi.
  *
- * Penting untuk pemilik: barang masuk dari nota tetap ada buktinya — siapa
- * yang mencatat, dari mana, dan isinya apa.
+ * Penting untuk pemilik warung: barang masuk dari nota tetap ada buktinya —
+ * siapa yang mencatat, dari mana, dan isinya apa. Semua tanggal dihitung di
+ * zona waktu warung (Asia/Jakarta), bukan zona waktu perangkat.
  */
 export function Riwayat() {
-  const { transaksi, baris, barang, stok } = useWarung()
-  const [filter, setFilter] = useState<"semua" | "jual" | "beli">("semua")
+  const { transaksi, baris, barang } = useWarung()
+  const [filter, setFilter] = useState<Filter>("semua")
+  const [cari, setCari] = useState("")
+  const [tampil, setTampil] = useState(50)
+
+  const namaBarang = useMemo(() => new Map(barang.map((b) => [b.id, b.nama])), [barang])
+
+  const barisByTransaksi = useMemo(() => {
+    const map = new Map<string, BarisTransaksi[]>()
+    for (const row of baris) {
+      const daftar = map.get(row.transaksi_id)
+      if (daftar) daftar.push(row)
+      else map.set(row.transaksi_id, [row])
+    }
+    return map
+  }, [baris])
 
   const daftar = useMemo(() => {
-    const terfilter = transaksi.filter((t) => (filter === "semua" ? true : t.tipe === filter))
-    return terfilter.slice(0, 40)
-  }, [transaksi, filter])
+    const kunci = cari.toLowerCase().trim()
+    const hasil: BarisRiwayat[] = []
 
-  const namaBarang = useMemo(
-    () => new Map(barang.map((b) => [b.id, b.nama])),
-    [barang],
-  )
-  const modalBarang = useMemo(
-    () => new Map(stok.map((s) => [s.barang_id, s.harga_modal])),
-    [stok],
-  )
+    for (const trx of transaksi) {
+      if (filter !== "semua" && trx.tipe !== filter) continue
 
-  const total = useMemo(
-    () =>
-      daftar.reduce((sum, t) => {
-        const barisT = baris.filter((b) => b.transaksi_id === t.id)
-        const modal = barisT.reduce(
-          (s, b) => s + b.jumlah * (modalBarang.get(b.barang_id) ?? 0),
-          0,
-        )
-        const laba = t.tipe === "jual" ? t.total - modal : 0
-        return sum + laba
-      }, 0),
-    [daftar, baris, modalBarang],
-  )
+      const item = (barisByTransaksi.get(trx.id) ?? []).map((row) => ({
+        nama: namaBarang.get(row.barang_id) ?? "Barang",
+        jumlah: row.jumlah,
+        satuan: row.satuan,
+      }))
+
+      if (kunci) {
+        const teks = [trx.agen ?? "", ...item.map((i) => i.nama)].join(" ").toLowerCase()
+        if (!teks.includes(kunci)) continue
+      }
+
+      hasil.push({ transaksi: trx, item })
+    }
+
+    // Waktu dihitung di zona waktu warung, jadi urutannya sama di HP mana pun.
+    return hasil.sort((a, b) => {
+      const beda = kunciWaktu(b.transaksi.tanggal).localeCompare(kunciWaktu(a.transaksi.tanggal))
+      if (beda !== 0) return beda
+      return b.transaksi.id.localeCompare(a.transaksi.id)
+    })
+  }, [barisByTransaksi, cari, filter, namaBarang, transaksi])
+
+  const terlihat = daftar.slice(0, tampil)
+
+  const penjualan = daftar.filter((row) => row.transaksi.tipe === "jual")
+  const pembelian = daftar.filter((row) => row.transaksi.tipe === "beli")
+  const totalJual = penjualan.reduce((sum, row) => sum + row.transaksi.total, 0)
+  const totalBeli = pembelian.reduce((sum, row) => sum + row.transaksi.total, 0)
 
   return (
-    <div className="space-y-5">
-      <div className="page-title">
+    <>
+      <section className="page-title">
         <div>
-          <span className="date-label">Riwayat</span>
-          <h1>Jejak transaksi</h1>
-          <p>Setiap transaksi, dari mana, dan isinya apa.</p>
+          <span className="date-label">Jejak aktivitas</span>
+          <h1>Riwayat transaksi</h1>
+          <p>Semua penjualan, pembelian, dan penyesuaian stok yang tersimpan.</p>
         </div>
-      </div>
+      </section>
 
-      <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <h2>{daftar.length} transaksi terakhir</h2>
-            <p>Laba kotor dari transaksi yang tampil: {rupiah(total)}</p>
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {(["semua", "jual", "beli"] as const).map((pilihan) => (
+      <section className="history-summary">
+        <article>
+          <span>Penjualan tampil</span>
+          <strong>{rupiah(totalJual)}</strong>
+          <small>{penjualan.length} transaksi</small>
+        </article>
+        <article>
+          <span>Pembelian tampil</span>
+          <strong>{rupiah(totalBeli)}</strong>
+          <small>{pembelian.length} transaksi</small>
+        </article>
+        <article>
+          <span>Hasil filter</span>
+          <strong>{daftar.length}</strong>
+          <small>{terlihat.length} transaksi ditampilkan</small>
+        </article>
+      </section>
+
+      <section className="history-panel">
+        <div className="history-toolbar">
+          <label>
+            <Icon name="search" size={18} />
+            <input
+              value={cari}
+              onChange={(event) => {
+                setCari(event.target.value)
+                setTampil(50)
+              }}
+              placeholder="Cari nama barang..."
+              aria-label="Cari nama barang"
+            />
+          </label>
+          <div className="filter-pills">
+            {(
+              [
+                ["semua", "Semua"],
+                ["jual", "Penjualan"],
+                ["beli", "Pembelian"],
+                ["sesuaikan", "Penyesuaian"],
+              ] as Array<[Filter, string]>
+            ).map(([nilai, label]) => (
               <button
-                key={pilihan}
+                key={nilai}
                 type="button"
-                className={filter === pilihan ? "small-action brand" : "small-action"}
-                onClick={() => setFilter(pilihan)}
+                className={filter === nilai ? "active" : ""}
+                onClick={() => {
+                  setFilter(nilai)
+                  setTampil(50)
+                }}
               >
-                {pilihan === "semua" ? "Semua" : pilihan === "jual" ? "Jual" : "Beli"}
+                {label}
               </button>
             ))}
           </div>
         </div>
 
-        {daftar.length === 0 ? (
-          <p className="form-note" style={{ marginTop: 20 }}>
-            Belum ada transaksi.
-          </p>
-        ) : (
-          <ul className="stock-list">
-            {daftar.map((trx) => {
-              const isi = baris.filter((b) => b.transaksi_id === trx.id)
-              const sumber = trx.sumber === "suara" ? "Suara" : trx.sumber === "nota" ? "Nota" : "Manual"
-              const tipe = trx.tipe === "jual" ? "Penjualan" : trx.tipe === "beli" ? "Pembelian" : "Penyesuaian"
-              return (
-                <li className="stock-item" key={trx.id}>
-                  <div className="product-code">{sumber.slice(0, 2).toUpperCase()}</div>
-                  <div className="stock-info">
-                    <div>
-                      <strong>{tipe}</strong>
-                      <span>{sumber}</span>
-                    </div>
-                    <small>
-                      {tanggalPanjang(trx.tanggal)} · {jam(trx.tanggal)}
-                      {isi.length > 0 &&
-                        ` · ${isi
-                          .map((b) => `${namaBarang.get(b.barang_id) ?? "?"} ${b.jumlah}`)
-                          .join(", ")}`}
-                    </small>
-                  </div>
-                  <b style={{ fontSize: 13 }}>{rupiah(trx.total)}</b>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+        <div className="history-list">
+          {terlihat.map((row) => {
+            const trx = row.transaksi
+            const judul =
+              trx.tipe === "jual"
+                ? "Penjualan"
+                : trx.tipe === "beli"
+                  ? trx.agen
+                    ? `Pembelian dari ${trx.agen}`
+                    : "Pembelian"
+                  : "Penyesuaian stok"
+            const nada = trx.tipe === "jual" ? "green" : "orange"
+            const ikon = trx.tipe === "jual" ? "up" : trx.tipe === "beli" ? "down" : "edit"
+            const jumlah = trx.tipe === "jual" ? `+${rupiah(trx.total)}` : trx.tipe === "beli" ? `−${rupiah(trx.total)}` : rupiah(trx.total)
+
+            return (
+              <div className="history-item" key={trx.id}>
+                <span className={`transaction-icon ${nada}`}>
+                  <Icon name={ikon} size={18} />
+                </span>
+                <div className="history-copy">
+                  <strong>{judul}</strong>
+                  <small>{ringkasBarang(row.item)}</small>
+                  <small>
+                    {labelHari(trx.tanggal)} · {jamWib(trx.tanggal)} WIB · {labelSumber(trx)}
+                  </small>
+                </div>
+                <b className={trx.tipe === "sesuaikan" ? undefined : nada}>{jumlah}</b>
+              </div>
+            )
+          })}
+
+          {daftar.length > terlihat.length && (
+            <button
+              type="button"
+              className="history-more"
+              onClick={() => setTampil((count) => count + 50)}
+            >
+              Tampilkan 50 transaksi lagi ({daftar.length - terlihat.length} tersisa)
+            </button>
+          )}
+
+          {daftar.length === 0 && (
+            <div className="empty-state">
+              <Icon name="clock" size={26} />
+              <strong>Belum ada transaksi</strong>
+              <span>Transaksi yang Anda catat akan muncul di sini.</span>
+            </div>
+          )}
+        </div>
       </section>
-    </div>
+    </>
   )
+}
+
+/** Ringkas isi transaksi: "Gula Pasir 2 pcs, Susu 1 kaleng". */
+function ringkasBarang(item: ItemRiwayat[]): string {
+  if (item.length === 0) return "Tanpa rincian barang"
+  const tampil = item.slice(0, 3).map((baris) => {
+    return `${baris.nama} ${angka(baris.jumlah, baris.jumlah % 1 === 0 ? 0 : 2)} ${baris.satuan}`
+  })
+  const sisanya = item.length - tampil.length
+  return tampil.join(", ") + (sisanya > 0 ? `, +${sisanya} barang lain` : "")
+}
+
+/** "Hari ini", "Kemarin", atau tanggal lengkap di zona waktu warung. */
+function labelHari(iso: string): string {
+  const selisih = selisihHari(iso)
+  if (selisih <= 0) return "Hari ini"
+  if (selisih === 1) return "Kemarin"
+  return tanggalIndo(iso)
+}
+
+/** Tanggal "14 November 2026" dari tanggal warung (bukan jam perangkat). */
+function tanggalIndo(iso: string): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${tanggalWib(iso)}T00:00:00Z`))
+}
+
+/** Kunci urut waktu di zona waktu warung: "2026-11-14 12:45". */
+function kunciWaktu(iso: string): string {
+  return `${tanggalWib(iso)} ${jamWib(iso).replace(".", ":")}`
+}
+
+function labelSumber(trx: Transaksi): string {
+  if (trx.sumber === "suara") return "dicatat lewat suara"
+  if (trx.sumber === "nota") return "dari nota belanja"
+  return "dicatat manual"
 }

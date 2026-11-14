@@ -2,6 +2,8 @@ import { useRef, useState } from "react"
 import { useWarung } from "../lib/store"
 import { bacaNota } from "../lib/api"
 import { rupiah } from "../lib/format"
+import { Icon } from "../components/Icon"
+import { Modal } from "../components/Modal"
 import type { Satuan } from "../lib/types"
 
 interface BarisNota {
@@ -19,7 +21,7 @@ interface BarisNota {
  * Total hasil baca dibandingkan dengan jumlah baris, jadi kalau tidak cocok
  * pengguna diberi tahu sebelum menyimpan.
  */
-export function PindaiNota() {
+export function PindaiNota({ onClose }: { onClose?: () => void }) {
   const { barang, simpanTransaksi } = useWarung()
   const [baris, setBaris] = useState<BarisNota[]>([])
   const [total, setTotal] = useState(0)
@@ -102,70 +104,65 @@ export function PindaiNota() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Pindai nota belanja</h1>
-      <p className="form-note">
-        Foto nota agen. AI baca baris barangnya, lalu kamu cek dulu.
+    <Modal label="Pindai nota belanja" onClose={() => onClose?.()}>
+      <span className="modal-kicker">FOTO NOTA, STOK OTOMATIS</span>
+      <h2>Pindai nota belanja</h2>
+      <p>
+        Foto nota agen, lalu AI baca baris barangnya. Anda yang memutuskan
+        apa yang benar sebelum stok berubah.
       </p>
 
-      <section className="panel">
+      <div className="scan-area">
+        <Icon name="camera" size={26} />
+        <strong>Ambil atau pilih foto nota</strong>
+        <span>Bisa juga nota tulisan tangan, selama tulisan terbaca.</span>
         <input
           ref={fileRef}
           type="file"
           accept="image/*"
           capture="environment"
-          className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0]
             if (file) void prosesFile(file)
             event.target.value = ""
           }}
         />
+      </div>
 
-        <button
-          type="button"
-          className="primary-action" style={{ width: "100%", height: 56 }}
-          onClick={() => fileRef.current?.click()}
-          disabled={sibuk}
-        >
-          {sibuk ? "Membaca nota…" : "📷 Ambil / pilih foto nota"}
-        </button>
-
-        {pratinjau && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={pratinjau}
-            alt="Pratinjau nota belanja"
-            className="max-h-56 w-full rounded-lg object-contain"
-            style={{ background: "var(--accent-light)" }}
-          />
-        )}
-      </section>
-
-      {galat && (
-        <p className="text-sm" >
-          {galat}
-        </p>
+      {pratinjau && (
+        <img
+          src={pratinjau}
+          alt="Pratinjau nota belanja"
+          className="nota-preview"
+          style={{ marginTop: 18, maxHeight: 220, width: "100%", objectFit: "contain" }}
+        />
       )}
 
+      {galat && <div className="form-error">{galat}</div>}
+
       {baris.length > 0 && (
-        <section className="panel">
-          <h2 className="text-sm font-semibold">Cek baris nota</h2>
-
+        <>
+          <span className="modal-kicker" style={{ marginTop: 22, display: "block" }}>
+            PERIKSA DULU, LALU SIMPAN
+          </span>
           {totalBeda && (
-            <p className="mt-2 text-xs" >
-              Total tertulis ({rupiah(total)}) beda dari jumlah baris ({rupiah(
-                baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0),
-              )}). Periksa dulu.
-            </p>
+            <div className="form-error">
+              Total tertulis ({rupiah(total)}) beda dari jumlah baris (
+              {rupiah(baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0))}). Periksa
+              dulu.
+            </div>
           )}
-
-          <ul className="mt-3 space-y-3">
+          <div className="confirm-editor">
+            <div className="confirm-head">
+              <span>Barang</span>
+              <span>Jumlah</span>
+              <span>Harga</span>
+              <span />
+            </div>
             {baris.map((item, index) => (
-              <li key={`${item.nama}-${index}`} className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
+              <div className="confirm-row" key={`${item.nama}-${index}`}>
+                <div className="confirm-product">
                   <input
-                    className="input" style={{ flex: 1 }}
                     value={item.nama}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -173,19 +170,21 @@ export function PindaiNota() {
                       )
                     }
                   />
-                  {item.perluDicek && (
-                    <span className="chip warn shrink-0">
-                      periksa
-                    </span>
-                  )}
+                  <div className="confirm-meta">
+                    {item.perluDicek ? (
+                      <span className="confidence low">periksa lagi</span>
+                    ) : (
+                      <span className="confidence">yakin</span>
+                    )}
+                    <span>{item.satuan}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="confirm-qty">
                   <input
                     type="number"
                     inputMode="decimal"
                     min="0"
                     step="any"
-                    className="input" style={{ width: 78 }}
                     value={item.jumlah}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -194,15 +193,14 @@ export function PindaiNota() {
                         ),
                       )
                     }
+                    aria-label={`Jumlah ${item.nama}`}
                   />
-                  <span className="form-note">
-                    {item.satuan}
-                  </span>
+                </div>
+                <div className="confirm-price">
                   <input
                     type="number"
                     inputMode="numeric"
                     min="0"
-                    className="input" style={{ flex: 1 }}
                     value={item.hargaSatuan}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -211,35 +209,48 @@ export function PindaiNota() {
                         ),
                       )
                     }
+                    aria-label={`Harga ${item.nama}`}
                   />
-                  <button
-                    type="button"
-                    className="confirm-remove"
-                    onClick={() => setBaris((prev) => prev.filter((_, i) => i !== index))}
-                    aria-label={`Hapus ${item.nama}`}
-                  >
-                    ✕
-                  </button>
                 </div>
-              </li>
+                <button
+                  type="button"
+                  className="confirm-remove"
+                  onClick={() => setBaris((prev) => prev.filter((_, i) => i !== index))}
+                  aria-label={`Hapus ${item.nama}`}
+                >
+                  <Icon name="close" size={16} />
+                </button>
+              </div>
             ))}
-          </ul>
-
-          <div className="mt-4 flex items-center justify-between border-t pt-3">
-            <span className="form-note">
-              Total
-            </span>
-            <span className="font-semibold">
-              {rupiah(baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0))}
-            </span>
+            <div className="confirm-total">
+              <span>Total</span>
+              <strong>
+                {rupiah(baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0))}
+              </strong>
+            </div>
           </div>
 
-          <button type="button" className="primary-action" style={{ width: "100%", marginTop: 14 }} onClick={() => void simpan()} disabled={sibuk}>
-            Simpan pembelian
-          </button>
-        </section>
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={() => setBaris([])}
+              disabled={sibuk}
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              className="primary-action"
+              onClick={() => void simpan()}
+              disabled={sibuk}
+            >
+              <Icon name="check" size={16} /> Simpan pembelian
+            </button>
+          </div>
+        </>
       )}
-    </div>
+    </Modal>
   )
 }
 

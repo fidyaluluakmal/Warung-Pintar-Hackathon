@@ -13,6 +13,7 @@ export function AppHeader({
   warung,
   tema,
   onGantiTema,
+  onBukaMenu,
 }: {
   query: string
   onQueryChange: (value: string) => void
@@ -22,6 +23,7 @@ export function AppHeader({
   warung: string
   tema: "terang" | "gelap"
   onGantiTema: () => void
+  onBukaMenu: () => void
 }) {
   const { stok, utang, sinyalMargin } = useWarung()
   const [notice, setNotice] = useState(false)
@@ -55,6 +57,18 @@ export function AppHeader({
 
   return (
     <header>
+      <button className="mobile-menu-trigger" onClick={onBukaMenu} aria-label="Buka menu">
+        <Icon name="menu" size={20} />
+      </button>
+      <div className="mobile-brand brand">
+        <div className="brand-mark">
+          <span>W</span>
+        </div>
+        <div>
+          <strong>Warung</strong>
+          <b>Pintar</b>
+        </div>
+      </div>
       <div className="search">
         <Icon name="search" size={19} />
         <input
