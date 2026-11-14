@@ -34,6 +34,9 @@ sebelum disimpan.
 | Saran belanja besok + alasan (dihitung kode) | Berjalan |
 | Tanya warung (AI menjawab dari data warung sendiri) | Berjalan |
 | Akun demo + RLS per pemilik warung | Berjalan |
+| **Simpen Dulu** — pelanggan bayar sebagian, sisanya jadi utang | Berjalan |
+| **Penjaga Margin** — harga modal naik diam-diam, tawarkan harga baru | Berjalan |
+| Kasir desktop + panel notifikasi + tema gelap | Berjalan |
 
 ## Prinsip yang dijaga
 
@@ -125,6 +128,7 @@ docs/           kontrak AI, skrip demo
 | Modul | Tugas |
 | --- | --- |
 | `src/lib/inventory.ts` | Stok dari history, saran beli, laba kotor |
+| `src/lib/margin.ts` | Deteksi margin menyusut, pembagian "simpen dulu" |
 | `src/lib/parser.ts` | Parser kalimat Indonesia (lokal, tanpa AI) |
 | `src/lib/format.ts` | Format rupiah dan tanggal (WIB) |
 
@@ -138,6 +142,26 @@ saran beli        = target stok − stok, minimal sampai stok minimum
 
 "Hari aktif" = hari sejak barang pertama terjual, dibatasi 30 hari. Warung yang
 baru buka dua hari tidak ikut dibagi 30.
+
+### Dua fitur pembeda
+
+**Simpen Dulu** — di kasir, pelanggan bisa bayar sebagian. Barang tetap keluar
+seluruhnya (stok turun untuk semua), tapi uang yang belum dibayar dicatat di
+buku utang. Pelanggan warung sering cuma punya nama panggilan ("Pak Yono"),
+jadi buku utang menyimpan nama, bukan kontak.
+
+**Penjaga Margin** — aplikasi menyimpan riwayat harga modal setiap kali ada
+pembelian. Kalau harga modal naik diam-diam, margin menyusut, dan aplikasi
+menawarkan harga jual baru supaya owner bisa putuskan sendiri.
+
+Margin dihitung pada harga jual yang sekarang, jadi yang terlihat adalah
+efek kenaikan modal itu sendiri:
+
+```txt
+margin sekarang   = (harga jual − modal sekarang) ÷ harga jual
+margin sebelumnya = (harga jual − modal dulu)     ÷ harga jual
+harga jual saran  = modal sekarang ÷ (1 − target margin)
+```
 
 ## Pengujian
 
