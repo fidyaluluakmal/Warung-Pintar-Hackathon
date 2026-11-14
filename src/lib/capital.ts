@@ -10,7 +10,9 @@
  */
 
 import { rupiah } from "./format"
-import type { BarisTransaksi, Barang, Transaksi, UtangBerjalan } from "./types"
+import { tanggalWib } from "./calendar"
+import { round2 } from "./inventory"
+import type { BarisTransaksi, StokBarang, Transaksi, UtangBerjalan } from "./types"
 
 const KUNCI = "warung-pintar-modal-awal-v1"
 
@@ -64,29 +66,42 @@ export function simpanModalAwal(input: ModalAwal | null): void {
   }
 }
 
+/**
+ * Apakah transaksi terjadi pada tanggal modal awal atau sesudahnya.
+ *
+ * Tanggal dibandingkan di zona waktu warung. Kalau dibotong dari string
+ * ISO (yang dalam UTC), penjualan jam 00:30 WIB terhitung tanggal
+ * sebelumnya dan laba kotornya keluar dari hitungan.
+ */
 function setelahTanggal(iso: string, since: string): boolean {
   if (!since) return true
-  return iso.slice(0, 10) >= since
+  return tanggalWib(iso) >= since
 }
 
 /**
  * Susun laporan posisi modal.
  *
- * estimatedNow = nilai stok + laba kotor kumulatif + utang belum lunas.
+ * estimatedNow = nilai stok sekarang + laba kotor kumulatif + utang belum lunas.
+ *
+ * Yang dipakai untuk "nilai stok" adalah stok SEKARANG, bukan stok awal:
+ * uang yang dipakai untuk kulakan sudah jadi barang di rak, dan barang yang
+ * sudah laku sudah masuk laba kotor. Kalau memakai stok awal, barang yang
+ * sudah terjual dihitung dua kali — sekali di laba, sekali di stok.
+ *
  * Uang tunai di laci tidak ikut dihitung (belum ada catatan kas harian) —
  * itu sebabnya hasilnya disebut "perkiraan".
  */
 export function susunLaporanModal(
   input: ModalAwal,
-  barang: Barang[],
+  stokBarang: StokBarang[],
   transaksi: Transaksi[],
   baris: BarisTransaksi[],
   utang: UtangBerjalan[],
 ): LaporanModal {
   const { since } = input
 
-  const stok = new Map(barang.map((b) => [b.id, b]))
-  const stockValue = barang.reduce((sum, b) => sum + b.stok_awal * b.harga_modal, 0)
+  const hargaModal = new Map(stokBarang.map((s) => [s.barang_id, s.harga_modal]))
+  const stockValue = stokBarang.reduce((sum, s) => sum + s.stok * s.harga_modal, 0)
 
   let grossProfit = 0
   for (const transaksiJual of transaksi) {
@@ -94,9 +109,8 @@ export function susunLaporanModal(
     if (!setelahTanggal(transaksiJual.tanggal, since)) continue
     const barisJual = baris.filter((b) => b.transaksi_id === transaksiJual.id)
     for (const barisSatu of barisJual) {
-      const barangAsal = stok.get(barisSatu.barang_id)
       const pendapatan = barisSatu.jumlah * barisSatu.harga_satuan
-      const modal = barisSatu.jumlah * (barangAsal?.harga_modal ?? 0)
+      const modal = barisSatu.jumlah * (hargaModal.get(barisSatu.barang_id) ?? 0)
       grossProfit += pendapatan - modal
     }
   }
@@ -132,8 +146,4 @@ export function susunLaporanModal(
     verdict,
     message: `${message} Belum termasuk uang tunai di laci.`,
   }
-}
-
-function round2(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100
 }

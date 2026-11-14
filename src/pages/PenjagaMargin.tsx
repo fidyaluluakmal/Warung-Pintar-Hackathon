@@ -1,10 +1,10 @@
 import { useState } from "react"
 import { useWarung } from "../lib/store"
-import { rupiah } from "../lib/format"
+import { persen, rupiah } from "../lib/format"
 import { MARGIN_TARGET } from "../lib/margin"
 
 /**
- * Penjaga Margin —.saatch modal naik diam-diam.
+ * Penjaga Margin — harga modal naik diam-diam.
  *
  * Harga modal naik tidak selalu terasa. Yang terasa belakangan: margin
  * menyusut, dan laba ikut terkikis. Halaman ini membandingkan modal dulu
@@ -72,9 +72,10 @@ export function PenjagaMargin() {
                     <strong>{sinyal.nama}</strong>
                     <p>
                       Modal {rupiah(sinyal.hargaModalSebelumnya)} →{" "}
-                      {rupiah(sinyal.hargaModal)} {sinyal.satuan} · margin{" "}
-                      {sinyal.marginSebelumnya}% → {sinyal.marginSekarang}%
+                      {rupiah(sinyal.hargaModal)} per {sinyal.satuan} · margin{" "}
+                      {persen(sinyal.marginSebelumnya)} → {persen(sinyal.marginSekarang)}
                     </p>
+                    <p className="consignment-hint">{sinyal.alasan}</p>
                     <div className="margin-bars" aria-hidden="true">
                       <span className="margin-bar old" style={{ height: tinggiLama }} />
                       <span className="margin-bar now" style={{ height: tinggiBaru }} />
@@ -106,10 +107,10 @@ export function PenjagaMargin() {
                       className={sinyal.marginSekarang < MARGIN_TARGET ? "chip danger" : "chip"}
                       style={{ fontSize: 13, padding: "6px 12px" }}
                     >
-                      {sinyal.marginSekarang}%
+                      {persen(sinyal.marginSekarang)}
                     </div>
                     <p className="form-note" style={{ marginTop: 8 }}>
-                      naik {sinyal.kenaikanModalPersen}%
+                      naik {persen(sinyal.kenaikanModalPersen)}
                     </p>
                     {baris && (
                       <p className="form-note">modal {rupiah(baris.harga_modal)}</p>
@@ -144,7 +145,7 @@ export function PenjagaMargin() {
                     modal {rupiah(baris.harga_modal)} · jual {rupiah(baris.harga_jual)}
                   </small>
                 </div>
-                <b style={{ fontSize: 13 }}>{baris.margin_persen}%</b>
+                <b style={{ fontSize: 13 }}>{persen(baris.margin_persen)}</b>
               </li>
             )
           })}

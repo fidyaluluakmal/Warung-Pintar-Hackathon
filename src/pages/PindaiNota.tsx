@@ -2,6 +2,7 @@ import { useRef, useState } from "react"
 import { useWarung } from "../lib/store"
 import { bacaNota } from "../lib/api"
 import { rupiah } from "../lib/format"
+import { pesanUntukUser } from "../lib/pesan"
 import { Icon } from "../components/Icon"
 import { Modal } from "../components/Modal"
 import type { Satuan } from "../lib/types"
@@ -97,7 +98,7 @@ export function PindaiNota({ onClose }: { onClose?: () => void }) {
       setTotalBeda(false)
       setPratinjau(null)
     } catch (kesalahan) {
-      setGalat(kesalahan instanceof Error ? kesalahan.message : "Gagal menyimpan.")
+      setGalat(pesanUntukUser(kesalahan, "Gagal menyimpan. Periksa koneksi, lalu coba lagi."))
     } finally {
       setSibuk(false)
     }
@@ -121,6 +122,7 @@ export function PindaiNota({ onClose }: { onClose?: () => void }) {
           type="file"
           accept="image/*"
           capture="environment"
+          aria-label="Pilih foto nota belanja"
           onChange={(event) => {
             const file = event.target.files?.[0]
             if (file) void prosesFile(file)
@@ -164,6 +166,7 @@ export function PindaiNota({ onClose }: { onClose?: () => void }) {
                 <div className="confirm-product">
                   <input
                     value={item.nama}
+                    aria-label={`Barang baris ${index + 1}`}
                     onChange={(event) =>
                       setBaris((prev) =>
                         prev.map((b, i) => (i === index ? { ...b, nama: event.target.value } : b)),

@@ -65,7 +65,7 @@ export interface PerbandinganPasar {
    *
    * Positif = harga di luar lebih murah dari modal sendiri (hemat).
    * Negatif = harga di luar lebih mahal.
-   * Dasarnya modal sendiri: "berapa persen modalmu di atas harga luar".
+   * Dasarnya modal sendiri: "berapa persen modal Anda di atas harga luar".
    */
   selisihPersen: number
   /** Selisih yang sama, kalau dibandingkan dengan rata-rata harga luar. */
@@ -74,7 +74,7 @@ export interface PerbandinganPasar {
   umurHari: number
 }
 
-/** Saran harga jual beserta Reasonsanya. */
+/** Saran harga jual beserta alasannya. */
 export interface SaranHargaJual {
   /** Harga jual yang menjaga margin target dari modal sendiri. */
   hargaJual: number
@@ -82,7 +82,7 @@ export interface SaranHargaJual {
   marginPersen: number
   /** Kalau barangnya dibeli di harga luar, harga jual seperti apa. */
   hargaJualBeliDiLuar: number
-  /** "modal kamu lebih murah" / "di luar lebih murah" / "sepat". */
+  /** "modal Anda lebih murah" / "di luar lebih murah" / "sepat". */
   verdict: string
   /** Penjelasan singkat, pakai angka. */
   alasan: string
@@ -179,10 +179,10 @@ export function saranHargaJual(
   } else if (selisih > 0) {
     // Selisih positif = modal sendiri lebih mahal, jadi di luar lebih murah.
     verdict = "di luar lebih murah"
-    alasan = `Di luar ${rupiah(hargaPasar)}, modal kamu ${rupiah(hargaModal)}. Kalau belanja di sana, baru bisa jual di ${rupiah(hargaJualBeliDiLuar)}.`
+    alasan = `Di luar ${rupiah(hargaPasar)}, modal Anda ${rupiah(hargaModal)}. Kalau belanja di sana, baru bisa jual di ${rupiah(hargaJualBeliDiLuar)}.`
   } else {
-    verdict = "modal kamu lebih murah"
-    alasan = `Modal kamu ${rupiah(hargaModal)}, di luar ${rupiah(hargaPasar)}. Jual di ${rupiah(hargaJual)} supaya margin ${marginTarget}% tetap aman.`
+    verdict = "modal Anda lebih murah"
+    alasan = `Modal Anda ${rupiah(hargaModal)}, di luar ${rupiah(hargaPasar)}. Jual di ${rupiah(hargaJual)} supaya margin ${marginTarget}% tetap aman.`
   }
 
   return {

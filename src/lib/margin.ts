@@ -7,6 +7,7 @@
  * Modul ini murni: masuk dan keluar sama, tanpa database atau jaringan.
  */
 
+import { persen, rupiahRingkas } from "./format"
 import type { MarginBarang } from "./types"
 
 /** Bulat ke kelipatan 100, ke atas. Harga jual selalu terlihat rapi. */
@@ -98,7 +99,7 @@ export function cariSinyalMargin(barang: MarginBarang[]): SinyalMargin[] {
       marginSebelumnya,
       kenaikanModalPersen: kenaikan,
       hargaJualSaran,
-      alasan: `Modal naik ${kenaikan}% (${formatRingkas(modalSebelumnya)} → ${formatRingkas(modalSekarang)} ${item.satuan}), margin menyusut ${marginSebelumnya}% → ${marginSekarang}%.`,
+      alasan: `Modal naik ${persen(kenaikan)} (${rupiahRingkas(modalSebelumnya)} → ${rupiahRingkas(modalSekarang)} per ${item.satuan}), margin menyusut ${persen(marginSebelumnya)} → ${persen(marginSekarang)}.`,
     })
   }
 
@@ -127,8 +128,14 @@ export interface HasilBagiBayar {
   dibayar: number
   /** Sisa yang jadi utang. */
   utang: number
-  /** Per baris: berapa yang dibayar dari barang ini. */
-  perBaris: Array<{ barangId: string; dibayar: number; utang: number }>
+  /**
+   * Per baris: berapa yang dibayar dari barang ini.
+   *
+   * `index` menunjuk baris asal, jadi dua baris untuk barang yang sama
+   * (misal "2 beras" dan "1 beras" di kalimat yang sama) tidak tertukar
+   *_qty_ dan harganya.
+   */
+  perBaris: Array<{ index: number; barangId: string; dibayar: number; utang: number }>
 }
 
 export function bagiPembayaran(baris: BarisBayar[], uangDibayar: number): HasilBagiBayar {
@@ -136,11 +143,12 @@ export function bagiPembayaran(baris: BarisBayar[], uangDibayar: number): HasilB
   const dibayar = round2(Math.min(Math.max(uangDibayar, 0), total))
   let sisa = dibayar
 
-  const perBaris = baris.map((b) => {
+  const perBaris = baris.map((b, index) => {
     const hargaBaris = round2(b.qty * b.hargaSatuan)
     const untukBaris = round2(Math.min(sisa, hargaBaris))
     sisa = round2(sisa - untukBaris)
     return {
+      index,
       barangId: b.barangId,
       dibayar: untukBaris,
       utang: round2(hargaBaris - untukBaris),
@@ -157,12 +165,4 @@ export function bagiPembayaran(baris: BarisBayar[], uangDibayar: number): HasilB
 /** Pembulatan 2 desimal, menghindari galat floating point. */
 export function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
-}
-
-/** Angka ringkas untuk alasan: 15000 -> "15 rb". */
-export function formatRingkas(nilai: number): string {
-  const angka = Math.abs(nilai)
-  if (angka >= 1_000_000) return `${round2(nilai / 1_000_000)} jt`
-  if (angka >= 1_000) return `${Math.round(nilai / 1_000)} rb`
-  return String(Math.round(nilai))
 }

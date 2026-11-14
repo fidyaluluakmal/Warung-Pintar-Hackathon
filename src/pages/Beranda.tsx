@@ -21,7 +21,7 @@ import type { TipsAi } from "../lib/types"
  * mau catat apa -> tutup buku -> pengeluaran -> utang -> saran AI.
  */
 export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
-  const { sesi, transaksi, baris, stok, barang, saranBeli, utang, sinyalMargin } = useWarung()
+  const { sesi, transaksi, baris, stok, saranBeli, utang, sinyalMargin } = useWarung()
   const [tips, setTips] = useState<TipsAi[]>([])
   const [sibuk, setSibuk] = useState(false)
   const [galat, setGalat] = useState("")
@@ -64,7 +64,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
     const omzetKemarin = penjualanKemarin.reduce((sum, t) => sum + t.total, 0)
 
     const laporanModal = modalAwal
-      ? susunLaporanModal(modalAwal, barang, transaksi, baris, utang)
+      ? susunLaporanModal(modalAwal, stok, transaksi, baris, utang)
       : null
 
     // Pengeluaran belanja hari ini.
@@ -88,7 +88,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
       utangJalan,
       totalBarang: stok.length,
     }
-  }, [transaksi, baris, stok, utang, modalAwal, barang])
+  }, [transaksi, baris, stok, utang, modalAwal])
 
   async function mintaAi() {
     setSibuk(true)
@@ -309,13 +309,13 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
             <Icon name="arrow" className="quick-arrow" />
           </button>
 
-          <button type="button" className="quick-card stockin" onClick={() => onPindah("Kasir")}>
+          <button type="button" className="quick-card stockin" onClick={() => onPindah("Stok Barang")}>
             <span className="quick-icon">
               <Icon name="box" size={30} />
             </span>
             <span>
               <strong>Tambah stok manual</strong>
-              <small>Pilih barang dari stok, isi jumlah masuk dan biaya belanjanya</small>
+              <small>Catat pembelian: barang masuk, jumlah, dan biaya belanjanya</small>
             </span>
             <Icon name="arrow" className="quick-arrow" />
           </button>
@@ -346,7 +346,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
             <strong>{rupiah(ringkasan.belanja)}</strong>
           </div>
           <div>
-            <small>Bersih hari ini</small>
+            <small>Sisa setelah belanja</small>
             <strong>{rupiah(ringkasan.bersih)}</strong>
           </div>
           <div>
@@ -364,7 +364,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
         <div className="panel-heading">
           <div>
             <h2>Pengeluaran belanja hari ini</h2>
-            <p>Biaya stok yang masuk hari ini, dipotong dari penjualan untuk penghasilan bersih.</p>
+            <p>Biaya stok yang masuk hari ini, dipotong dari penjualan untuk menghitung sisa hari ini.</p>
           </div>
           <button onClick={() => onPindah("Foto Nota")}>
             <Icon name="plus" size={16} /> Catat belanja
@@ -372,7 +372,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
         </div>
         <div className="closing-inline">
           <div>
-            <small>Pengeluaran belanja</small>
+            <small>Belanja stok</small>
             <strong>{rupiah(ringkasan.belanja)}</strong>
           </div>
           <div>
@@ -380,11 +380,11 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
             <strong>{rupiah(ringkasan.omzet)}</strong>
           </div>
           <div>
-            <small>Penghasilan bersih</small>
+            <small>Sisa setelah belanja</small>
             <strong>{rupiah(ringkasan.bersih)}</strong>
           </div>
           <div>
-            <small>Marjin bersih</small>
+            <small>Marjin setelah belanja</small>
             <strong>
               {angka(ringkasan.omzet > 0 ? (ringkasan.bersih / ringkasan.omzet) * 100 : 0, 1)}%
             </strong>
@@ -413,7 +413,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
           </div>
         )}
         <small className="ask-note">
-          Penghasilan bersih = penjualan hari ini {rupiah(ringkasan.omzet)} − pengeluaran belanja{" "}
+          Sisa setelah belanja = penjualan hari ini {rupiah(ringkasan.omzet)} − belanja stok{" "}
           {rupiah(ringkasan.belanja)}.
         </small>
       </section>
@@ -505,11 +505,11 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
           </span>
           <h2>AI baca buku dagangmu</h2>
           <p>
-            Angka dihitung dari catatankamu sendiri, lalu AI menyusun sarannya. Tidak ada angka
+            Angka dihitung dari catatan Anda sendiri, lalu AI menyusun sarannya. Tidak ada angka
             yang dikarang — kalau datanya kurang, AI bilang begitu.
           </p>
           <button type="button" onClick={() => void mintaAi()} disabled={sibuk}>
-            {sibuk ? "Membaca..." : "Minta AI membaca"}
+            {sibuk ? "Membaca…" : "Minta AI membaca"}
             <Icon name="arrow" size={17} />
           </button>
           {galat && (

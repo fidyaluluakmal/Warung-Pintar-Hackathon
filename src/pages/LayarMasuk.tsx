@@ -56,7 +56,7 @@ export function LayarMasuk() {
           }}
         >
           <div className="auth-field">
-            <span>{modeLokal ? "Nama warung" : "Email"}</span>
+            <label htmlFor="email">{modeLokal ? "Nama warung" : "Email"}</label>
             <input
               id="email"
               className="input"
@@ -68,7 +68,7 @@ export function LayarMasuk() {
           </div>
 
           <div className="auth-field">
-            <span>{modeLokal ? "Nama penjual" : "Sandi"}</span>
+            <label htmlFor="sandi">{modeLokal ? "Nama penjual" : "Sandi"}</label>
             <input
               id="sandi"
               type={modeLokal ? "text" : "password"}

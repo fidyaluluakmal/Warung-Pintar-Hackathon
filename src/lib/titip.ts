@@ -106,8 +106,8 @@ export function statistikTitip(rows: Titip[]): StatistikTitip {
 /**
  * Ringkasan yang harus dibayar ke pemilik barang.
  *
- * Hasilnya bisa disalin dan dikirim ke pemilik barang — jadi Owner's manual
- * tak perlu menghitung ulang.
+ * Hasilnya bisa disalin dan dikirim ke pemilik barang — jadi pemilik barang
+ * tak perlu menghitung ulang sendiri.
  */
 export function teksPembayaranTitip(rows: Titip[]): string {
   const aktif = rows.filter((row) => row.status === "aktif" && row.terjual > 0)

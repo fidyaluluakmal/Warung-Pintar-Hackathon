@@ -2,7 +2,7 @@
  * Parser lokal untuk kalimat voice.
  *
  * Berjalan 100% di browser, tanpa AI dan tanpa internet. Jadi daftar barang
- * tetap bisa diisi walau AI sedang tidak bisa jawaban atau jaringan putus.
+ * tetap bisa diisi walau AI sedang tidak bisa menjawab atau jaringan putus.
  *
  * Aturan: harga hanya dikenali dari sinyal yang jelas ("14 ribu", "17.000",
  * "1,5 juta"). Angka polos dibaca sebagai jumlah, bukan harga.
@@ -184,14 +184,6 @@ function parsePotongan(bagian: string): HasilParse["items"][number] | null {
   }
   if (price !== undefined) hasil.price = price
   return hasil
-}
-
-/** Parse angka: "3", "3.5", "1,5". Returns null kalau bukan angka. */
-export function parseAngka(kata: string): number | null {
-  const bersih = kata.replace(",", ".").replace(/[^0-9.]/g, "")
-  if (!bersih || bersih === ".") return null
-  const nilai = Number(bersih)
-  return Number.isFinite(nilai) ? nilai : null
 }
 
 /**

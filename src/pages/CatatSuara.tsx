@@ -5,6 +5,7 @@ import { useWarung } from "../lib/store"
 import { ekstrakSuara } from "../lib/api"
 import { parseKalimat } from "../lib/parser"
 import { rupiah } from "../lib/format"
+import { pesanUntukUser } from "../lib/pesan"
 import type { Satuan } from "../lib/types"
 
 interface BarisKonfirmasi {
@@ -160,7 +161,7 @@ export function CatatSuara({ onClose }: { onClose?: () => void }) {
       // kasir dan bisa lanjut transaksi berikutnya.
       onClose?.()
     } catch (kesalahan) {
-      setGalat(kesalahan instanceof Error ? kesalahan.message : "Gagal menyimpan.")
+      setGalat(pesanUntukUser(kesalahan, "Gagal menyimpan. Periksa koneksi, lalu coba lagi."))
     } finally {
       setSibuk(false)
     }
@@ -226,6 +227,7 @@ export function CatatSuara({ onClose }: { onClose?: () => void }) {
                 <div className="confirm-product">
                   <input
                     value={item.nama}
+                    aria-label={`Barang baris ${index + 1}`}
                     onChange={(event) =>
                       setBaris((prev) =>
                         prev.map((b, i) => (i === index ? { ...b, nama: event.target.value } : b)),

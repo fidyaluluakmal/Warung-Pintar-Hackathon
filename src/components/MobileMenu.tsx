@@ -86,13 +86,6 @@ export function MobileMenu({
               <span>{entry.label}</span>
             </button>
           ))}
-          <button
-            className={activeNav === "Pengaturan" ? "active" : ""}
-            onClick={() => buka("Pengaturan")}
-          >
-            <Icon name="user" />
-            <span>Akun &amp; Pengaturan</span>
-          </button>
         </div>
       </nav>
     </div>

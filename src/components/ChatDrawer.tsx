@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "./Icon"
 import { useWarung } from "../lib/store"
 import { callAskWarung } from "../lib/api"
+import { selisihHari } from "../lib/calendar"
 
 interface Pesan {
   id: string
@@ -48,7 +49,7 @@ function simpanSesi(sesi: Sesi[]) {
  * dikirim sebagai konteks, jadi model tidak pernah mengarang angka.
  */
 export function ChatDrawer({ onClose }: { onClose: () => void }) {
-  const { transaksi, baris, stok, utang, saranBeli } = useWarung()
+  const { transaksi, baris, barang, stok, utang, saranBeli } = useWarung()
   const [sesi, setSesi] = useState<Sesi[]>([])
 
   const [aktifId, setAktifId] = useState<string>("")
@@ -87,14 +88,33 @@ export function ChatDrawer({ onClose }: { onClose: () => void }) {
 
   // Konteks angka: semua dihitung di aplikasi, bukan oleh model.
   const konteks = useMemo(() => {
-    const omzetMingguIni = transaksi
-      .filter((t) => t.tipe === "jual")
-      .reduce((sum, t) => sum + t.total, 0)
+    const modeBarang = new Map(barang.map((b) => [b.id, b.harga_modal]))
+    const tipeById = new Map(transaksi.map((t) => [t.id, t.tipe]))
+
+    // 7 hari terakhir di kalender warung (Asia/Jakarta), bukan 168 jam.
+    const mingguIni = transaksi.filter(
+      (t) => t.tipe === "jual" && selisihHari(t.tanggal) < 7,
+    )
+    const idMingguIni = new Set(mingguIni.map((t) => t.id))
+
+    const omzetMingguIni = mingguIni.reduce((sum, t) => sum + t.total, 0)
+
+    // Laba kotor = penjualan - modal barang terjual. Kalau modalnya ikut
+    // dikirim sebagai omzet, AI akan menjawab "laba kotor = omzet" dan
+    // dock-nya jadi bohong.
+    let modalTerjual = 0
+    for (const row of baris) {
+      if (!idMingguIni.has(row.transaksi_id)) continue
+      if (tipeById.get(row.transaksi_id) !== "jual") continue
+      modalTerjual += row.jumlah * (modeBarang.get(row.barang_id) ?? 0)
+    }
+    const labaKotorMingguIni = omzetMingguIni - modalTerjual
+
     const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
     const utangJalan = utang.filter((u) => u.status === "belum_lunas")
     return {
       omzetMingguIni,
-      labaKotorMingguIni: omzetMingguIni,
+      labaKotorMingguIni,
       stokTipis: stokTipis.map((s) => ({ nama: s.nama, stok: s.stok, satuan: s.satuan })),
       saranBeli: saranBeli.map((s) => ({ nama: s.nama, qty: s.qty, satuan: s.satuan })),
       pelangganUtang: utangJalan.map((u) => ({
@@ -104,7 +124,7 @@ export function ChatDrawer({ onClose }: { onClose: () => void }) {
       totalTransaksi: transaksi.length,
       jumlahBaris: baris.length,
     }
-  }, [transaksi, baris, stok, utang, saranBeli])
+  }, [transaksi, baris, barang, stok, utang, saranBeli])
 
   async function tanya(pertanyaan: string) {
     const teks = pertanyaan.trim()
@@ -274,7 +294,7 @@ export function ChatDrawer({ onClose }: { onClose: () => void }) {
           </button>
         </form>
         <small className="chat-note">
-          Sesi tersimpan di perangkat ini. AI hanya menjelaskan angka dari catatanmu.
+          Sesi tersimpan di perangkat ini. AI hanya menjelaskan angka dari catatan Anda.
         </small>
     </div>
   )

@@ -7,6 +7,7 @@
  * Aturan stok: Stok akhir = Stok awal + Barang masuk - Barang keluar.
  */
 
+import { selisihHari } from "./calendar"
 import type { SaranBeli, StokBarang, Transaksi, BarisTransaksi } from "./types"
 
 /** Stok akhir satu barang dari riwayat baris transaksinya. */
@@ -60,16 +61,16 @@ export function hitungSaranBeli(
     const qtyTerjual = jualRows.reduce((sum, row) => sum + row.jumlah, 0)
 
     // Hari aktif: sejak penjualan pertama, dibatasi 30 hari.
+    // Dihitung dari tanggal warung (Asia/Jakarta), bukan selisih milidetik.
+    // Kalau pakai milidetik mentah, penjualan jam 23:30 dihitung masih
+    // "hari yang sama" — laju jualan jadi terlalu besar dan saran beli berlebihan.
     const tanggalJual = jualRows
       .map((row) => findTanggal(row.transaksi_id, transaksi))
       .filter((value): value is string => value !== null)
       .sort()
     const pertama = tanggalJual[0]
     if (!pertama) continue
-    const hariAktif = Math.min(
-      30,
-      Math.max(1, Math.floor((hariIni.getTime() - new Date(pertama).getTime()) / 86_400_000) + 1),
-    )
+    const hariAktif = Math.min(30, Math.max(1, selisihHari(pertama, hariIni) + 1))
 
     const dasarPerHari = qtyTerjual / hariAktif
     const musim = faktorMusim[barang.barang_id] ?? 1

@@ -3,7 +3,7 @@
  *
  * Semua kunci AI ada di server. Frontend hanya mengirim data dan menerima
  * JSON. Kalau AI gagal, pemanggil tetap bisa jatuh ke fallback lokal —
- * angka tidak pernah hilang hanya karena AI sedang tidak bisa jawaban.
+ * angka tidak pernah hilang hanya karena AI sedang tidak bisa menjawab.
  */
 
 import { EDGE_FUNCTIONS, supabase } from "./supabase"

@@ -18,10 +18,40 @@ export function rupiah(nilai: number): string {
 /** Angka ringkas: 15000 -> "15 rb". Untuk kartu ringkasan yang sempit. */
 export function rupiahRingkas(nilai: number): string {
   const angka = Math.abs(nilai || 0)
-  if (angka >= 1_000_000_000) return `${(nilai / 1_000_000_000).toFixed(1)} M`
-  if (angka >= 1_000_000) return `${(nilai / 1_000_000).toFixed(1)} jt`
+  if (angka >= 1_000_000_000) return `${angkaDesimal(nilai / 1_000_000_000)} M`
+  if (angka >= 1_000_000) return `${angkaDesimal(nilai / 1_000_000)} jt`
   if (angka >= 1_000) return `${Math.round(nilai / 1_000)} rb`
   return String(Math.round(nilai))
+}
+
+/**
+ * Angka desimal dengan pemisah koma.
+ *
+ * `toFixed(1)` memakai titik — "7.2 jt". Angka yang dibaca orang di Indonesia
+ * pakai koma sebagai pemisah desimal.
+ */
+export function angkaDesimal(nilai: number, desimal = 1): string {
+  return angka(nilai, desimal)
+}
+
+/**
+ * Jumlah barang: bulat tanpa desimal, pecahan dengan maksimal 2 desimal.
+ *
+ * 12 -> "12", 2.5 -> "2,5". `angka(x, 2)` selalu menambah ",00" — buat
+ * jumlah barang itu kelihatan aneh.
+ */
+export function angkaRapi(nilai: number): string {
+  return angka(nilai, Number.isInteger(nilai) ? 0 : 2)
+}
+
+/**
+ * Persen dengan pemisah koma, tanpa ",0" di ekor.
+ *
+ * 10 -> "10%", 12.5 -> "12,5%".
+ */
+export function persen(nilai: number, desimal = 1): string {
+  const bulat = Number.isInteger(nilai)
+  return `${angka(nilai, bulat ? 0 : desimal)}%`
 }
 
 /** Angka biasa dengan pemisah ribuan, tanpa simbol mata uang. */
@@ -46,30 +76,12 @@ const TANGGAL_SHORT = new Intl.DateTimeFormat("id-ID", {
   month: "short",
 })
 
-const HARI = new Intl.DateTimeFormat("id-ID", {
-  timeZone: "Asia/Jakarta",
-  weekday: "long",
-})
-
 export function tanggalPanjang(iso: string): string {
   return TANGGAL_PANJANG.format(new Date(iso))
 }
 
 export function tanggalShort(iso: string): string {
   return TANGGAL_SHORT.format(new Date(iso))
-}
-
-export function hariIni(): string {
-  return HARI.format(new Date())
-}
-
-/** Jam HH:MM dalam zona waktu warung. */
-export function jam(iso: string): string {
-  return new Intl.DateTimeFormat("id-ID", {
-    timeZone: "Asia/Jakarta",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso))
 }
 
 /** Sapaan sesuai jam warung. */
@@ -85,14 +97,4 @@ export function sapaan(now: Date = new Date()): string {
   if (jamAngka < 15) return "Selamat siang"
   if (jamAngka < 18) return "Selamat sore"
   return "Selamat malam"
-}
-
-/** Inisial untuk avatar. */
-export function inisial(nama: string): string {
-  return nama
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((kata) => kata[0]?.toUpperCase() ?? "")
-    .join("")
 }

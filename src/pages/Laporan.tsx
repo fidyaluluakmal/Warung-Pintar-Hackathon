@@ -2,32 +2,39 @@ import { useMemo, useState } from "react"
 import { Icon } from "../components/Icon"
 import { useWarung } from "../lib/store"
 import { angka, rupiah, rupiahRingkas } from "../lib/format"
-import { hariIniWib, tanggalWib } from "../lib/calendar"
+import { hariIniWib, tanggalWib, transaksiHariIni } from "../lib/calendar"
 import { labaKotor, round2 } from "../lib/inventory"
 import type { NavLabel } from "../lib/nav"
 
-type Periode = "7 Hari" | "30 Hari" | "3 Bulan"
+type Periode = "7 hari" | "30 hari" | "3 bulan"
 
-const PERIODE: Periode[] = ["7 Hari", "30 Hari", "3 Bulan"]
+const PERIODE: Periode[] = ["7 hari", "30 hari", "3 bulan"]
 
 /**
  * Laporan warung.
  *
- * Pola penjualan, laba kotor, dan produk yang paling diminati. Grafik dan
+ * Pola penjualan, laba kotor, dan barang yang paling diminati. Grafik dan
  * ringkasan membaca kumpulan data yang sama, jadi angkanya selalu cocok.
  */
 export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
   const { transaksi, baris, stok } = useWarung()
-  const [periode, setPeriode] = useState<Periode>("7 Hari")
+  const [periode, setPeriode] = useState<Periode>("7 hari")
   const [barTerpilih, setBarTerpilih] = useState<number | null>(null)
 
+  /**
+   * Deret tanggal untuk grafik.
+   *
+   * Dihitung dari tanggal warung (Asia/Jakarta), bukan dari tanggal perangkat.
+   * Kalau perangkat beda zona waktu, jendela grafik geser satu hari dan kartu
+   * "omzet hari ini" jadi menghitung hari yang berbeda dari batang terakhir.
+   */
   const hari = useMemo(() => {
-    const banyak = periode === "7 Hari" ? 7 : periode === "30 Hari" ? 30 : 90
+    const banyak = periode === "7 hari" ? 7 : periode === "30 hari" ? 30 : 90
     const hasil: string[] = []
+    const dasar = new Date(`${hariIniWib()}T00:00:00Z`)
     for (let i = banyak - 1; i >= 0; i -= 1) {
-      const d = new Date()
-      d.setDate(d.getDate() - i)
-      hasil.push(tanggalWib(d.toISOString()))
+      const d = new Date(dasar.getTime() - i * 86_400_000)
+      hasil.push(d.toISOString().slice(0, 10))
     }
     return hasil
   }, [periode])
@@ -59,7 +66,7 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
     }
 
     const omzetHariIni = transaksi
-      .filter((t) => t.tipe === "jual" && tanggalWib(t.tanggal) === hariIniWib())
+      .filter((t) => t.tipe === "jual" && transaksiHariIni(t.tanggal))
       .reduce((sum, t) => sum + t.total, 0)
 
     // Deret harian untuk grafik.
@@ -106,7 +113,7 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
         <div>
           <span className="date-label">Performa usaha</span>
           <h1>Laporan warung</h1>
-          <p>Lihat pola penjualan, laba kotor, dan produk yang paling diminati.</p>
+          <p>Lihat pola penjualan, laba kotor, dan barang yang paling diminati.</p>
         </div>
         <div className="period-tabs">
           {PERIODE.map((opsi) => (
@@ -147,7 +154,7 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
         <article>
           <span>Barang terjual</span>
           <strong>{angka(data.barangTerjual, 1)}</strong>
-          <small>{data.produkTeratas.length} produk berkontribusi</small>
+          <small>{data.produkTeratas.length} barang berkontribusi</small>
         </article>
       </section>
 
@@ -197,7 +204,7 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
           <div className="report-heading">
             <div>
               <h2>Komposisi omzet</h2>
-              <p>Bagian tiap produk dari total penjualan.</p>
+              <p>Bagian tiap barang dari total penjualan.</p>
             </div>
           </div>
           <div className="donut-wrap">
@@ -256,7 +263,7 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
         <section className="report-panel top-products">
           <div className="report-heading">
             <div>
-              <h2>Produk terlaris</h2>
+              <h2>Barang terlaris</h2>
               <p>Kontribusi terhadap penjualan</p>
             </div>
           </div>

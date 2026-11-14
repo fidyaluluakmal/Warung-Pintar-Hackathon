@@ -210,11 +210,11 @@ function ringkasBarang(item: ItemRiwayat[]): string {
   return tampil.join(", ") + (sisanya > 0 ? `, +${sisanya} barang lain` : "")
 }
 
-/** "Hari ini", "Kemarin", atau tanggal lengkap di zona waktu warung. */
+/** "hari ini", "kemarin", atau tanggal lengkap di zona waktu warung. */
 function labelHari(iso: string): string {
   const selisih = selisihHari(iso)
-  if (selisih <= 0) return "Hari ini"
-  if (selisih === 1) return "Kemarin"
+  if (selisih <= 0) return "hari ini"
+  if (selisih === 1) return "kemarin"
   return tanggalIndo(iso)
 }
 

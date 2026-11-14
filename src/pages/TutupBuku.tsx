@@ -2,7 +2,7 @@ import { useMemo, useState } from "react"
 import { Icon } from "../components/Icon"
 import { useWarung } from "../lib/store"
 import { hariIniWib, jamWib, selisihHari, tanggalWib } from "../lib/calendar"
-import { angka, rupiah, tanggalPanjang, tanggalShort } from "../lib/format"
+import { angka, angkaRapi, rupiah, tanggalPanjang, tanggalShort } from "../lib/format"
 import { labaKotor, round2 } from "../lib/inventory"
 import type { NavLabel } from "../lib/nav"
 
@@ -122,6 +122,12 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
     const totalUtang = utangJalan.reduce((sum, u) => sum + u.sisa, 0)
     const utangLewatTujuh = utangJalan.filter((u) => u.umur > 7)
 
+    // Kredit yang dibuat hari ini: bagian penjualan yang tidak dibayar.
+    // Uang ini TIDAK masuk laci, jadi harus dikurangi dari perkiraan kas.
+    const kreditHariIni = utang
+      .filter((u) => tanggalWib(u.tanggal) === hariIni)
+      .reduce((sum, u) => sum + Math.max(u.total - u.dibayar, 0), 0)
+
     // Stok menipis dan saran beli besok — dari mesin restok yang sama.
     const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
     const saran = saranBeli.map((s) => ({
@@ -131,6 +137,12 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
     const totalSaran = saran.reduce((sum, s) => sum + s.biaya, 0)
 
     const sisaSetelahBelanja = round2(omzet - biayaBelanja)
+
+    // Perkiraan uang yang benar-benar masuk laci hari ini.
+    // Penjualan tunai, dikurangi bagian yang disimpan dulu (jadi utang), dan
+    // dikurangi belanja yang dibayar hari ini. Kalau ini disamakan dengan
+    // omzet saja, laci selalu terbaca kurang.
+    const kasMasuk = round2(omzet - kreditHariIni - biayaBelanja)
     const marginKotor = omzet > 0 ? round2((laba / omzet) * 100) : 0
 
     const label = tanggalPanjang(new Date().toISOString())
@@ -166,6 +178,8 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
     return {
       label,
       headline,
+      kasMasuk,
+      kreditHariIni: round2(kreditHariIni),
       omzet: round2(omzet),
       laba,
       biayaBelanja: round2(biayaBelanja),
@@ -185,8 +199,9 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
     }
   }, [transaksi, baris, stok, saranBeli, utang])
 
-  // Uang yang seharusnya ada di laci: penjualan hari ini (diasumsikan tunai).
-  const harapanLaci = ringkasan.omzet
+  // Uang yang seharusnya ada di laci: penjualan hari ini dikurangi bagian
+  // yang disimpan dulu dan belanja yang dibayar hari ini.
+  const harapanLaci = ringkasan.kasMasuk
 
   async function salin() {
     try {
@@ -250,7 +265,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
           </div>
           <div>
             <small>Barang terjual</small>
-            <strong>{angka(ringkasan.barangTerjual, 2)}</strong>
+            <strong>{angkaRapi(ringkasan.barangTerjual)}</strong>
           </div>
         </div>
       </section>
@@ -262,7 +277,10 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
             <span>{rupiah(harapanLaci)}</span>
           </div>
           <p className="cash-expected">
-            Seharusnya ada di laci <strong>{rupiah(harapanLaci)}</strong> dari penjualan hari ini.
+            Seharusnya ada di laci <strong>{rupiah(harapanLaci)}</strong> — penjualan{" "}
+            {rupiah(ringkasan.omzet)}
+            {ringkasan.kreditHariIni > 0 && ` dikurangi utang ${rupiah(ringkasan.kreditHariIni)}`}
+            {ringkasan.biayaBelanja > 0 && ` dikurangi belanja ${rupiah(ringkasan.biayaBelanja)}`}.
           </p>
           <div className="cash-input">
             <input
@@ -328,7 +346,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
                   <div>
                     <strong>{utang.pelanggan}</strong>
                     <small>
-                      {angka(utang.qty, 2)} {utang.satuan} {utang.nama_barang} · {utang.umur} hari
+                      {angkaRapi(utang.qty)} {utang.satuan} {utang.nama_barang} · {utang.umur} hari
                     </small>
                   </div>
                   {utang.umur > 7 && <span className="closing-flag">Lewat 7 hari</span>}
@@ -347,12 +365,12 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
 
         <section className="closing-block">
           <div className="closing-block-head">
-            <h2>Belanja stok hari ini</h2>
+            <h2>Belanja stok</h2>
             <span>{rupiah(ringkasan.biayaBelanja)}</span>
           </div>
           <div className="closing-inline">
             <div>
-              <small>Pengeluaran belanja</small>
+              <small>Belanja stok</small>
               <strong>{rupiah(ringkasan.biayaBelanja)}</strong>
             </div>
             <div>
@@ -405,7 +423,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
                 <li key={saran.barangId}>
                   <div>
                     <strong>
-                      {saran.nama} · {angka(saran.qty, 2)} {saran.satuan}
+                      {saran.nama} · {angkaRapi(saran.qty)} {saran.satuan}
                     </strong>
                     <small>{saran.alasan}</small>
                   </div>
@@ -420,7 +438,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
               <strong>Stok menipis</strong>
               <p>
                 {ringkasan.stokTipis
-                  .map((item) => `${item.nama} ${angka(item.stok, 2)} ${item.satuan}`)
+                  .map((item) => `${item.nama} ${angkaRapi(item.stok)} ${item.satuan}`)
                   .join(" · ")}
               </p>
             </div>
@@ -439,7 +457,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
               <div key={item.nama}>
                 <strong>{item.nama}</strong>
                 <span>
-                  {angka(item.qty, 2)} · {rupiah(item.pendapatan)}
+                  {angkaRapi(item.qty)} · {rupiah(item.pendapatan)}
                 </span>
               </div>
             ))}

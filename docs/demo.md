@@ -102,7 +102,7 @@ cocok."
 
 ## 9. Tanya AI (20 detik)
 
-1. Tekan ikon kilat di header → drawer **Asisten_Warung** terbuka.
+1. Tekan ikon kilat di header → drawer **Asisten warung** terbuka.
 2. Tekan chip **Beli apa besok?**.
 3. Tunggu jawabannya. Tunjukkan bahwa angkanya sama dengan panel lain.
 

@@ -22,7 +22,7 @@ export function Sidebar({
       <button
         className="sidebar-toggle"
         onClick={onToggle}
-        aria-label={collapsed ? "Buka menu" : "Tutup menu"}
+        aria-label={collapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
         aria-expanded={!collapsed}
         title={collapsed ? "Buka menu" : "Tutup menu"}
       >

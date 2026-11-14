@@ -19,6 +19,8 @@
 
 import { supabase } from "./supabase"
 import { ambilSemua } from "./supabaseQuery"
+import { selisihHari } from "./calendar"
+import { pesanUntukUser } from "./pesan"
 import type { BarisTransaksi, Transaksi } from "./types"
 
 /* --------------------------------------------------------------------- tipe */
@@ -106,26 +108,6 @@ export const BATAS_JARANG_HARI = 30
  */
 export function normalisasiNama(nama: string): string {
   return nama.trim().replace(/\s+/g, " ").toLocaleLowerCase("id-ID")
-}
-
-/**
- * Gabung nama-nama yang sama (case-insensitive) jadi satu.
- *
- * Nama yang dipakai untuk ditampilkan mengikuti kemunculan pertama, jadi
- * urutan input menentukan tampilan. "pak yono" dan "Pak Yono" jadi satu nama.
- */
-export function gabungNamaDuplikat(daftar: string[]): string[] {
-  const seen = new Set<string>()
-  const hasil: string[] = []
-  for (const nama of daftar) {
-    const bersih = nama.trim().replace(/\s+/g, " ")
-    if (!bersih) continue
-    const kunci = normalisasiNama(bersih)
-    if (seen.has(kunci)) continue
-    seen.add(kunci)
-    hasil.push(bersih)
-  }
-  return hasil
 }
 
 /**
@@ -233,28 +215,6 @@ export function labelKunjungan(
 /** Label utang: masih ada sisa -> "Punya utang", sudah bersih -> "Kulang". */
 export function labelUtang(totalUtang: number): string {
   return totalUtang > 0 ? "Punya utang" : "Kulang"
-}
-
-/**
- * Selisih hari antara sebuah tanggal dan hari ini, dihitung di zona waktu
- * warung (Asia/Jakarta) — bukan zona waktu perangkat.
- */
-export function selisihHari(tanggal: string, hariIni: Date = new Date()): number {
-  const dari = hariDalamZonaWarung(tanggal)
-  const sampai = hariDalamZonaWarung(hariIni)
-  if (!dari || !sampai) return 0
-  return Math.round((Date.parse(sampai) - Date.parse(dari)) / 86_400_000)
-}
-
-function hariDalamZonaWarung(nilai: string | Date): string {
-  const tanggal = typeof nilai === "string" ? new Date(nilai) : nilai
-  if (Number.isNaN(tanggal.getTime())) return ""
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(tanggal)
 }
 
 /**
@@ -577,7 +537,7 @@ export async function simpanPelanggan(input: {
     if (error.code === "23505") {
       return { ok: false, pesan: `Sudah ada pelanggan bernama "${nama}".` }
     }
-    return { ok: false, pesan: error.message }
+    return { ok: false, pesan: pesanUntukUser(error, "Gagal menyimpan pelanggan. Coba lagi.") }
   }
 
   return { ok: true, pesan: `${nama} sudah masuk buku pelanggan.` }

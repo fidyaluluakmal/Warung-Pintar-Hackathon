@@ -28,6 +28,7 @@ export type IconName =
   | "menu"
   | "logout"
   | "wallet"
+  | "tag"
 
 const iconPaths: Record<IconName, ReactNode> = {
   home: (
@@ -128,6 +129,12 @@ const iconPaths: Record<IconName, ReactNode> = {
       <path d="M3 7a2 2 0 0 1 2-2h12v4" />
       <rect x="3" y="7" width="18" height="12" rx="2" />
       <path d="M16 13h2" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" />
+      <path d="M7 7h.01" />
     </>
   ),
 }

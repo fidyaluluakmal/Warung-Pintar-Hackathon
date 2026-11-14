@@ -144,10 +144,10 @@ describe("saranHargaJual", () => {
     expect(saran.marginPersen).toBeGreaterThanOrEqual(MARGIN_TARGET)
   })
 
-  it("bilang modal kamu lebih murah kalau modalnya di bawah harga luar", () => {
+  it("bilang modal Anda lebih murah kalau modalnya di bawah harga luar", () => {
     const saran = saranHargaJual(14_000, 15_000)
 
-    expect(saran.verdict).toBe("modal kamu lebih murah")
+    expect(saran.verdict).toBe("modal Anda lebih murah")
     expect(saran.alasan).toContain("14.000")
     expect(saran.alasan).toContain("15.000")
   })

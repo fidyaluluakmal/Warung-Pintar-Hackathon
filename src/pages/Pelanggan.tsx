@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import { Icon } from "../components/Icon"
-import { rupiah } from "../lib/format"
+import { Modal } from "../components/Modal"
+import { angkaRapi, rupiah, tanggalShort } from "../lib/format"
 import {
   hitungRingkasanPelanggan,
   inisialPelanggan,
   muatBukuPelanggan,
+  rataRataBelanja,
   simpanPelanggan,
   urutPelanggan,
   type UrutanPelanggan,
@@ -37,6 +39,7 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
   const [sibuk, setSibuk] = useState(false)
   const [pesan, setPesan] = useState("")
   const [galat, setGalat] = useState("")
+  const [dipilih, setDipilih] = useState<string | null>(null)
 
   // Muat daftar pelanggan dari database sekali, lalu hitung di memori.
   useEffect(() => {
@@ -63,6 +66,11 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
       buku.utang,
     )
   }, [buku])
+
+  const detail = useMemo(
+    () => ringkasan.find((p) => p.nama === dipilih) ?? null,
+    [ringkasan, dipilih],
+  )
 
   const daftar = useMemo(() => {
     const kunci = cari.toLowerCase().trim()
@@ -258,7 +266,12 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
 
       <div className="customers-grid" style={{ marginTop: 16 }}>
         {daftar.map((pelanggan) => (
-          <div className="customer-card" key={pelanggan.id ?? pelanggan.nama}>
+          <button
+            type="button"
+            className="customer-card"
+            key={pelanggan.id ?? pelanggan.nama}
+            onClick={() => setDipilih(pelanggan.nama)}
+          >
             <div className="customer-head">
               <span className="customer-avatar">{inisialPelanggan(pelanggan.nama)}</span>
               <div>
@@ -281,9 +294,11 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
                 <span className="customer-status lunas">Lunas</span>
               )}
               {!pelanggan.telepon && <span className="customer-status belum">Lengkapi nomor</span>}
-              {pelanggan.barangFavorit && <small>favorit: {pelanggan.barangFavorit}</small>}
+              {pelanggan.barangFavorit && (
+                <small>favorit: {pelanggan.barangFavorit}</small>
+              )}
             </div>
-          </div>
+          </button>
         ))}
         {daftar.length === 0 && (
           <div className="empty-state">
@@ -293,6 +308,96 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
           </div>
         )}
       </div>
+
+      {detail && (
+        <Modal
+          label={`Riwayat ${detail.nama}`}
+          onClose={() => setDipilih(null)}
+        >
+          <span className="modal-kicker">Buku pelanggan</span>
+          <h2>{detail.nama}</h2>
+          <p>
+            {detail.telepon ?? "Tanpa nomor telepon"}
+            {detail.kunjunganTerakhir !== null
+              ? ` · terakhir datang ${selisihHari(detail.kunjunganTerakhir)} hari lalu`
+              : " · belum pernah datang"}
+            {` · ${detail.labelKunjungan}`}
+          </p>
+          {detail.catatan && <p className="form-note">{detail.catatan}</p>}
+
+          <ul className="debt-list" style={{ marginTop: 16 }}>
+            <li className="debt-item">
+              <div className="debt-avatar">Rp</div>
+              <div>
+                <strong>Total belanja</strong>
+                <small>
+                  {detail.jumlahKunjungan} kunjungan · rata-rata{" "}
+                  {rupiah(rataRataBelanja([detail]))}
+                </small>
+              </div>
+              <b>{rupiah(detail.totalBelanja)}</b>
+            </li>
+            <li className="debt-item">
+              <div className="debt-avatar">{detail.initials}</div>
+              <div>
+                <strong>Barang favorit</strong>
+                <small>
+                  {detail.barangFavorit
+                    ? `${detail.nama} · ${angkaRapi(detail.qtyFavorit)}`
+                    : "belum ada"}
+                </small>
+              </div>
+              <b>{detail.labelUtang}</b>
+            </li>
+            <li className="debt-item">
+              <div className="debt-avatar">UT</div>
+              <div>
+                <strong>Utang berjalan</strong>
+                <small>
+                  {detail.utangTerlama
+                    ? `terlama ${selisihHari(detail.utangTerlama)} hari`
+                    : "tidak ada"}
+                </small>
+              </div>
+              <b>{rupiah(detail.totalUtang)}</b>
+            </li>
+          </ul>
+
+          <div className="panel-heading" style={{ marginTop: 20 }}>
+            <div>
+              <h2>Riwayat pembelian</h2>
+              <p>Transaksi yang menyebut nama pelanggan ini</p>
+            </div>
+          </div>
+
+          {detail.pembelian.length === 0 ? (
+            <p className="form-note" style={{ marginTop: 12 }}>
+              Belum ada pembelian yang menyebut nama ini.
+            </p>
+          ) : (
+            <ul className="debt-list" style={{ marginTop: 12 }}>
+              {detail.pembelian.slice(0, 12).map((item, index) => (
+                <li className="debt-item" key={`${item.transaksiId}-${index}`}>
+                  <div className="debt-avatar">{item.jumlah}</div>
+                  <div>
+                    <strong>{item.namaBarang}</strong>
+                    <small>
+                      {tanggalShort(item.tanggal)} · {angkaRapi(item.jumlah)} {item.satuan}
+                    </small>
+                  </div>
+                  <b>{rupiah(item.total)}</b>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="modal-actions">
+            <button type="button" className="secondary-action" onClick={() => setDipilih(null)}>
+              Tutup
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

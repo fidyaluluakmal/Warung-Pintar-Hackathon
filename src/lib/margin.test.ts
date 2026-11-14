@@ -142,6 +142,24 @@ describe("bagiPembayaran", () => {
     expect(hasil.perBaris[0].dibayar).toBe(5_000)
   })
 
+  it("baris untuk barang yang sama tetap terpisah", () => {
+    // Satu kalimat bisa menyebut barang yang sama dua kali: "2 beras dan 1 beras".
+    // Dua baris itu harus dihitung terpisah, bukan digabung.
+    const hasil = bagiPembayaran(
+      [
+        { barangId: "b1", qty: 2, satuan: "kg", hargaSatuan: 10_000 },
+        { barangId: "b1", qty: 1, satuan: "kg", hargaSatuan: 10_000 },
+      ],
+      25_000,
+    )
+    expect(hasil.perBaris).toHaveLength(2)
+    expect(hasil.perBaris[0].index).toBe(0)
+    expect(hasil.perBaris[1].index).toBe(1)
+    // Baris pertama lunas, baris kedua jadi utang.
+    expect(hasil.perBaris[0].utang).toBe(0)
+    expect(hasil.perBaris[1].utang).toBe(5_000)
+  })
+
   it("tidak pernah bayar melebihi total", () => {
     const hasil = bagiPembayaran(
       [{ barangId: "b1", qty: 1, satuan: "pcs", hargaSatuan: 10_000 }],

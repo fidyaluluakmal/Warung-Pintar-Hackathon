@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 import {
   BATAS_JARANG_HARI,
   BATAS_RUTIN,
-  gabungNamaDuplikat,
   gabungPelangganDuplikat,
   hitungRingkasanPelanggan,
   inisialPelanggan,
@@ -57,22 +56,6 @@ describe("normalisasiNama", () => {
 
   it("nama berbeda huruf besar-kecil dianggap sama", () => {
     expect(normalisasiNama("pak yono")).toBe(normalisasiNama("Pak Yono"))
-  })
-})
-
-describe("gabungNamaDuplikat", () => {
-  it("menggabungkan nama yang sama huruf besar-kecil", () => {
-    expect(gabungNamaDuplikat(["pak yono", "Pak Yono", "Bu Endah"])).toEqual([
-      "pak yono",
-      "Bu Endah",
-    ])
-  })
-
-  it("memangkas spasi dan membuang nama kosong", () => {
-    expect(gabungNamaDuplikat(["  Pak Yono  ", "   ", "Bu Endah"])).toEqual([
-      "Pak Yono",
-      "Bu Endah",
-    ])
   })
 })
 

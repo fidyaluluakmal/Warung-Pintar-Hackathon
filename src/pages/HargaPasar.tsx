@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { rupiah } from "../lib/format"
+import { persen, rupiah } from "../lib/format"
 import { hariIniWIB } from "../lib/inventory"
 import { MARGIN_TARGET } from "../lib/margin"
 import { supabase } from "../lib/supabase"
@@ -45,7 +45,7 @@ export function HargaPasar() {
   const muatData = useCallback(async () => {
     if (!supabase) {
       setGalat(
-        "Fitur ini butuh koneksi ke database warung. Isi VITE_SUPABASE_URL dan kunci anon di berkas .env, lalu jalankan ulang aplikasinya.",
+        "Fitur ini butuh koneksi ke database warung. Hubungkan aplikasi ke database, lalu jalankan ulang.",
       )
       setMemuat(false)
       return
@@ -56,7 +56,7 @@ export function HargaPasar() {
       if (errorSesi) throw errorSesi
       if (!sesi.user) {
         setGalat(
-          "Belum masuk. Masuk dulu supaya harga pasar tersimpan di warung kamu.",
+          "Belum masuk. Masuk dulu supaya harga pasar tersimpan di warung Anda.",
         )
         setMemuat(false)
         return
@@ -118,6 +118,12 @@ export function HargaPasar() {
     }
     if (!Number.isFinite(nilaiHarga) || nilaiHarga <= 0) {
       setGalat("Harga di tempat lain harus diisi lebih dari nol.")
+      return
+    }
+    // Tanggal wajib diisi. Kalau kosong, string tanggal yang dikirim jadi
+    // tidak valid dan database menolaknya dengan pesan yang tidak terbaca.
+    if (!tanggal) {
+      setGalat("Tanggal catatannya belum diisi.")
       return
     }
 
@@ -188,7 +194,7 @@ export function HargaPasar() {
         <div>
           <span className="date-label">Harga Pasar</span>
           <h1>Bandingkan harga pasar</h1>
-          <p>Harga barang yang sama di tempat lain, dibanding modal kamu.</p>
+          <p>Harga barang yang sama di tempat lain, dibanding modal Anda.</p>
         </div>
       </div>
 
@@ -200,8 +206,8 @@ export function HargaPasar() {
           </div>
         </div>
         <p className="form-note">
-          Catat harga yang kamu lihat di toko atau agen lain — misalnya "di tempat lain
-          beras 15 ribu, di sini 14 ribu". Aplikasi membandingkan dengan modal kamu,
+          Catat harga yang Anda lihat di toko atau agen lain — misalnya "di tempat lain
+          beras 15 ribu, di sini 14 ribu". Aplikasi membandingkan dengan modal Anda,
           lalu memberi saran harga jual supaya margin {MARGIN_TARGET}% tetap aman.
         </p>
       </section>
@@ -225,7 +231,7 @@ export function HargaPasar() {
             </span>
           </div>
           <span className="stat-label">Rata-rata hemat di tempat lain</span>
-          <strong>{ringkasan.rataRataHemat.toFixed(1)}%</strong>
+          <strong>{persen(ringkasan.rataRataHemat)}</strong>
           <small>Hanya barang yang lebih murah di luar</small>
         </article>
 
@@ -316,6 +322,7 @@ export function HargaPasar() {
               type="date"
               className="input"
               value={tanggal}
+              required
               onChange={(event) => setTanggal(event.target.value)}
             />
           </div>
@@ -348,7 +355,7 @@ export function HargaPasar() {
         <div className="panel-heading">
           <div>
             <h2>Perbandingan per barang</h2>
-            <p>Modal kamu dibanding harga yang tercatat di tempat lain</p>
+            <p>Modal Anda dibanding harga yang tercatat di tempat lain</p>
           </div>
           {pesanJual && <span className="chip">{pesanJual}</span>}
         </div>
@@ -360,7 +367,7 @@ export function HargaPasar() {
         ) : perbandingan.length === 0 ? (
           <p className="form-note" style={{ marginTop: 16 }}>
             Belum ada harga pasar yang dicatat. Catat satu saja, lalu aplikasi
-            langsung dibandingkan dengan modal kamu.
+            langsung dibandingkan dengan modal Anda.
           </p>
         ) : (
           <ul className="stock-list">
@@ -368,7 +375,7 @@ export function HargaPasar() {
               const saran = saranHargaJual(item.hargaModal, item.hargaTermurah)
               const hemat = item.selisihPersen > 0
               const sama = Math.abs(item.selisihPersen) < TOLERANSI_SEPAK_PERSEN
-              const persen = Math.abs(item.selisihPersen).toFixed(1)
+              const persenHemat = persen(Math.abs(item.selisihPersen))
               const tempat = item.catatanTerpakai?.tempat
               return (
                 <li className="stock-item" key={item.barangId}>
@@ -401,7 +408,7 @@ export function HargaPasar() {
                     }}
                   >
                     <span className={sama || hemat ? "chip" : "chip danger"}>
-                      {sama ? "sepat" : hemat ? `hemat ${persen}%` : `lebih mahal ${persen}%`}
+                      {sama ? "sepat" : hemat ? `hemat ${persenHemat}` : `lebih mahal ${persenHemat}`}
                     </span>
                     <b style={{ fontSize: 13 }}>{rupiah(saran.hargaJual)}</b>
                     <span className="form-note" style={{ marginTop: 0 }}>
@@ -467,7 +474,7 @@ function pesanGalat(kesalahan: unknown): string {
   const pesan = (kesalahan as { message?: string } | null)?.message ?? ""
 
   if (kode === "42P01" || kode === "PGRST205") {
-    return "Tabel harga pasar belum ada di database. Jalankan migrasi 0041_harga_pasar.sql, lalu muat ulang halaman ini."
+    return "Data harga pasar belum siap di database ini. Muat ulang halaman ini sebentar lagi."
   }
   if (kode === "42501") {
     return "Kamu belum masuk, jadi data harga pasar tidak bisa disimpan."

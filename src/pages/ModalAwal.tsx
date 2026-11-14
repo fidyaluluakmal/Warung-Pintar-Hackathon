@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react"
 import { useWarung } from "../lib/store"
-import { rupiah } from "../lib/format"
-import { labaKotor, round2 } from "../lib/inventory"
+import { rupiah, tanggalPanjang } from "../lib/format"
+import { hariIniWib } from "../lib/calendar"
+import { bacaModalAwal, simpanModalAwal, susunLaporanModal } from "../lib/capital"
 
 /**
  * Modal Awal — "uang saya bertambah atau berkurang?"
@@ -9,75 +10,47 @@ import { labaKotor, round2 } from "../lib/inventory"
  * Pemilik warung tidak butuh laporan laba yang rumit. Dia butuh tahu:
  * modal yang saya pakai dulu, sekarang jadi berapa.
  *
- * Nilai sekarang = nilai stok + laba kotor + piutang pelanggan.
+ * Perhitungannya sama dengan panel di Beranda — keduanya baca fungsi yang
+ * sama di `src/lib/capital.ts`, jadi angkanya tidak mungkin berbeda.
  */
-
-const KUNCI = "warung-pintar-modal-awal"
-
-interface ModalAwal {
-  nominal: number
-  mulai: string
-}
-
-function bacaModal(): ModalAwal | null {
-  try {
-    const mentah = window.localStorage.getItem(KUNCI)
-    return mentah ? (JSON.parse(mentah) as ModalAwal) : null
-  } catch {
-    return null
-  }
-}
-
 export function ModalAwal() {
   const { stok, transaksi, baris, utang, sesi } = useWarung()
   const [terbuka, setTerbuka] = useState(false)
   const [nominal, setNominal] = useState("")
   const [mulai, setMulai] = useState("")
   const [tersimpan, setTersimpan] = useState(false)
+  const [galat, setGalat] = useState("")
 
-  const modal = useMemo(() => bacaModal(), [tersimpan])
+  const modal = useMemo(() => bacaModalAwal(), [tersimpan])
 
-  const posisi = useMemo(() => {
-    const nilaiStok = stok.reduce((sum, s) => sum + s.stok * s.harga_modal, 0)
-
-    const hargaModal = new Map(stok.map((s) => [s.barang_id, s.harga_modal]))
-    const idsJual = new Set(transaksi.filter((t) => t.tipe === "jual").map((t) => t.id))
-    const modalTerjual = baris
-      .filter((row) => idsJual.has(row.transaksi_id))
-      .reduce((sum, row) => sum + row.jumlah * (hargaModal.get(row.barang_id) ?? 0), 0)
-    const omzet = transaksi
-      .filter((t) => t.tipe === "jual")
-      .reduce((sum, t) => sum + t.total, 0)
-
-    const piutang = utang.reduce(
-      (sum, u) => sum + Math.max(u.total - u.dibayar, 0),
-      0,
-    )
-
-    return {
-      nilaiStok: round2(nilaiStok),
-      labaKotor: labaKotor(omzet, modalTerjual),
-      piutang: round2(piutang),
-      sekarang: round2(nilaiStok + labaKotor(omzet, modalTerjual) + piutang),
-    }
-  }, [stok, transaksi, baris, utang])
+  const laporan = useMemo(
+    () =>
+      modal
+        ? susunLaporanModal(modal, stok, transaksi, baris, utang)
+        : null,
+    [modal, stok, transaksi, baris, utang],
+  )
 
   function simpan() {
     const angka = Number(nominal.replace(/\D/g, ""))
-    if (!Number.isFinite(angka) || angka <= 0) return
-    try {
-      window.localStorage.setItem(
-        KUNCI,
-        JSON.stringify({ nominal: angka, mulai: mulai || new Date().toISOString() }),
-      )
-    } catch {
-      // Penyimpanan diblokir.
+    if (!Number.isFinite(angka) || angka <= 0) {
+      setGalat("Modal awal harus lebih dari nol.")
+      return
     }
-    setTersimpan(true)
+    simpanModalAwal({ amount: angka, since: mulai || hariIniWib() })
+    setTersimpan((nilai) => !nilai)
+    setGalat("")
     setTerbuka(false)
   }
 
-  const selisih = modal ? round2(posisi.sekarang - modal.nominal) : 0
+  function bukaForm() {
+    setNominal(modal ? String(modal.amount) : "")
+    setMulai(modal?.since ?? hariIniWib())
+    setGalat("")
+    setTerbuka((nilai) => !nilai)
+  }
+
+  const selisih = laporan?.change ?? 0
 
   return (
     <div className="space-y-5">
@@ -87,7 +60,7 @@ export function ModalAwal() {
           <h1>Uang saya bertambah atau berkurang?</h1>
           <p>Bandingkan modal yang dipakai dulu dengan posisi sekarang.</p>
         </div>
-        <button type="button" className="secondary-action" onClick={() => setTerbuka(!terbuka)}>
+        <button type="button" className="secondary-action" onClick={bukaForm}>
           {modal ? "Ubah modal" : "Isi modal awal"}
         </button>
       </div>
@@ -125,15 +98,16 @@ export function ModalAwal() {
                 Simpan modal awal
               </button>
             </div>
+            {galat && <div className="form-error">{galat}</div>}
           </div>
         </section>
       )}
 
-      {!modal ? (
+      {!modal || !laporan ? (
         <section className="panel">
           <p className="form-note">
             Belum diisi modal awal. Isi sekali, lalu aplikasi bisa menunjukkan
-            apakah uangmu bertambah atau berkurang sejak itu.
+            apakah uang Anda bertambah atau berkurang sejak itu.
           </p>
         </section>
       ) : (
@@ -147,8 +121,8 @@ export function ModalAwal() {
                 </span>
               </div>
               <span className="stat-label">Modal awal</span>
-              <strong>{rupiah(modal.nominal)}</strong>
-              <small>Sejak {new Date(modal.mulai).toLocaleDateString("id-ID")}</small>
+              <strong>{rupiah(laporan.initial)}</strong>
+              <small>Sejak {tanggalPanjang(`${laporan.since}T00:00:00+07:00`)}</small>
             </article>
 
             <article className="stat-card">
@@ -157,7 +131,7 @@ export function ModalAwal() {
                 <span className="trend positive">sekarang</span>
               </div>
               <span className="stat-label">Posisi sekarang</span>
-              <strong>{rupiah(posisi.sekarang)}</strong>
+              <strong>{rupiah(laporan.estimatedNow)}</strong>
               <small>Stok + laba kotor + piutang</small>
             </article>
 
@@ -174,8 +148,8 @@ export function ModalAwal() {
               <strong>{rupiah(Math.abs(selisih))}</strong>
               <small>
                 {selisih >= 0
-                  ? "Uangmu bertambah."
-                  : "Uangmu berkurang — cek barang hilang atau harga jual."}
+                  ? "Uang Anda bertambah."
+                  : "Uang Anda berkurang — cek barang hilang atau harga jual."}
               </small>
             </article>
           </div>
@@ -194,7 +168,7 @@ export function ModalAwal() {
                   <strong>Nilai stok di rak</strong>
                   <small>Stok sekarang × harga modal</small>
                 </div>
-                <b style={{ fontSize: 13 }}>{rupiah(posisi.nilaiStok)}</b>
+                <b style={{ fontSize: 13 }}>{rupiah(laporan.stockValue)}</b>
               </li>
               <li className="stock-item">
                 <div className="product-code">LB</div>
@@ -202,7 +176,7 @@ export function ModalAwal() {
                   <strong>Laba kotor</strong>
                   <small>Penjualan − modal barang terjual</small>
                 </div>
-                <b style={{ fontSize: 13 }}>{rupiah(posisi.labaKotor)}</b>
+                <b style={{ fontSize: 13 }}>{rupiah(laporan.grossProfit)}</b>
               </li>
               <li className="stock-item">
                 <div className="product-code">UT</div>
@@ -210,16 +184,14 @@ export function ModalAwal() {
                   <strong>Piutang pelanggan</strong>
                   <small>Utang yang belum lunas</small>
                 </div>
-                <b style={{ fontSize: 13 }}>{rupiah(posisi.piutang)}</b>
+                <b style={{ fontSize: 13 }}>{rupiah(laporan.openDebt)}</b>
               </li>
             </ul>
             <p className="form-note">
               Modal awal dicatat sekali, lalu dihitung ulang dari catatan
               warung. Bukan angka yang diubah manual.
             </p>
-            <p className="form-note">
-              Dipakai untuk {sesi?.warung ?? "warungmu"}.
-            </p>
+            <p className="form-note">Dipakai untuk {sesi?.warung ?? "warung Anda"}.</p>
           </section>
         </>
       )}

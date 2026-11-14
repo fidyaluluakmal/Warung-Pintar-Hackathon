@@ -1,18 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { cariPeminjam, parseAngka, parseHarga, parseKalimat } from "./parser"
-
-describe("parseAngka", () => {
-  it("membaca angka bulat dan desimal", () => {
-    expect(parseAngka("3")).toBe(3)
-    expect(parseAngka("3.5")).toBe(3.5)
-    expect(parseAngka("1,5")).toBe(1.5)
-  })
-
-  it("mengembalikan null kalau bukan angka", () => {
-    expect(parseAngka("beras")).toBeNull()
-    expect(parseAngka("")).toBeNull()
-  })
-})
+import { cariPeminjam, parseHarga, parseKalimat } from "./parser"
 
 describe("parseHarga", () => {
   it("membaca harga dalam bentuk kata", () => {

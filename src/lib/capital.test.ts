@@ -1,19 +1,27 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest"
 import { bacaModalAwal, simpanModalAwal, susunLaporanModal } from "./capital"
-import type { BarisTransaksi, Barang, Transaksi, UtangBerjalan } from "./types"
+import type { BarisTransaksi, StokBarang, Transaksi, UtangBerjalan } from "./types"
 
-const barang: Barang[] = [
+/**
+ * Stok dipakai sebagai nilai rak SEKARANG, bukan stok awal.
+ *
+ * Kalau memakai stok awal, barang yang sudah laku dihitung dua kali: sekali
+ * di laba kotor, sekali lagi di nilai stok. Jadi posisi modal selalu kelihatan
+ * lebih besar.
+ */
+const stok: StokBarang[] = [
   {
-    id: "b1",
+    barang_id: "b1",
     owner_id: "o1",
     nama: "Beras Premium",
     satuan: "kg",
-    stok_awal: 100,
     min_stok: 10,
     harga_modal: 14_000,
     harga_jual: 16_000,
     lead_time_hari: 2,
+    stok_awal: 100,
+    stok: 90,
   },
 ]
 
@@ -64,48 +72,48 @@ describe("susunLaporanModal", () => {
   it("menghitung nilai stok, laba kotor, dan piutang", () => {
     const laporan = susunLaporanModal(
       { amount: 1_000_000, since: "2026-11-01" },
-      barang,
+      stok,
       transaksi,
       baris,
       [],
     )
-    // Stok: 100 kg x 14.000 = 1.400.000
-    expect(laporan.stockValue).toBe(1_400_000)
+    // Stok sekarang: 90 kg x 14.000 = 1.260.000
+    expect(laporan.stockValue).toBe(1_260_000)
     // Laba kotor: (16.000 - 14.000) x 10 = 20.000
     expect(laporan.grossProfit).toBe(20_000)
     expect(laporan.openDebt).toBe(0)
-    expect(laporan.estimatedNow).toBe(1_420_000)
+    expect(laporan.estimatedNow).toBe(1_280_000)
   })
 
   it("menghitung piutang dari utang yang belum lunas", () => {
     const laporan = susunLaporanModal(
       { amount: 1_000_000, since: "2026-11-01" },
-      barang,
+      stok,
       transaksi,
       baris,
       utang,
     )
     expect(laporan.openDebt).toBe(80_000)
-    expect(laporan.estimatedNow).toBe(1_500_000)
+    expect(laporan.estimatedNow).toBe(1_360_000)
   })
 
   it("menyatakan modal bertambah kalau posisi sekarang lebih besar", () => {
     const laporan = susunLaporanModal(
       { amount: 1_000_000, since: "2026-11-01" },
-      barang,
+      stok,
       transaksi,
       baris,
       [],
     )
     expect(laporan.verdict).toBe("naik")
-    expect(laporan.change).toBe(420_000)
+    expect(laporan.change).toBe(280_000)
     expect(laporan.message).toContain("bertambah")
   })
 
   it("menyatakan modal berkurang kalau posisi sekarang lebih kecil", () => {
     const laporan = susunLaporanModal(
       { amount: 5_000_000, since: "2026-11-01" },
-      barang,
+      stok,
       transaksi,
       baris,
       [],
@@ -118,7 +126,7 @@ describe("susunLaporanModal", () => {
   it("tidak menghitung penjualan sebelum tanggal modal awal", () => {
     const laporan = susunLaporanModal(
       { amount: 1_000_000, since: "2026-12-01" },
-      barang,
+      stok,
       transaksi,
       baris,
       [],

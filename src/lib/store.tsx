@@ -22,6 +22,7 @@ import { supabase, modeDemoLokal } from "./supabase"
 import { ambilSemua } from "./supabaseQuery"
 import { hitungStok, hitungSaranBeli, round2 } from "./inventory"
 import { bagiPembayaran, cariSinyalMargin, type SinyalMargin } from "./margin"
+import { dataDemoLokal, type DataWarungLokal } from "./dataDemo"
 import type {
   Alias,
   BarisTransaksi,
@@ -32,6 +33,7 @@ import type {
   StokBarang,
   Titip,
   Transaksi,
+  Utang,
   UtangBerjalan,
 } from "./types"
 
@@ -89,6 +91,35 @@ export interface SimpanTitipInput {
   catatan?: string | null
 }
 
+/** Barang baru untuk katalog warung. */
+export interface SimpanBarangInput {
+  /** Nama baku barang, mis. "Gula Pasir". */
+  nama: string
+  satuan: Satuan
+  /** Berapa yang tersedia saat barang dimasukkan ke katalog. */
+  stokAwal: number
+  /** Batas stok minimum sebelum perlu dibeli. */
+  minStok: number
+  /** Harga beli dari pemasok. */
+  hargaModal: number
+  /** Harga jual ke pelanggan. */
+  hargaJual: number
+  /** Lama barang datang dari pemasok, dalam hari. */
+  leadTimeHari: number
+  /** Cara orang lain menyebut barang ini, mis. "gulpas". */
+  alias?: string[]
+}
+
+/** Pembelian manual: barang masuk ke gudang. */
+export interface CatatPembelianInput {
+  barangId: string
+  jumlah: number
+  /** Harga beli per satuan. */
+  hargaSatuan: number
+  /** Nama pemasok, opsional. */
+  agen?: string
+}
+
 interface WarungContext {
   siap: boolean
   modeLokal: boolean
@@ -119,6 +150,10 @@ interface WarungContext {
   ubahHargaJual: (barangId: string, hargaJual: number) => Promise<void>
   /** Catat barang titipan baru. */
   simpanTitip: (input: SimpanTitipInput) => Promise<void>
+  /** Tambah barang baru ke katalog. */
+  simpanBarang: (input: SimpanBarangInput) => Promise<void>
+  /** Catat pembelian: barang masuk ke gudang. */
+  catatPembelian: (input: CatatPembelianInput) => Promise<void>
   /** Catat penjualan barang titipan sebanyak qty. */
   catatTitipTerjual: (id: string, qty: number) => Promise<void>
   /** Tutup titipan: barang dikembalikan, bagian pemilik dibayar. */
@@ -153,6 +188,33 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       setAlias(lokal.alias)
       setTransaksi(lokal.transaksi)
       setBaris(lokal.baris)
+      const namaBarang = new Map(lokal.barang.map((b) => [b.id, b.nama]))
+      setUtang(
+        lokal.utang.map((u) => ({
+          ...u,
+          nama_barang: namaBarang.get(u.barang_id) ?? "",
+          sisa: Math.max(u.total - u.dibayar, 0),
+        })),
+      )
+      setTitip(lokal.titip)
+      // Margin di mode lokal dihitung dari harga modal barang, karena tidak
+      // ada riwayat harga modal. Tanpa ini, halaman penjaga margin kosong
+      // total dan tidak bisa dicoba.
+      setMargin(
+        lokal.barang.map((b) => ({
+          barang_id: b.id,
+          owner_id: b.owner_id,
+          nama: b.nama,
+          satuan: b.satuan,
+          harga_jual: b.harga_jual,
+          harga_modal: b.harga_modal,
+          modal_sebelumnya: b.harga_modal,
+          margin_persen:
+            b.harga_jual > 0
+              ? round2(((b.harga_jual - b.harga_modal) / b.harga_jual) * 100)
+              : 0,
+        })),
+      )
       return
     }
 
@@ -258,12 +320,27 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     async (input: SimpanTransaksiInput) => {
       if (!sesi) throw new Error("Belum masuk.")
 
-      const total = round2(
-        input.baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0),
-      )
+      // Setiap baris harus menunjuk barang yang benar-benar ada. Kalau id-nya
+      // kosong, database menolaknya dan seluruh transaksi gagal — dengan pesan
+      // error bahasa Inggris yang tidak ada artinya buat pemilik warung.
+      const idValid = new Set(barang.map((b) => b.id))
+      const barisTanpaId = input.baris.find((b) => !idValid.has(b.barangId))
+      if (barisTanpaId) {
+        throw new Error(
+          "Ada barang yang belum ada di katalog. Tambahkan barangnya dulu, lalu catat lagi.",
+        )
+      }
+
+      // Penyesuaian tidak punya nilai jual, jadi totalsnya 0. Kalau dihitung
+      // dari baris, selisih negatif membuat total negatif — dan database
+      // menolak transaksi dengan total di bawah nol.
+      const total =
+        input.tipe === "sesuaikan"
+          ? 0
+          : round2(input.baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0))
 
       if (modeDemoLokal || !supabase) {
-        const id = `trx-${Date.now()}`
+        const id = idLokal("trx")
         const transaksiBaru: Transaksi = {
           id,
           owner_id: sesi.userId,
@@ -284,8 +361,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
         }))
         const lokal = bacaLokal()
         simpanLokal({
-          barang: lokal.barang,
-          alias: lokal.alias,
+          ...lokal,
           transaksi: [transaksiBaru, ...lokal.transaksi],
           baris: [...barisBaru, ...lokal.baris],
         })
@@ -324,7 +400,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
 
       await muatData()
     },
-    [sesi, muatData],
+    [sesi, barang, muatData],
   )
 
   /**
@@ -342,7 +418,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       const sisaUtang = round2(total - dibayar)
 
       if (modeDemoLokal || !supabase) {
-        const id = `trx-${Date.now()}`
+        const id = idLokal("trx")
         const transaksiBaru: Transaksi = {
           id,
           owner_id: sesi.userId,
@@ -361,15 +437,30 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
           satuan: b.satuan as BarisTransaksi["satuan"],
           harga_satuan: b.hargaSatuan,
         }))
+
+        // Utangnya ikut dicatat di mode lokal. Kalau tidak, penjualan
+        // "simpen dulu" jadi hilang utangnya: barang keluar, uang tidak
+        // masuk, dan buku utang selalu kosong.
+        const rowsUtangLokal = hitungBarisUtang(input, dibayar, sesi.userId)
+
         const lokal = bacaLokal()
         simpanLokal({
-          barang: lokal.barang,
-          alias: lokal.alias,
+          ...lokal,
           transaksi: [transaksiBaru, ...lokal.transaksi],
           baris: [...barisBaru, ...lokal.baris],
+          utang: [...rowsUtangLokal, ...lokal.utang],
         })
         setTransaksi((prev) => [transaksiBaru, ...prev])
         setBaris((prev) => [...barisBaru, ...prev])
+        const namaBarang = new Map(lokal.barang.map((b) => [b.id, b.nama]))
+        setUtang((prev) => [
+          ...rowsUtangLokal.map((u) => ({
+            ...u,
+            nama_barang: namaBarang.get(u.barang_id) ?? "",
+            sisa: Math.max(u.total - u.dibayar, 0),
+          })),
+          ...prev,
+        ])
         return
       }
 
@@ -401,31 +492,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
 
       // Sisa yang tidak dibayar dicatat sebagai utang per barang.
       if (sisaUtang > 0) {
-        const bagi = bagiPembayaran(
-          input.baris.map((b) => ({
-            barangId: b.barangId,
-            qty: b.jumlah,
-            satuan: b.satuan,
-            hargaSatuan: b.hargaSatuan,
-          })),
-          dibayar,
-        )
-        const rowsUtang = bagi.perBaris
-          .filter((row) => row.utang > 0)
-          .map((row) => {
-            const asal = input.baris.find((b) => b.barangId === row.barangId)
-            return {
-              owner_id: sesi.userId,
-              pelanggan: input.pelanggan.trim() || "Tanpa nama",
-              barang_id: row.barangId,
-              qty: asal?.jumlah ?? 0,
-              satuan: asal?.satuan ?? "pcs",
-              harga_satuan: asal?.hargaSatuan ?? 0,
-              total: row.utang,
-              status: "belum_lunas",
-              dibayar: 0,
-            }
-          })
+        const rowsUtang = hitungBarisUtang(input, dibayar, sesi.userId)
         if (rowsUtang.length > 0) {
           const { error: errorUtang } = await supabase.from("utang").insert(rowsUtang)
           if (errorUtang) throw errorUtang
@@ -442,6 +509,9 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     async (id: string) => {
       if (!sesi) throw new Error("Belum masuk.")
       if (modeDemoLokal || !supabase) {
+        const lokal = bacaLokal()
+        const sisa = lokal.utang.filter((item) => item.id !== id)
+        simpanLokal({ ...lokal, utang: sisa })
         setUtang((prev) => prev.filter((item) => item.id !== id))
         return
       }
@@ -510,7 +580,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
 
       if (modeDemoLokal || !supabase) {
         const baru: Titip = {
-          id: `titip-${Date.now()}`,
+          id: idLokal("titip"),
           owner_id: sesi.userId,
           pemilik,
           nama_barang: namaBarang,
@@ -525,6 +595,8 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
           dibuat_pada: new Date().toISOString(),
           selesai_pada: null,
         }
+        const lokal = bacaLokal()
+        simpanLokal({ ...lokal, titip: [baru, ...lokal.titip] })
         setTitip((prev) => [baru, ...prev])
         return
       }
@@ -548,6 +620,163 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     [sesi, muatData],
   )
 
+  /**
+   * Tambah barang baru ke katalog.
+   *
+   * Satu barang = satu nama baku. Kalau nama sudah dipakai, database
+   * menolak (unik per pemilik) — pesannya diterjemahkan supaya pemilik
+   * tahu harus menambah alias, bukan membuat barang baru.
+   */
+  const simpanBarang = useCallback(
+    async (input: SimpanBarangInput) => {
+      if (!sesi) throw new Error("Belum masuk.")
+      const nama = input.nama.trim().replace(/\s+/g, " ")
+      if (!nama) throw new Error("Nama barang wajib diisi.")
+      if (input.hargaJual <= 0) throw new Error("Harga jual harus lebih dari nol.")
+      if (input.hargaModal < 0) throw new Error("Harga modal tidak boleh negatif.")
+      if (input.stokAwal < 0 || input.minStok < 0) {
+        throw new Error("Jumlah barang tidak boleh negatif.")
+      }
+
+      const aliasBaru = (input.alias ?? [])
+        .map((a) => a.trim().replace(/\s+/g, " "))
+        .filter((a) => a.length > 0 && a.toLowerCase() !== nama.toLowerCase())
+
+      // Cek nama yang sama sebelum menyentuh database. Database memang menolak
+      // (unik per pemilik), tapi errornya bahasa Inggris dan muncul sebagai
+      // 409 di konsol — terlihat seperti aplikasi rusak.
+      const sudahAda = barang.find((b) => b.nama.toLowerCase() === nama.toLowerCase())
+      if (sudahAda) {
+        throw new Error(`Sudah ada barang bernama "${nama}".`)
+      }
+
+      if (modeDemoLokal || !supabase) {
+        const id = idLokal("barang")
+        const baru: Barang = {
+          id,
+          owner_id: sesi.userId,
+          nama,
+          satuan: input.satuan,
+          stok_awal: input.stokAwal,
+          min_stok: input.minStok,
+          harga_modal: input.hargaModal,
+          harga_jual: input.hargaJual,
+          lead_time_hari: input.leadTimeHari,
+        }
+        const aliasBaruRows: Alias[] = aliasBaru.map((a, index) => ({
+          id: `${id}-alias-${index}`,
+          owner_id: sesi.userId,
+          barang_id: id,
+          alias: a,
+        }))
+        const lokal = bacaLokal()
+        simpanLokal({
+          ...lokal,
+          barang: [...lokal.barang, baru],
+          alias: [...lokal.alias, ...aliasBaruRows],
+        })
+        setBarang((prev) => [...prev, baru])
+        setAlias((prev) => [...prev, ...aliasBaruRows])
+        return
+      }
+
+      const { data, error } = await supabase
+        .from("barang")
+        .insert({
+          owner_id: sesi.userId,
+          nama,
+          satuan: input.satuan,
+          stok_awal: input.stokAwal,
+          min_stok: input.minStok,
+          harga_modal: input.hargaModal,
+          harga_jual: input.hargaJual,
+          lead_time_hari: input.leadTimeHari,
+        })
+        .select()
+        .single()
+      if (error) {
+        if (error.code === "23505") {
+          throw new Error(`Sudah ada barang bernama "${nama}".`)
+        }
+        throw error
+      }
+
+      if (aliasBaru.length > 0) {
+        const { error: errorAlias } = await supabase.from("alias_barang").insert(
+          aliasBaru.map((a) => ({
+            owner_id: sesi.userId,
+            barang_id: data.id,
+            alias: a,
+          })),
+        )
+        if (errorAlias) throw errorAlias
+      }
+
+      await muatData()
+    },
+    [sesi, barang, muatData],
+  )
+
+  /**
+   * Catat pembelian: barang masuk ke gudang.
+   *
+   * Dua hal terjadi sekaligus:
+   *  1. Transaksi pembelian tercatat, jadi stok naik dari history.
+   *  2. Harga modal lama disimpan sebagai riwayat, lalu harga modal barang
+   *     diupdate ke harga beli yang baru. Tanpa ini, Penjaga Margin tidak
+   *     pernah tahu harga modal naik — fitur itu diam-diam tidak jalan.
+   */
+  const catatPembelian = useCallback(
+    async (input: CatatPembelianInput) => {
+      if (!sesi) throw new Error("Belum masuk.")
+      const row = barang.find((b) => b.id === input.barangId)
+      if (!row) throw new Error("Barang tidak ditemukan.")
+      if (!(input.jumlah > 0)) throw new Error("Jumlah pembelian harus lebih dari nol.")
+      if (input.hargaSatuan < 0) throw new Error("Harga beli tidak boleh negatif.")
+
+      await simpanTransaksi({
+        tipe: "beli",
+        sumber: "manual",
+        agen: input.agen?.trim() || undefined,
+        baris: [
+          {
+            barangId: row.id,
+            jumlah: input.jumlah,
+            satuan: row.satuan,
+            hargaSatuan: input.hargaSatuan,
+          },
+        ],
+      })
+
+      // Harga modal berubah: simpan yang lama sebagai riwayat, lalu pakai yang baru.
+      if (row.harga_modal > 0 && round2(row.harga_modal) !== round2(input.hargaSatuan)) {
+        if (modeDemoLokal || !supabase) {
+          setBarang((prev) =>
+            prev.map((b) =>
+              b.id === row.id ? { ...b, harga_modal: round2(input.hargaSatuan) } : b,
+            ),
+          )
+        } else {
+          const { error: errorRiwayat } = await supabase.from("harga_modal_riwayat").insert({
+            owner_id: sesi.userId,
+            barang_id: row.id,
+            harga_modal: row.harga_modal,
+            tanggal: new Date().toISOString(),
+          })
+          if (errorRiwayat) throw errorRiwayat
+
+          const { error: errorBarang } = await supabase
+            .from("barang")
+            .update({ harga_modal: round2(input.hargaSatuan) })
+            .eq("id", row.id)
+          if (errorBarang) throw errorBarang
+        }
+        await muatData()
+      }
+    },
+    [sesi, barang, simpanTransaksi, muatData],
+  )
+
   /** Catat penjualan barang titipan sebanyak `qty`. */
   const catatTitipTerjual = useCallback(
     async (id: string, qty: number) => {
@@ -558,6 +787,13 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       if (terjual <= 0) throw new Error("Tidak ada barang titipan yang bisa dijual.")
 
       if (modeDemoLokal || !supabase) {
+        const lokal = bacaLokal()
+        simpanLokal({
+          ...lokal,
+          titip: lokal.titip.map((item) =>
+            item.id === id ? { ...item, terjual: item.terjual + terjual } : item,
+          ),
+        })
         setTitip((prev) =>
           prev.map((item) =>
             item.id === id ? { ...item, terjual: item.terjual + terjual } : item,
@@ -586,6 +822,15 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     async (id: string) => {
       if (!sesi) throw new Error("Belum masuk.")
       if (modeDemoLokal || !supabase) {
+        const lokal = bacaLokal()
+        simpanLokal({
+          ...lokal,
+          titip: lokal.titip.map((item) =>
+            item.id === id
+              ? { ...item, status: "selesai" as const, selesai_pada: new Date().toISOString() }
+              : item,
+          ),
+        })
         setTitip((prev) =>
           prev.map((item) =>
             item.id === id
@@ -607,7 +852,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
 
   const resetDemo = useCallback(() => {
     const lokal = bacaLokal()
-    simpanLokal({ barang: lokal.barang, alias: lokal.alias, transaksi: [], baris: [] })
+    simpanLokal({ ...lokal, transaksi: [], baris: [] })
     setTransaksi([])
     setBaris([])
   }, [])
@@ -663,6 +908,8 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       lunasiUtang,
       ubahHargaJual,
       simpanTitip,
+      simpanBarang,
+      catatPembelian,
       catatTitipTerjual,
       tutupTitip,
       resetDemo,
@@ -688,6 +935,8 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       lunasiUtang,
       ubahHargaJual,
       simpanTitip,
+      simpanBarang,
+      catatPembelian,
       catatTitipTerjual,
       tutupTitip,
       resetDemo,
@@ -698,42 +947,100 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
 }
 
 
-/**
- * Ambil semua baris sebuah tabel, sedikit demi sedikit.
- *
- * PostgREST memotong jawaban di 1000 baris. Kalau tabel lebih besar,
- * baris yang terpotong hilang tanpa tanda — stok jadi negatif, laba kotor
- * salah, dan pelanggan kehilangan barang favorit. Jadi ambil bertahap
- * sampai habis.
- */
-
 /* -------------------------------------------------------------------------- */
 /* Mode lokal                                                                 */
 /* -------------------------------------------------------------------------- */
 
-interface DataLokal {
-  barang: Barang[]
-  alias: Alias[]
-  transaksi: Transaksi[]
-  baris: BarisTransaksi[]
+/**
+ * Id unik untuk data lokal.
+ *
+ * `Date.now()` saja bisa bentrok: dua transaksi yang disimpan dalam milidetik
+ * yang sama akan mendapat id yang sama, dan baris yang salah ikut berubah.
+ */
+let penghitungLokal = 0
+function idLokal(prefix: string): string {
+  penghitungLokal += 1
+  return `${prefix}-${Date.now()}-${penghitungLokal}`
+}
+
+/**
+ * Hitung baris utang dari penjualan "simpen dulu".
+ *
+ * Satu baris = satu barang yang diutangkan. Barang yang dibayar penuh tidak
+ * masuk. Dipakai baik di mode Supabase maupun mode lokal, supaya angkanya
+ * sama di keduanya.
+ */
+function hitungBarisUtang(
+  input: SimpenDuluInput,
+  dibayar: number,
+  ownerId: string,
+): Utang[] {
+  const bagi = bagiPembayaran(
+    input.baris.map((b) => ({
+      barangId: b.barangId,
+      qty: b.jumlah,
+      satuan: b.satuan,
+      hargaSatuan: b.hargaSatuan,
+    })),
+    dibayar,
+  )
+  const pelanggan = input.pelanggan.trim() || "Tanpa nama"
+  return bagi.perBaris
+    .filter((row) => row.utang > 0)
+    .map((row, index) => {
+      // Pakai baris asal sesuai posisinya, bukan mencari nama barang pertama.
+      // Kalau barang yang sama muncul dua kali, qty dan harganya bisa tertukar.
+      const asal = input.baris[row.index]
+      return {
+        id: idLokal(`utang-${index}`),
+        owner_id: ownerId,
+        pelanggan,
+        barang_id: row.barangId,
+        qty: asal?.jumlah ?? 0,
+        satuan: (asal?.satuan ?? "pcs") as Satuan,
+        harga_satuan: asal?.hargaSatuan ?? 0,
+        total: row.utang,
+        tanggal: new Date().toISOString(),
+        status: "belum_lunas" as const,
+        dibayar: 0,
+        lunas_pada: null,
+      }
+    })
+}
+
+interface DataLokal extends DataWarungLokal {}
+
+const KOSONG: DataWarungLokal = {
+  barang: [],
+  alias: [],
+  transaksi: [],
+  baris: [],
+  utang: [],
+  titip: [],
 }
 
 function bacaLokal(): DataLokal {
-  if (typeof localStorage === "undefined") {
-    return { barang: [], alias: [], transaksi: [], baris: [] }
-  }
+  if (typeof localStorage === "undefined") return KOSONG
   try {
     const mentah = localStorage.getItem(KUNCI_LOCAL)
-    if (!mentah) return { barang: [], alias: [], transaksi: [], baris: [] }
+    if (!mentah) {
+      // Belum ada data: isi dengan data contoh supaya aplikasinya bisa
+      // langsung dicoba, bukan terbuka kosong.
+      const demo = dataDemoLokal()
+      simpanLokal(demo)
+      return demo
+    }
     const data = JSON.parse(mentah) as Partial<DataLokal>
     return {
       barang: data.barang ?? [],
       alias: data.alias ?? [],
       transaksi: data.transaksi ?? [],
       baris: data.baris ?? [],
+      utang: data.utang ?? [],
+      titip: data.titip ?? [],
     }
   } catch {
-    return { barang: [], alias: [], transaksi: [], baris: [] }
+    return KOSONG
   }
 }
 
