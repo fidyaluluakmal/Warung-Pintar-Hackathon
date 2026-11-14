@@ -49,8 +49,14 @@ export function useTema(): {
   aktif: "terang" | "gelap"
   ganti: (tema: Tema) => void
 } {
-  const [tema, setTema] = useState<Tema>("sistem")
-  const [aktif, setAktif] = useState<"terang" | "gelap">("terang")
+  // Pilihan tersimpan harus langsung dipakai, kalau tidak pilihan yang
+  // disimpan hilang begitu halaman dimuat ulang.
+  const [tema, setTema] = useState<Tema>(() =>
+    typeof window === "undefined" ? "sistem" : bacaTemaTersimpan(),
+  )
+  const [aktif, setAktif] = useState<"terang" | "gelap">(() =>
+    typeof window === "undefined" ? "terang" : tema === "gelap" ? "gelap" : "terang",
+  )
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)")

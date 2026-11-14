@@ -121,7 +121,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
       <div className="quick-section">
         <div className="section-heading">
           <h2>Catat cepat</h2>
-          <p>Tiga cara, semuanyaasks konfirmasi dulu sebelum disimpan.</p>
+          <p>Tiga cara, semuanya asks konfirmasi dulu sebelum disimpan.</p>
         </div>
         <div className="quick-grid">
           <button type="button" className="quick-card voice" onClick={() => onPindah("Catat Suara")}>
