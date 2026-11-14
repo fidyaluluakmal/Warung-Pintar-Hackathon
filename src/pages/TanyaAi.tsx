@@ -77,20 +77,20 @@ export function TanyaAi() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Tanya warung</h1>
-      <p className="text-sm" style={{ color: "var(--teks-lembut)" }}>
+      <p className="form-note">
         AI menjawab dari catatan warungmu sendiri. Angkanya dihitung aplikasi, bukan ditebak AI.
       </p>
 
-      <section className="kartu p-4">
+      <section className="panel">
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <p className="text-xs" style={{ color: "var(--teks-lembut)" }}>
+            <p className="form-note">
               Omzet 7 hari
             </p>
             <p className="text-lg font-semibold">{rupiah(angkaMingguIni.omzet)}</p>
           </div>
           <div>
-            <p className="text-xs" style={{ color: "var(--teks-lembut)" }}>
+            <p className="form-note">
               Laba kotor 7 hari
             </p>
             <p className="text-lg font-semibold">{rupiah(angkaMingguIni.labaKotor)}</p>
@@ -98,7 +98,7 @@ export function TanyaAi() {
         </div>
       </section>
 
-      <div className="kartu space-y-3 p-4">
+      <section className="panel">
         <div>
           <label className="label" htmlFor="pertanyaan">
             Pertanyaan
@@ -116,7 +116,7 @@ export function TanyaAi() {
         </div>
         <button
           type="button"
-          className="tombol-utama w-full"
+          className="primary-action" style={{ width: "100%" }}
           onClick={() => void tanya(pertanyaan)}
           disabled={sibuk || !pertanyaan.trim()}
         >
@@ -137,22 +137,22 @@ export function TanyaAi() {
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
       {galat && (
-        <p className="text-sm" style={{ color: "var(--bahaya)" }}>
+        <p className="text-sm" >
           {galat}
         </p>
       )}
 
       {tips.length > 0 && (
-        <section className="kartu p-4">
+        <section className="panel">
           <h2 className="text-sm font-semibold">Saran AI</h2>
           <ul className="mt-3 space-y-3">
             {tips.map((tip, index) => (
               <li key={index}>
                 <p className="text-sm font-medium">{tip.text}</p>
-                <p className="text-xs" style={{ color: "var(--teks-lembut)" }}>
+                <p className="form-note">
                   {tip.reason}
                 </p>
               </li>
@@ -162,9 +162,9 @@ export function TanyaAi() {
       )}
 
       {saranBeli.length > 0 && (
-        <section className="kartu p-4">
+        <section className="panel">
           <h2 className="text-sm font-semibold">Saran belanja (dihitung kode)</h2>
-          <p className="mt-1 text-xs" style={{ color: "var(--teks-lembut)" }}>
+          <p className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
             Angka ini dari mesin hitung, bukan dari AI. Dosanya bisa ditelusuri.
           </p>
           <ul className="mt-3 space-y-3">
@@ -173,7 +173,7 @@ export function TanyaAi() {
                 <p className="text-sm font-medium">
                   Beli {saran.qty} {saran.satuan} {saran.nama}
                 </p>
-                <p className="text-xs" style={{ color: "var(--teks-lembut)" }}>
+                <p className="form-note">
                   {saran.alasan}
                 </p>
               </li>
@@ -183,7 +183,7 @@ export function TanyaAi() {
       )}
 
       {jawaban && tips.length === 0 && (
-        <section className="kartu p-4">
+        <section className="panel">
           <p className="text-sm">{jawaban}</p>
         </section>
       )}

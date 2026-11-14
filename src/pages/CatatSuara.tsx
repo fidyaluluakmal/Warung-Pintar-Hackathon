@@ -164,14 +164,14 @@ export function CatatSuara() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Catat penjualan</h1>
-      <p className="text-sm" style={{ color: "var(--teks-lembut)" }}>
+      <p className="form-note">
         Ucapkan apa yang terjual. Hasilnya dicek dulu sebelum disimpan.
       </p>
 
-      <div className="kartu space-y-3 p-4">
+      <section className="panel">
         <button
           type="button"
-          className="tombol-utama w-full !min-h-16"
+          className="primary-action" style={{ width: "100%", height: 56 }}
           onClick={merekam ? stopRekam : mulaiRekam}
           disabled={sibuk}
         >
@@ -184,7 +184,7 @@ export function CatatSuara() {
           </label>
           <textarea
             id="teks-suara"
-            className="input min-h-20 py-2"
+            className="input" style={{ minHeight: 92, padding: "10px 12px" }}
             placeholder="mis. terjual 3 kilo beras dan 2 bungkus kopi"
             value={teks}
             onChange={(event) => setTeks(event.target.value)}
@@ -193,29 +193,29 @@ export function CatatSuara() {
 
         <button
           type="button"
-          className="tombol-sekunder w-full"
+          className="secondary-action" style={{ width: "100%" }}
           disabled={sibuk || teks.trim().length === 0}
           onClick={() => void proses(teks)}
         >
           {sibuk ? "Memproses…" : "Baca kalimat ini"}
         </button>
-      </div>
+      </section>
 
       {galat && (
-        <p className="text-sm" style={{ color: "var(--bahaya)" }}>
+        <p className="text-sm" >
           {galat}
         </p>
       )}
 
       {baris.length > 0 && (
-        <section className="kartu p-4">
+        <section className="panel">
           <h2 className="text-sm font-semibold">Cek dulu sebelum disimpan</h2>
           <ul className="mt-3 space-y-3">
             {baris.map((item, index) => (
               <li key={`${item.nama}-${index}`} className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <input
-                    className="input flex-1"
+                    className="input" style={{ flex: 1 }}
                     value={item.nama}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -224,7 +224,7 @@ export function CatatSuara() {
                     }
                   />
                   {item.perluDicek && (
-                    <span className="chip shrink-0" style={{ color: "var(--peringatan)" }}>
+                    <span className="chip warn shrink-0">
                       periksa
                     </span>
                   )}
@@ -235,7 +235,7 @@ export function CatatSuara() {
                     inputMode="decimal"
                     min="0"
                     step="any"
-                    className="input w-24"
+                    className="input" style={{ width: 78 }}
                     value={item.jumlah}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -245,14 +245,14 @@ export function CatatSuara() {
                       )
                     }
                   />
-                  <span className="text-xs" style={{ color: "var(--teks-lembut)" }}>
+                  <span className="form-note">
                     {item.satuan}
                   </span>
                   <input
                     type="number"
                     inputMode="numeric"
                     min="0"
-                    className="input flex-1"
+                    className="input" style={{ flex: 1 }}
                     value={item.hargaSatuan}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -264,7 +264,7 @@ export function CatatSuara() {
                   />
                   <button
                     type="button"
-                    className="tombol-sekunder !min-h-11 !px-3"
+                    className="confirm-remove"
                     onClick={() => setBaris((prev) => prev.filter((_, i) => i !== index))}
                     aria-label={`Hapus ${item.nama}`}
                   >
@@ -276,7 +276,7 @@ export function CatatSuara() {
           </ul>
 
           <div className="mt-4 flex items-center justify-between border-t pt-3">
-            <span className="text-sm" style={{ color: "var(--teks-lembut)" }}>
+            <span className="form-note">
               Total
             </span>
             <span className="font-semibold">
@@ -286,7 +286,7 @@ export function CatatSuara() {
             </span>
           </div>
 
-          <button type="button" className="tombol-utama mt-3 w-full" onClick={() => void simpan()} disabled={sibuk}>
+          <button type="button" className="primary-action" style={{ width: "100%", marginTop: 14 }} onClick={() => void simpan()} disabled={sibuk}>
             Simpan penjualan
           </button>
         </section>

@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react"
 import { PenyediaWarung, useWarung } from "./lib/store"
+import { AppHeader } from "./components/AppHeader"
+import { MobileNav } from "./components/MobileNav"
+import { Sidebar } from "./components/Sidebar"
 import { LayarMasuk } from "./pages/LayarMasuk"
 import { Beranda } from "./pages/Beranda"
+import { Kasir } from "./pages/Kasir"
 import { CatatSuara } from "./pages/CatatSuara"
 import { PindaiNota } from "./pages/PindaiNota"
-import { TanyaAi } from "./pages/TanyaAi"
+import { PenjagaMargin } from "./pages/PenjagaMargin"
+import { SimpenDulu } from "./pages/SimpenDulu"
 import { StokBarang } from "./pages/StokBarang"
+import { TanyaAi } from "./pages/TanyaAi"
+import type { NavLabel } from "./lib/nav"
 
-type Halaman = "beranda" | "suara" | "nota" | "tanya" | "stok"
-
-const MENU: Array<{ id: Halaman; label: string; ikon: string }> = [
-  { id: "beranda", label: "Beranda", ikon: "🏠" },
-  { id: "suara", label: "Catat", ikon: "🎙️" },
-  { id: "nota", label: "Nota", ikon: "📷" },
-  { id: "tanya", label: "Tanya AI", ikon: "💬" },
-  { id: "stok", label: "Stok", ikon: "📦" },
-]
+const SIDEBAR_KEY = "warung-pintar-sidebar"
+const TEMA_KEY = "warung-pintar-tema"
 
 export default function App() {
   return (
@@ -27,17 +27,54 @@ export default function App() {
 
 function Kerangka() {
   const { siap, sesi } = useWarung()
-  const [halaman, setHalaman] = useState<Halaman>("beranda")
-  const [tema, setTema] = useState<"terang" | "gelap">("terang")
+  const [nav, setNav] = useState<NavLabel>("Beranda")
+  const [cari, setCari] = useState("")
+  const [sidebarCiut, setSidebarCiut] = useState(() => {
+    try {
+      return window.localStorage.getItem(SIDEBAR_KEY) === "collapsed"
+    } catch {
+      return false
+    }
+  })
 
-  useTema(tema)
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)")
+    const terapkan = () => {
+      let tersimpan: string | null = null
+      try {
+        tersimpan = window.localStorage.getItem(TEMA_KEY)
+      } catch {
+        tersimpan = null
+      }
+      const pilihan = tersimpan === "dark" ? "dark" : media.matches ? "dark" : "light"
+      document.documentElement.dataset.theme = pilihan
+    }
+    terapkan()
+    media.addEventListener("change", terapkan)
+    return () => media.removeEventListener("change", terapkan)
+  }, [])
+
+  function buka(navigasi: NavLabel) {
+    setNav(navigasi)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  function tutupSidebar() {
+    setSidebarCiut((sekarang) => {
+      const berikut = !sekarang
+      try {
+        window.localStorage.setItem(SIDEBAR_KEY, berikut ? "collapsed" : "expanded")
+      } catch {
+        // Penyimpanan diblokir: pilihan hanya berlaku di sesi ini.
+      }
+      return berikut
+    })
+  }
 
   if (!siap) {
     return (
-      <div className="flex min-h-dvh items-center justify-center" style={{ color: "var(--teks)" }}>
-        <p className="text-sm" style={{ color: "var(--teks-lembut)" }}>
-          Menyiapkan warung…
-        </p>
+      <div className="auth-loading" style={{ display: "grid", placeItems: "center", minHeight: "100dvh" }}>
+        Menyiapkan warung…
       </div>
     )
   }
@@ -46,66 +83,43 @@ function Kerangka() {
     return <LayarMasuk />
   }
 
-  return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col">
-      <header
-        className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3"
-        style={{ background: "var(--latar)", borderBottom: "1px solid var(--garis)" }}
-      >
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{sesi.warung}</p>
-          <p className="truncate text-xs" style={{ color: "var(--teks-lembut)" }}>
-            {sesi.pemilik}
-          </p>
-        </div>
-        <button
-          type="button"
-          className="tombol-sekunder shrink-0 !min-h-9 !px-3 text-xs"
-          onClick={() => setTema(tema === "terang" ? "gelap" : "terang")}
-          aria-label="Ganti tema terang dan gelap"
-        >
-          {tema === "terang" ? "🌙" : "☀️"}
-        </button>
-      </header>
+  const nama = sesi.pemilik || "Pemilik Warung"
+  const warung = sesi.warung || "Warung Saya"
 
-      <main className="flex-1 px-4 pb-24 pt-4">
-        {halaman === "beranda" && <Beranda onPindah={setHalaman} />}
-        {halaman === "suara" && <CatatSuara />}
-        {halaman === "nota" && <PindaiNota />}
-        {halaman === "tanya" && <TanyaAi />}
-        {halaman === "stok" && <StokBarang />}
+  return (
+    <div className="app-shell">
+      <Sidebar
+        activeNav={nav}
+        onNavigate={buka}
+        collapsed={sidebarCiut}
+        onToggle={tutupSidebar}
+        nama={nama}
+        warung={warung}
+      />
+
+      <main className={sidebarCiut ? "sidebar-collapsed" : ""}>
+        <AppHeader
+          query={cari}
+          onQueryChange={setCari}
+          onNavigate={buka}
+          onBukaAi={() => buka("Tanya AI")}
+          nama={nama}
+          warung={warung}
+        />
+
+        <div className="content">
+          {nav === "Beranda" && <Beranda onPindah={buka} />}
+          {nav === "Kasir" && <Kasir />}
+          {nav === "Catat Suara" && <CatatSuara />}
+          {nav === "Foto Nota" && <PindaiNota />}
+          {nav === "Tanya AI" && <TanyaAi />}
+          {nav === "Stok Barang" && <StokBarang cari={cari} />}
+          {nav === "Simpen Dulu" && <SimpenDulu />}
+          {nav === "Penjaga Margin" && <PenjagaMargin />}
+        </div>
       </main>
 
-      <nav
-        className="fixed inset-x-0 bottom-0 z-10 flex border-t"
-        style={{ background: "var(--permukaan)", borderColor: "var(--garis)" }}
-        aria-label="Navigasi utama"
-      >
-        {MENU.map((menu) => {
-          const aktif = halaman === menu.id
-          return (
-            <button
-              key={menu.id}
-              type="button"
-              onClick={() => setHalaman(menu.id)}
-              aria-current={aktif ? "page" : undefined}
-              className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[0.6875rem] font-medium"
-              style={{ color: aktif ? "var(--aksen)" : "var(--teks-lembut)" }}
-            >
-              <span className="text-lg leading-none" aria-hidden="true">
-                {menu.ikon}
-              </span>
-              {menu.label}
-            </button>
-          )
-        })}
-      </nav>
+      <MobileNav activeNav={nav} onNavigate={buka} />
     </div>
   )
-}
-
-function useTema(tema: "terang" | "gelap") {
-  useEffect(() => {
-    document.documentElement.dataset.theme = tema
-  }, [tema])
 }

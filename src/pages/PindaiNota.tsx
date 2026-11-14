@@ -104,11 +104,11 @@ export function PindaiNota() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Pindai nota belanja</h1>
-      <p className="text-sm" style={{ color: "var(--teks-lembut)" }}>
+      <p className="form-note">
         Foto nota agen. AI baca baris barangnya, lalu kamu cek dulu.
       </p>
 
-      <div className="kartu space-y-3 p-4">
+      <section className="panel">
         <input
           ref={fileRef}
           type="file"
@@ -124,7 +124,7 @@ export function PindaiNota() {
 
         <button
           type="button"
-          className="tombol-utama w-full !min-h-16"
+          className="primary-action" style={{ width: "100%", height: 56 }}
           onClick={() => fileRef.current?.click()}
           disabled={sibuk}
         >
@@ -137,23 +137,23 @@ export function PindaiNota() {
             src={pratinjau}
             alt="Pratinjau nota belanja"
             className="max-h-56 w-full rounded-lg object-contain"
-            style={{ background: "var(--aksen-lembut)" }}
+            style={{ background: "var(--accent-light)" }}
           />
         )}
-      </div>
+      </section>
 
       {galat && (
-        <p className="text-sm" style={{ color: "var(--bahaya)" }}>
+        <p className="text-sm" >
           {galat}
         </p>
       )}
 
       {baris.length > 0 && (
-        <section className="kartu p-4">
+        <section className="panel">
           <h2 className="text-sm font-semibold">Cek baris nota</h2>
 
           {totalBeda && (
-            <p className="mt-2 text-xs" style={{ color: "var(--peringatan)" }}>
+            <p className="mt-2 text-xs" >
               Total tertulis ({rupiah(total)}) beda dari jumlah baris ({rupiah(
                 baris.reduce((sum, b) => sum + b.jumlah * b.hargaSatuan, 0),
               )}). Periksa dulu.
@@ -165,7 +165,7 @@ export function PindaiNota() {
               <li key={`${item.nama}-${index}`} className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <input
-                    className="input flex-1"
+                    className="input" style={{ flex: 1 }}
                     value={item.nama}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -174,7 +174,7 @@ export function PindaiNota() {
                     }
                   />
                   {item.perluDicek && (
-                    <span className="chip shrink-0" style={{ color: "var(--peringatan)" }}>
+                    <span className="chip warn shrink-0">
                       periksa
                     </span>
                   )}
@@ -185,7 +185,7 @@ export function PindaiNota() {
                     inputMode="decimal"
                     min="0"
                     step="any"
-                    className="input w-24"
+                    className="input" style={{ width: 78 }}
                     value={item.jumlah}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -195,14 +195,14 @@ export function PindaiNota() {
                       )
                     }
                   />
-                  <span className="text-xs" style={{ color: "var(--teks-lembut)" }}>
+                  <span className="form-note">
                     {item.satuan}
                   </span>
                   <input
                     type="number"
                     inputMode="numeric"
                     min="0"
-                    className="input flex-1"
+                    className="input" style={{ flex: 1 }}
                     value={item.hargaSatuan}
                     onChange={(event) =>
                       setBaris((prev) =>
@@ -214,7 +214,7 @@ export function PindaiNota() {
                   />
                   <button
                     type="button"
-                    className="tombol-sekunder !min-h-11 !px-3"
+                    className="confirm-remove"
                     onClick={() => setBaris((prev) => prev.filter((_, i) => i !== index))}
                     aria-label={`Hapus ${item.nama}`}
                   >
@@ -226,7 +226,7 @@ export function PindaiNota() {
           </ul>
 
           <div className="mt-4 flex items-center justify-between border-t pt-3">
-            <span className="text-sm" style={{ color: "var(--teks-lembut)" }}>
+            <span className="form-note">
               Total
             </span>
             <span className="font-semibold">
@@ -234,7 +234,7 @@ export function PindaiNota() {
             </span>
           </div>
 
-          <button type="button" className="tombol-utama mt-3 w-full" onClick={() => void simpan()} disabled={sibuk}>
+          <button type="button" className="primary-action" style={{ width: "100%", marginTop: 14 }} onClick={() => void simpan()} disabled={sibuk}>
             Simpan pembelian
           </button>
         </section>

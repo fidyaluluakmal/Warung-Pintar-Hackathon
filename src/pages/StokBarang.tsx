@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import { useWarung } from "../lib/store"
 import { rupiah } from "../lib/format"
 
 /** Stok barang: daftar lengkap dengan penanda stok menipis. */
-export function StokBarang() {
-  const { stok, transaksi, keluar } = useWarung()
-  const [cari, setCari] = useState("")
+export function StokBarang({ cari = "" }: { cari?: string }) {
+  const { stok, keluar } = useWarung()
 
   const daftar = useMemo(() => {
     const kunci = cari.toLowerCase().trim()
@@ -20,62 +19,53 @@ export function StokBarang() {
   }, [stok, cari])
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold">Stok barang</h1>
-        <button type="button" className="tombol-sekunder !min-h-9 !px-3 text-xs" onClick={() => void keluar()}>
+    <div className="space-y-5">
+      <div className="page-title">
+        <div>
+          <span className="date-label">Stok Barang</span>
+          <h1>Daftar stok</h1>
+          <p>Stok dihitung dari history transaksi, bukan angka yang diketik.</p>
+        </div>
+        <button type="button" className="secondary-action" onClick={() => void keluar()}>
           Keluar
         </button>
       </div>
 
-      <input
-        className="input"
-        value={cari}
-        onChange={(event) => setCari(event.target.value)}
-        placeholder="Cari barang…"
-        aria-label="Cari barang"
-      />
-
-      <p className="text-xs" style={{ color: "var(--teks-lembut)" }}>
-        {stok.length} barang · {transaksi.length} transaksi tercatat
-      </p>
-
-      <ul className="space-y-2">
-        {daftar.map((barang) => {
-          const tipis = barang.stok <= barang.min_stok
-          return (
-            <li key={barang.barang_id} className="kartu p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{barang.nama}</p>
-                  <p className="text-xs" style={{ color: "var(--teks-lembut)" }}>
-                    Jual {rupiah(barang.harga_jual)} · Modal {rupiah(barang.harga_modal)}
-                  </p>
+      <section className="panel">
+        <ul className="stock-list" style={{ marginTop: 0 }}>
+          {daftar.map((barang) => {
+            const tipis = barang.stok <= barang.min_stok
+            const persen = barang.min_stok > 0 ? Math.min(100, (barang.stok / (barang.min_stok * 2)) * 100) : 100
+            return (
+              <li className="stock-item" key={barang.barang_id}>
+                <div className="product-code">{barang.satuan.slice(0, 2).toUpperCase()}</div>
+                <div className="stock-info">
+                  <div>
+                    <strong>{barang.nama}</strong>
+                    {tipis && <span>tipis</span>}
+                  </div>
+                  <small>
+                    Jual {rupiah(barang.harga_jual)} · modal {rupiah(barang.harga_modal)} · min{" "}
+                    {barang.min_stok} {barang.satuan}
+                  </small>
+                  <div className="progress">
+                    <i className={tipis ? "low" : ""} style={{ width: `${persen}%` }} />
+                  </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-sm font-semibold">
-                    {barang.stok} {barang.satuan}
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--teks-lembut)" }}>
-                    min {barang.min_stok}
-                  </p>
-                </div>
-              </div>
-              {tipis && (
-                <span className="chip mt-2" style={{ color: "var(--peringatan)" }}>
-                  perlu dibeli
-                </span>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+                <b style={{ fontSize: 14, whiteSpace: "nowrap" }}>
+                  {barang.stok} {barang.satuan}
+                </b>
+              </li>
+            )
+          })}
+        </ul>
 
-      {daftar.length === 0 && (
-        <p className="text-sm" style={{ color: "var(--teks-lembut)" }}>
-          Tidak ada barang yang cocok.
-        </p>
-      )}
+        {daftar.length === 0 && (
+          <p className="form-note" style={{ marginTop: 16 }}>
+            Tidak ada barang yang cocok.
+          </p>
+        )}
+      </section>
     </div>
   )
 }
