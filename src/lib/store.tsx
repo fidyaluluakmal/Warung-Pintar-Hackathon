@@ -163,7 +163,14 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
         setTransaksi(tersimpan.transaksi)
         setBaris(tersimpan.baris)
         const akun = bacaAkunLokal()
-        if (akun) setSesi(akun)
+        if (akun) {
+          const override = bacaOverrideAkun()
+          setSesi({
+            ...akun,
+            warung: override.warung || akun.warung,
+            pemilik: override.pemilik || akun.pemilik,
+          })
+        }
         setSiap(true)
         return
       }
@@ -186,11 +193,12 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
   const masuk = useCallback(
     async (email: string, sandi: string) => {
       if (modeDemoLokal || !supabase) {
+        const override = bacaOverrideAkun()
         const akun: SesiPengguna = {
           userId: "lokal",
           email,
-          warung: "Warung Sumber Rejeki",
-          pemilik: "Pak Andi",
+          warung: override.warung || "Warung Sumber Rejeki",
+          pemilik: override.pemilik || "Pak Andi",
         }
         simpanAkunLokal(akun)
         setSesi(akun)
@@ -597,14 +605,37 @@ function hapusAkunLokal() {
  */
 async function profilDariUser(userId: string): Promise<SesiPengguna> {
   if (!supabase) {
-    return { userId, email: "", warung: "Warung Sumber Rejeki", pemilik: "Pak Andi" }
+    return { ...profilLokal(), userId, email: "" }
   }
   const { data } = await supabase.auth.getUser()
   const meta = data.user?.user_metadata ?? {}
+  const dasar = {
+    warung: typeof meta.warung === "string" ? meta.warung : "Warung Sumber Rejeki",
+    pemilik: typeof meta.pemilik === "string" ? meta.pemilik : "Pak Andi",
+  }
+  // Nama yang diubah di Pengaturan menang, supaya tidak perlu tulis ulang
+  // metadata akun Supabase.
+  const override = bacaOverrideAkun()
   return {
     userId,
     email: data.user?.email ?? "",
-    warung: typeof meta.warung === "string" ? meta.warung : "Warung Sumber Rejeki",
-    pemilik: typeof meta.pemilik === "string" ? meta.pemilik : "Pak Andi",
+    warung: override.warung || dasar.warung,
+    pemilik: override.pemilik || dasar.pemilik,
+  }
+}
+
+function profilLokal(): { warung: string; pemilik: string } {
+  return { warung: "Warung Sumber Rejeki", pemilik: "Pak Andi" }
+}
+
+/** Nama warung/pemilik yang diubah dari halaman Pengaturan. */
+export function bacaOverrideAkun(): { warung: string; pemilik: string } {
+  try {
+    const mentah = window.localStorage.getItem("warung-pintar-akun")
+    if (!mentah) return { warung: "", pemilik: "" }
+    const data = JSON.parse(mentah) as { warung?: string; pemilik?: string }
+    return { warung: data.warung ?? "", pemilik: data.pemilik ?? "" }
+  } catch {
+    return { warung: "", pemilik: "" }
   }
 }

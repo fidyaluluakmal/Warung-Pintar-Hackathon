@@ -225,6 +225,36 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
         </section>
       </div>
 
+      <div className="dashboard-grid" style={{ marginTop: 16 }}>
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Modal awal & untung/rugi</h2>
+              <p>Uangmu bertambah atau berkurang?</p>
+            </div>
+            <button onClick={() => onPindah("Modal Awal")}>Buka</button>
+          </div>
+          <p className="form-note" style={{ marginTop: 16 }}>
+            Isi modal awal sekali, lalu aplikasi membandingkan dengan posisi
+            sekarang: nilai stok + laba kotor + piutang pelanggan.
+          </p>
+        </section>
+
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Tutup buku</h2>
+              <p>Ringkasan harian, siap dikirim</p>
+            </div>
+            <button onClick={() => onPindah("Tutup Buku")}>Buka</button>
+          </div>
+          <p className="form-note" style={{ marginTop: 16 }}>
+            Satu ringkasan penjualan, laba kotor, utang tua, dan daftar belanja
+            besok — bisa disalin lalu dikirim ke supplier.
+          </p>
+        </section>
+      </div>
+
       {sinyalMargin.length > 0 && (
         <section className="panel" style={{ marginTop: 16 }}>
           <div className="panel-heading">
