@@ -16,6 +16,7 @@ import { PindaiNota } from "./pages/PindaiNota"
 import { PenjagaMargin } from "./pages/PenjagaMargin"
 import { SimpenDulu } from "./pages/SimpenDulu"
 import { StokBarang } from "./pages/StokBarang"
+import { TitipJual } from "./pages/TitipJual"
 import { Laporan } from "./pages/Laporan"
 import { ModalAwal } from "./pages/ModalAwal"
 import { Pengaturan } from "./pages/Pengaturan"
@@ -127,6 +128,7 @@ function Kerangka() {
           {nav === "Penjaga Margin" && <PenjagaMargin />}
           {nav === "Cek Stok" && <CekStok />}
           {nav === "Pelanggan" && <Pelanggan />}
+          {nav === "Titip Jual" && <TitipJual />}
           {nav === "Harga Pasar" && <HargaPasar />}
           {nav === "Modal Awal" && <ModalAwal />}
           {nav === "Tutup Buku" && <TutupBuku onPindah={buka} />}

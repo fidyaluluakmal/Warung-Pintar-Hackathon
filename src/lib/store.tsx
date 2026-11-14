@@ -28,7 +28,9 @@ import type {
   Barang,
   MarginBarang,
   SaranBeli,
+  Satuan,
   StokBarang,
+  Titip,
   Transaksi,
   UtangBerjalan,
 } from "./types"
@@ -70,6 +72,23 @@ export interface SimpanTransaksiInput {
   }>
 }
 
+/** Data barang titipan baru. */
+export interface SimpanTitipInput {
+  /** Nama yang menitipkan barang, mis. "Pak Hendra". */
+  pemilik: string
+  namaBarang: string
+  satuan: Satuan
+  /** Berapa yang dititipkan. */
+  qty: number
+  /** Harga dari pemilik barang. */
+  hargaPemilik: number
+  /** Harga jual ke pelanggan. */
+  hargaJual: number
+  /** Komisi warung dalam persen. */
+  komisiPersen: number
+  catatan?: string | null
+}
+
 interface WarungContext {
   siap: boolean
   modeLokal: boolean
@@ -88,6 +107,8 @@ interface WarungContext {
   sinyalMargin: SinyalMargin[]
   /** Margin per barang, untuk layar penjaga margin. */
   margin: MarginBarang[]
+  /** Barang titipan (konsinyasi) milik orang lain. */
+  titip: Titip[]
   muatData: () => Promise<void>
   simpanTransaksi: (input: SimpanTransaksiInput) => Promise<void>
   /** Simpan penjualan "simpen dulu": sebagian dibayar, sisanya jadi utang. */
@@ -96,6 +117,12 @@ interface WarungContext {
   lunasiUtang: (id: string) => Promise<void>
   /** Perbarui harga jual barang (dipakai penjaga margin). */
   ubahHargaJual: (barangId: string, hargaJual: number) => Promise<void>
+  /** Catat barang titipan baru. */
+  simpanTitip: (input: SimpanTitipInput) => Promise<void>
+  /** Catat penjualan barang titipan sebanyak qty. */
+  catatTitipTerjual: (id: string, qty: number) => Promise<void>
+  /** Tutup titipan: barang dikembalikan, bagian pemilik dibayar. */
+  tutupTitip: (id: string) => Promise<void>
   resetDemo: () => void
 }
 
@@ -116,6 +143,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
   const [baris, setBaris] = useState<BarisTransaksi[]>([])
   const [utang, setUtang] = useState<UtangBerjalan[]>([])
   const [margin, setMargin] = useState<MarginBarang[]>([])
+  const [titip, setTitip] = useState<Titip[]>([])
 
   // Pemuatan data.
   const muatData = useCallback(async () => {
@@ -128,19 +156,21 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       return
     }
 
-    const [b, a, t, br, ut, mg] = await Promise.all([
+    const [b, a, t, br, ut, mg, tp] = await Promise.all([
       supabase.from("barang").select("*").order("nama"),
       supabase.from("alias_barang").select("*"),
       ambilSemua<Transaksi>("transaksi", "*", "tanggal", false),
       ambilSemua<BarisTransaksi>("baris_transaksi", "*"),
       supabase.from("utang_berjalan").select("*").order("tanggal", { ascending: false }),
       supabase.from("margin_barang").select("*").order("nama"),
+      supabase.from("titip").select("*").order("dibuat_pada", { ascending: false }),
     ])
 
     if (b.error) throw b.error
     if (a.error) throw a.error
     if (ut.error) throw ut.error
     if (mg.error) throw mg.error
+    if (tp.error) throw tp.error
 
     setBarang((b.data ?? []) as Barang[])
     setAlias((a.data ?? []) as Alias[])
@@ -148,6 +178,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     setBaris(br)
     setUtang((ut.data ?? []) as UtangBerjalan[])
     setMargin((mg.data ?? []) as MarginBarang[])
+    setTitip((tp.data ?? []) as Titip[])
   }, [])
 
   // Sesi: Supabase Auth, atau akun lokal sederhana.
@@ -455,6 +486,125 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     [sesi, muatData],
   )
 
+  /**
+   * Catat barang titipan baru.
+   *
+   * Barang titipan bukan milik warung, jadi tidak menyentuh stok. Yang
+   * disimpan cuma datanya: siapa yang menitipkan, berapa, dan komisinya.
+   */
+  const simpanTitip = useCallback(
+    async (input: SimpanTitipInput) => {
+      if (!sesi) throw new Error("Belum masuk.")
+      const pemilik = input.pemilik.trim()
+      const namaBarang = input.namaBarang.trim()
+      if (!pemilik) throw new Error("Nama pemilik barang wajib diisi.")
+      if (!namaBarang) throw new Error("Nama barang titipan wajib diisi.")
+      if (!(input.qty > 0)) throw new Error("Jumlah titipan harus lebih dari nol.")
+      if (!Number.isFinite(input.komisiPersen) || input.komisiPersen < 0) {
+        throw new Error("Komisi warung tidak boleh negatif.")
+      }
+      // Di atas 100% berarti bagian pemilik barang jadi minus — tolak.
+      if (input.komisiPersen > 100) {
+        throw new Error("Komisi warung tidak boleh lebih dari 100%.")
+      }
+
+      if (modeDemoLokal || !supabase) {
+        const baru: Titip = {
+          id: `titip-${Date.now()}`,
+          owner_id: sesi.userId,
+          pemilik,
+          nama_barang: namaBarang,
+          satuan: input.satuan || "pcs",
+          qty: input.qty,
+          terjual: 0,
+          harga_pemilik: input.hargaPemilik,
+          harga_jual: input.hargaJual,
+          komisi_persen: input.komisiPersen,
+          status: "aktif",
+          catatan: input.catatan?.trim() || null,
+          dibuat_pada: new Date().toISOString(),
+          selesai_pada: null,
+        }
+        setTitip((prev) => [baru, ...prev])
+        return
+      }
+
+      const { error } = await supabase.from("titip").insert({
+        owner_id: sesi.userId,
+        pemilik,
+        nama_barang: namaBarang,
+        satuan: input.satuan || "pcs",
+        qty: input.qty,
+        terjual: 0,
+        harga_pemilik: input.hargaPemilik,
+        harga_jual: input.hargaJual,
+        komisi_persen: input.komisiPersen,
+        status: "aktif",
+        catatan: input.catatan?.trim() || null,
+      })
+      if (error) throw error
+      await muatData()
+    },
+    [sesi, muatData],
+  )
+
+  /** Catat penjualan barang titipan sebanyak `qty`. */
+  const catatTitipTerjual = useCallback(
+    async (id: string, qty: number) => {
+      if (!sesi) throw new Error("Belum masuk.")
+      const row = titip.find((item) => item.id === id)
+      if (!row) throw new Error("Titipan tidak ditemukan.")
+      const terjual = Math.min(Math.max(0, qty), Math.max(0, row.qty - row.terjual))
+      if (terjual <= 0) throw new Error("Tidak ada barang titipan yang bisa dijual.")
+
+      if (modeDemoLokal || !supabase) {
+        setTitip((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, terjual: item.terjual + terjual } : item,
+          ),
+        )
+        return
+      }
+
+      const { error } = await supabase
+        .from("titip")
+        .update({ terjual: row.terjual + terjual })
+        .eq("id", id)
+      if (error) throw error
+      await muatData()
+    },
+    [sesi, titip, muatData],
+  )
+
+  /**
+   * Tutup titipan.
+   *
+   * Sisa barang dikembalikan ke pemilik barang, jadi statusnya selesai dan
+   * tidak lagi masuk hitungan yang harus dibayar.
+   */
+  const tutupTitip = useCallback(
+    async (id: string) => {
+      if (!sesi) throw new Error("Belum masuk.")
+      if (modeDemoLokal || !supabase) {
+        setTitip((prev) =>
+          prev.map((item) =>
+            item.id === id
+              ? { ...item, status: "selesai", selesai_pada: new Date().toISOString() }
+              : item,
+          ),
+        )
+        return
+      }
+      const { error } = await supabase
+        .from("titip")
+        .update({ status: "selesai", selesai_pada: new Date().toISOString() })
+        .eq("id", id)
+      if (error) throw error
+      await muatData()
+    },
+    [sesi, muatData],
+  )
+
   const resetDemo = useCallback(() => {
     const lokal = bacaLokal()
     simpanLokal({ barang: lokal.barang, alias: lokal.alias, transaksi: [], baris: [] })
@@ -506,11 +656,15 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       utang,
       sinyalMargin,
       margin,
+      titip,
       muatData,
       simpanTransaksi,
       simpanSimpenDulu,
       lunasiUtang,
       ubahHargaJual,
+      simpanTitip,
+      catatTitipTerjual,
+      tutupTitip,
       resetDemo,
     }),
     [
@@ -527,11 +681,15 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       utang,
       sinyalMargin,
       margin,
+      titip,
       muatData,
       simpanTransaksi,
       simpanSimpenDulu,
       lunasiUtang,
       ubahHargaJual,
+      simpanTitip,
+      catatTitipTerjual,
+      tutupTitip,
       resetDemo,
     ],
   )

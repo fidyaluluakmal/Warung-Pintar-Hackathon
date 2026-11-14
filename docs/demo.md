@@ -77,7 +77,20 @@ jumlah — bukan cuma yang dibayar."
 Poin: "Harga modal naik tidak terasa. Yang terasa belakangan: margin
 menyusut. Kasir biasa tidak tahu ini sebelum tutup buku."
 
-## 7. Tutup buku + Laporan (25 detik)
+## 7. Titip Jual — barang milik orang lain (20 detik)
+
+1. Buka menu **Titip Jual**.
+2. Tunjukkan ringkasan: omzet titipan, komisi warung, dan berapa yang harus
+   dibayar ke pemilik barang.
+3. Tunjukkan satu kartu: "Krupuk Udang dari Mas Togo, 15 pcs laku, komisi
+   15% — semua laku, bisa dibayar".
+4. Tekan **Rincian pembayaran** — teks siap salin.
+
+Poin: "Warung sering jadi etalase barang tetangga. Barang titipan tidak masuk
+stok warung, jadi laba warung tetap bersih. Yang dihitung cuma komisi warung
+dan bagian yang harus dibayar ke pemilik barang."
+
+## 8. Tutup buku + Laporan (25 detik)
 
 1. Buka menu **Tutup Buku** — ringkasan penjualan, laba kotor, bersih, utang,
    dan yang perlu dibeli besok. Tunjukkan tombol salin.
@@ -87,7 +100,7 @@ menyusut. Kasir biasa tidak tahu ini sebelum tutup buku."
 Poin: "Tutup buku dan laporan membaca data yang sama, jadi angkanya selalu
 cocok."
 
-## 8. Tanya AI (20 detik)
+## 9. Tanya AI (20 detik)
 
 1. Tekan ikon kilat di header → drawer **Asisten_Warung** terbuka.
 2. Tekan chip **Beli apa besok?**.
@@ -96,7 +109,7 @@ cocok."
 Poin: "AI menjawab dari catatan warung sendiri. Angkanya dihitung
 aplikasi, bukan dikarang AI."
 
-## 9. Tutup (10 detik)
+## 10. Tutup (10 detik)
 
 "Kasir tahu transaksi. Yang ditanyakan pemilik warung justru: uang saya
 bertambah atau berkurang? Dan kalau berkurang, mau kulakan apa besok?"
@@ -133,5 +146,7 @@ jadi demo bisa diulang persis.
 | Utang terlama | Pak Yono, Rp198.500 (15 hari) |
 | Menunggak lebih dari 7 hari | 2 orang |
 | Pelanggan tercatat | 5 orang, semuanya punya riwayat belanja |
+| Omzet titipan | Rp601.000, komisi warung Rp76.250 |
+| Harus dibayar ke pemilik barang | Rp524.750 |
 | Modal naik | Beras Premium Rp14.000 → Rp15.120, margin 12,5% → 5,5% |
 | Modal naik | Telur Ayam Rp28.000 → Rp31.360, margin 12,5% → 2% |

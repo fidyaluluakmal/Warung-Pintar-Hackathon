@@ -42,6 +42,7 @@ sebelum disimpan.
 | Laporan — tren penjualan, komposisi omzet, produk terlaris | Berjalan |
 | Cek Stok (opname) — selisih jadi penyesuaian stok | Berjalan |
 | Pelanggan — buku pelanggan, favorit, kunjungan | Berjalan |
+| Titip Jual — komisi warung untuk barang milik orang lain | Berjalan |
 | Harga Pasar — bandingkan harga barang di tempat lain | Berjalan |
 | Riwayat — jejak transaksi beserta sumbernya | Berjalan |
 | Asisten Warung — drawer tanya-jawab dari catatan warung | Berjalan |
@@ -125,8 +126,8 @@ Alur demo (±3 menit) ada di [`docs/demo.md`](docs/demo.md).
 src/
   lib/          mesin hitung, parser, kalender, tipe, lapisan API
   pages/        Beranda, Kasir, Stok Barang, Simpen Dulu, Penjaga Margin,
-                Cek Stok, Pelanggan, Harga Pasar, Modal Awal, Tutup Buku,
-                Laporan, Riwayat, Pengaturan
+                Cek Stok, Pelanggan, Titip Jual, Harga Pasar, Modal Awal,
+                Tutup Buku, Laporan, Riwayat, Pengaturan
   components/   Sidebar, AppHeader, MobileNav, MobileMenu, Modal, ChatDrawer,
                 Icon, UserAvatar
 supabase/
@@ -163,6 +164,7 @@ jadi tidak ada hex yang ditulis manual di komponen.
 | `src/lib/capital.ts` | Posisi modal: nilai stok + laba + piutang |
 | `src/lib/supabaseQuery.ts` | Ambil tabel bertahap, tanpa terpotong 1000 baris |
 | `src/lib/margin.ts` | Deteksi margin menyusut, pembagian "simpen dulu" |
+| `src/lib/titip.ts` | Hitungan komisi dan bagian pemilik barang titipan |
 | `src/lib/parser.ts` | Parser kalimat Indonesia (lokal, tanpa AI) |
 | `src/lib/format.ts` | Format rupiah dan tanggal (WIB) |
 

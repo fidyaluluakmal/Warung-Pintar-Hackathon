@@ -9,6 +9,7 @@ export type NavLabel =
   | "Cek Stok"
   | "Pelanggan"
   | "Harga Pasar"
+  | "Titip Jual"
   | "Catat Suara"
   | "Foto Nota"
   | "Tanya AI"
@@ -34,6 +35,7 @@ export const nav: Array<{ label: NavLabel; icon: IconName }> = [
   { label: "Penjaga Margin", icon: "chart" },
   { label: "Cek Stok", icon: "scan" },
   { label: "Pelanggan", icon: "user" },
+  { label: "Titip Jual", icon: "box" },
   { label: "Harga Pasar", icon: "chart" },
 ]
 

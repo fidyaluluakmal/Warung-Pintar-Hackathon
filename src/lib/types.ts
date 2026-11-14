@@ -172,3 +172,32 @@ export interface HargaModalRiwayat {
   harga_modal: number
   tanggal: string
 }
+
+/**
+ * Barang titipan (konsinyasi).
+ *
+ * Barang milik orang lain yang dijual warung. Tidak masuk stok warung —
+ * yang dihitung cuma komisi warung dan bagian untuk pemilik barang.
+ */
+export interface Titip {
+  id: string
+  owner_id: string
+  /** Nama yang menitipkan barang. */
+  pemilik: string
+  nama_barang: string
+  satuan: Satuan
+  /** Berapa yang dititipkan. */
+  qty: number
+  /** Berapa yang sudah laku. */
+  terjual: number
+  /** Harga dari pemilik barang (informasi). */
+  harga_pemilik: number
+  /** Harga jual ke pelanggan. */
+  harga_jual: number
+  /** Komisi warung dalam persen dari omzet. */
+  komisi_persen: number
+  status: "aktif" | "selesai"
+  catatan: string | null
+  dibuat_pada: string
+  selesai_pada: string | null
+}
