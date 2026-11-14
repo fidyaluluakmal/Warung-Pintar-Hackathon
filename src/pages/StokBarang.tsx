@@ -58,7 +58,7 @@ export function StokBarang({
   cari?: string
   onPindah?: (nav: NavLabel) => void
 }) {
-  const { stok, saranBeli, keluar, simpanBarang, catatPembelian } = useWarung()
+  const { stok, saranBeli, simpanBarang, catatPembelian } = useWarung()
   const [cari, setCari] = useState(cariAwal)
   const [filter, setFilter] = useState<Filter>("semua")
 
@@ -339,12 +339,6 @@ export function StokBarang({
           )
         })}
       </section>
-
-      <div className="dashboard-footnote">
-        <button type="button" className="secondary-action" onClick={() => void keluar()}>
-          Keluar dari akun
-        </button>
-      </div>
 
       {formBarang && (
         <Modal label="Tambah barang" onClose={() => setFormBarang(null)}>
