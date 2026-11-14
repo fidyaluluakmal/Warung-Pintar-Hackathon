@@ -6,6 +6,7 @@ import {
   hitungRingkasanPelanggan,
   inisialPelanggan,
   rataRataBelanja,
+  ringkasUtang,
   urutPelanggan,
   type UrutanPelanggan,
 } from "../lib/pelanggan"
@@ -48,12 +49,7 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
         transaksi.filter((t) => t.tipe === "jual"),
         baris,
         barang.map((b) => ({ id: b.id, nama: b.nama })),
-        utang.map((u) => ({
-          pelanggan: u.pelanggan,
-          total: u.total,
-          dibayar: u.dibayar,
-          status: u.status,
-        })),
+        ringkasUtang(utang),
       ),
     [pelanggan, transaksi, baris, barang, utang],
   )

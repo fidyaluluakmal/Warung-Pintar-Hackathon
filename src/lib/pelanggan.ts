@@ -428,6 +428,31 @@ function pilihFavorit(
   return terbaik ? { nama: terbaik.nama, qty: terbaik.qty } : null
 }
 
+/**
+ * Ringkas baris utang jadi bentuk yang dipakai hitungRingkasanPelanggan.
+ *
+ * Tanggal utangnya wajib ikut. Kalau tanggalnya hilang, umur utang tidak
+ * bisa dihitung — dan "menunggak lebih dari 7 hari" selalu nol, tanpa ada
+ * tanda ada yang salah.
+ */
+export function ringkasUtang(
+  utang: Array<{
+    pelanggan: string
+    total: number
+    dibayar: number
+    status?: string
+    tanggal?: string | null
+  }>,
+): UtangRingkas[] {
+  return utang.map((row) => ({
+    pelanggan: row.pelanggan,
+    total: row.total,
+    dibayar: row.dibayar,
+    status: row.status,
+    tanggal: row.tanggal ?? null,
+  }))
+}
+
 /** Pembulatan 2 desimal, menghindari galat floating point. */
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100

@@ -9,6 +9,7 @@ import {
   labelUtang,
   normalisasiNama,
   rataRataBelanja,
+  ringkasUtang,
   urutPelanggan,
   type DataPelanggan,
 } from "./pelanggan"
@@ -415,3 +416,46 @@ function selisih(tanggal: string): number {
   const sampai = new Date("2026-11-14T00:00:00Z").getTime()
   return Math.round((sampai - dari) / 86_400_000)
 }
+
+describe("ringkasUtang", () => {
+  it("tanggal utang ikut terbawa", () => {
+    // Tanpa tanggal, umur utang tidak bisa dihitung dan "menunggak lebih
+    // dari 7 hari" selalu nol.
+    const hasil = ringkasUtang([
+      {
+        pelanggan: "Pak Yono",
+        total: 80_000,
+        dibayar: 0,
+        status: "belum_lunas",
+        tanggal: "2026-10-30T02:00:00Z",
+      },
+    ])
+    expect(hasil[0].tanggal).toBe("2026-10-30T02:00:00Z")
+  })
+
+  it("tanggal yang kosong jadi null, bukan undefined yang bikin error", () => {
+    const hasil = ringkasUtang([{ pelanggan: "Bu Sri", total: 10_000, dibayar: 0 }])
+    expect(hasil[0].tanggal).toBeNull()
+  })
+
+  it("umur utang bisa dihitung dari tanggalnya", () => {
+    const hasil = hitungRingkasanPelanggan(
+      [pelanggan("Pak Yono", "p1")],
+      [],
+      [],
+      BARANG,
+      ringkasUtang([
+        {
+          pelanggan: "Pak Yono",
+          total: 80_000,
+          dibayar: 0,
+          status: "belum_lunas",
+          tanggal: "2026-10-30T02:00:00Z",
+        },
+      ]),
+      HARI_INI,
+    )
+    expect(hasil[0].utangTerlama).toBe("2026-10-30T02:00:00Z")
+    expect(selisih("2026-10-30")).toBeGreaterThan(7)
+  })
+})
