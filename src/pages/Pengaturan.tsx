@@ -46,25 +46,6 @@ export function Pengaturan() {
     }
   }
 
-  /**
-   * Tema sistem saat ini.
-   *
-   * Pratinjau "Ikuti sistem" harus menunjukkan tampilan yang benar-benar
-   * akan dipakai. Kalau sistemnya gelap, pratinjaunya gelap — bukan
-   * setengah terang.
-   */
-  const [sistemGelap, setSistemGelap] = useState(() => {
-    if (typeof window === "undefined") return false
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-  })
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)")
-    const dengar = () => setSistemGelap(media.matches)
-    media.addEventListener("change", dengar)
-    return () => media.removeEventListener("change", dengar)
-  }, [])
-
   const opsiTema: Array<{
     nilai: Tema
     label: string
@@ -73,7 +54,6 @@ export function Pengaturan() {
   }> = [
     { nilai: "terang", label: "Terang", ikon: "sun", pratinjau: "light-preview" },
     { nilai: "gelap", label: "Gelap", ikon: "moon", pratinjau: "dark-preview" },
-    { nilai: "sistem", label: "Ikuti sistem", ikon: "auto", pratinjau: "system-preview" },
   ]
 
   return (
@@ -146,15 +126,7 @@ export function Pengaturan() {
                 className={tema === opsi.nilai ? "active" : ""}
                 onClick={() => ganti(opsi.nilai)}
               >
-                <span
-                  className={`theme-preview ${opsi.pratinjau}${
-                    opsi.nilai === "sistem"
-                      ? sistemGelap
-                        ? " is-gelap"
-                        : " is-terang"
-                      : ""
-                  }`}
-                >
+                <span className={`theme-preview ${opsi.pratinjau}`}>
                   <i />
                   <i />
                   <i />
@@ -163,11 +135,6 @@ export function Pengaturan() {
                   <Icon name={opsi.ikon} size={16} />
                   <strong>{opsi.label}</strong>
                 </span>
-                {opsi.nilai === "sistem" && (
-                  <small className="theme-hint">
-                    Perangkatmu {sistemGelap ? "gelap" : "terang"}
-                  </small>
-                )}
                 <i className="theme-check">
                   <Icon name="check" size={13} />
                 </i>

@@ -1,22 +1,36 @@
 /**
- * Tema tampilan: terang, gelap, atau ikut sistem.
+ * Tema tampilan: terang atau gelap.
  *
- * Pilihan disimpan di localStorage. Mode "sistem" membuat aplikasi
- * otomatis mengikuti saat perangkat berubah.
+ * Pilihan disimpan di localStorage, jadi tema yang dipilih tetap sama
+ * setelah aplikasi dimuat ulang.
  */
 
 import { useEffect, useState } from "react"
 
-export type Tema = "terang" | "gelap" | "sistem"
+export type Tema = "terang" | "gelap"
 
 const KUNCI = "warung-pintar-tema"
 
+/**
+ * Baca tema yang tersimpan.
+ *
+ * Nilai lama "sistem" (dulu ada pilihan "Ikuti sistem") diselesaikan ke
+ * tema perangkat sekali ini, lalu disimpan sebagai pilihan tetap. Jadi
+ * pengguna lama tidak kehilangan tampilan yang mereka pakai, cuma tidak
+ * lagi ikut berubah sendiri.
+ */
 export function bacaTemaTersimpan(): Tema {
   try {
     const nilai = window.localStorage.getItem(KUNCI)
-    return nilai === "gelap" || nilai === "terang" ? nilai : "sistem"
+    if (nilai === "gelap" || nilai === "terang") return nilai
+    if (nilai === "sistem") {
+      const tema = sistemGelap() ? "gelap" : "terang"
+      window.localStorage.setItem(KUNCI, tema)
+      return tema
+    }
+    return "terang"
   } catch {
-    return "sistem"
+    return "terang"
   }
 }
 
@@ -28,15 +42,10 @@ export function simpanTema(tema: Tema) {
   }
 }
 
-/**
- * Terapkan tema ke elemen <html>.
- *
- * "sistem" diselesaikan ke tema yang sedang aktif di perangkat, jadi
- * fungsi ini aman dipanggil dengan nilai apa pun.
- */
+/** Terapkan tema ke elemen <html>. */
 export function terapkanTema(tema: Tema): "terang" | "gelap" {
-  const gelap = tema === "sistem" ? sistemGelap() : tema === "gelap"
-  // `document` tidak ada saat render di server. Lewati saja — tema berlaku
+  const gelap = tema === "gelap"
+  // `document` tidak ada saat render di server. Lewati saja: tema berlaku
   // begitu aplikasi jalan di browser.
   if (typeof document !== "undefined") {
     document.documentElement.dataset.theme = gelap ? "dark" : "light"
@@ -52,8 +61,6 @@ export function sistemGelap(): boolean {
 
 /**
  * Hook tema. Mengembalikan tema yang aktif dan cara mengubahnya.
- *
- * Kalau tema "sistem", perubahan pengaturan perangkat langsung diikuti.
  */
 export function useTema(): {
   tema: Tema
@@ -63,34 +70,14 @@ export function useTema(): {
   // Pilihan tersimpan harus langsung dipakai, kalau tidak pilihan yang
   // disimpan hilang begitu halaman dimuat ulang.
   const [tema, setTema] = useState<Tema>(() =>
-    typeof window === "undefined" ? "sistem" : bacaTemaTersimpan(),
+    typeof window === "undefined" ? "terang" : bacaTemaTersimpan(),
   )
-  // Keadaan awal ikut tema sistem, bukan selalu terang. Kalau tema yang
-  // disimpan "sistem" dan perangkatnya gelap, aplikasi sempat menampilkan
-  // tema terang sebelum efek berjalan — kedipan putih di layar.
   const [aktif, setAktif] = useState<"terang" | "gelap">(() =>
-    typeof window === "undefined"
-      ? "terang"
-      : tema === "sistem"
-        ? sistemGelap()
-          ? "gelap"
-          : "terang"
-        : tema === "gelap"
-          ? "gelap"
-          : "terang",
+    typeof window === "undefined" ? "terang" : bacaTemaTersimpan(),
   )
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)")
-
-    const terapkan = () => {
-      const pilihan = tema === "sistem" ? (media.matches ? "gelap" : "terang") : tema
-      setAktif(terapkanTema(pilihan))
-    }
-
-    terapkan()
-    media.addEventListener("change", terapkan)
-    return () => media.removeEventListener("change", terapkan)
+    setAktif(terapkanTema(tema))
   }, [tema])
 
   function ganti(berikutnya: Tema) {

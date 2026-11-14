@@ -10,7 +10,7 @@ import { AsistenAi } from "./pages/AsistenAi"
 /**
  * Uji asap: aplikasi harus bisa dirender tanpa error.
  *
- * Ini menangkap kesalahan yang tidak terlihat dari typecheck — misalnya
+ * Ini menangkap kesalahan yang tidak terlihat dari typecheck: misalnya
  * komponen yang memanggil hook di luar React, atau nama yang salah ketik.
  */
 describe("render aplikasi", () => {
@@ -61,8 +61,19 @@ describe("tema", () => {
     expect(document.documentElement.dataset.theme).toBe("light")
   })
 
-  it("bacaTemaTersimpan mengembalikan sistem saat belum ada pilihan", () => {
-    expect(bacaTemaTersimpan()).toBe("sistem")
+  it("bacaTemaTersimpan mengembalikan terang saat belum ada pilihan", () => {
+    expect(bacaTemaTersimpan()).toBe("terang")
+  })
+
+  it("bacaTemaTersimpan menyelesaikan nilai lama sistem menjadi tema tetap", () => {
+    // Dulu ada pilihan "Ikuti sistem". Nilai lamanya diselesaikan sekali
+    // lalu disimpan sebagai pilihan tetap, supaya tampilan tidak berubah
+    // diam-diam di tengah pemakaian.
+    window.localStorage.setItem("warung-pintar-tema", "sistem")
+    const hasil = bacaTemaTersimpan()
+    expect(hasil === "terang" || hasil === "gelap").toBe(true)
+    expect(window.localStorage.getItem("warung-pintar-tema")).toBe(hasil)
+    window.localStorage.removeItem("warung-pintar-tema")
   })
 
   it("bacaTemaTersimpan mengembalikan pilihan yang tersimpan", () => {

@@ -40,7 +40,7 @@
    * Hijau hanya untuk satu hal: tanda "aman / lunas".
    *
    * Semua permukaan lain pakai biru dan netral. Kalau hijau dipakai untuk
-   * apa saja,ourage hijau tidak lagi berarti apa-apa.
+   * apa saja, warna hijau tidak lagi berarti apa-apa.
    */
   --sukses: #1c7a55;
   --sukses-light: #e6f5ee;
@@ -53,7 +53,7 @@
   /*
    * Cincin fokus.
    *
-   * Tanpa ini, pengguna keyboard tidak tahu di mana posisinya — tombol
+   * Tanpa ini, pengguna keyboard tidak tahu di mana posisinya: tombol
    * yang difokus sama sekali tidak kelihatan. Warnanya diambil dari palet
    * aplikasi, bukan biru bawaan browser.
    */
@@ -620,7 +620,7 @@ header {
 /*
  * Tombol ikon di header.
  *
- * 44px, bukan 36px: di HP iniibu jari yangriculum, bukan kursor.
+ * 44px, bukan 36px: di HP yang mengetik adalah ibu jari, bukan kursor.
  */
 .notification {
   position: relative;
@@ -916,8 +916,8 @@ header {
 /*
  * Kartu aksi cepat.
  *
- * Semuanya memakai surface yang sama -- tidak ada yang lebih terang
- * Yang menandai aksi adalah kotak ikonnyya, bukan latar kartunya. Kalau
+ * Semuanya memakai permukaan yang sama, tidak ada yang lebih terang.
+ * Yang menandai aksi adalah kotak ikon'snya, bukan latar kartunya. Kalau
  * latarnya ikut biru, tiga kartu ini berteriak lebih keras daripada
  * angka-angka ringkasan, padahal angka itu yang paling penting.
  */
@@ -1778,7 +1778,9 @@ header {
   width: min(34px, 72%);
   min-height: 8px;
   display: block;
-  border-radius: 6px 6px 2px 2px;
+  /* Sudut batang hanya sedikit membulat. Kalau dibulatkan penuh, batang
+     pendek akan berubah jadi oval. */
+  border-radius: 3px 3px 2px 2px;
   background: var(--surface-3);
   transition:
     height 0.35s ease,
@@ -2083,12 +2085,11 @@ header {
  * Pratinjau tema.
  *
  * Warnanya diambil dari token yang sama dengan aplikasinya, jadi
- * pratinjaunya bukan gambarCorporate yang karangan — tapi miniatur
- * tampilan yang sebenarnya.
+ * pratinjaunya bukan gambar karangan, tapi miniatur tampilan yang
+ * sebenarnya.
  *
- * Pratinjau "Ikuti sistem" mengikuti tema sistem yang sedang aktif: kalau
- * perangkatnya gelap, pratinjaunya gelap. Kalau selalu setengah terang,
- * yang muncul di layar justru kelihatan seperti tema terang.
+ * Pratinjau "Gelap" memakai warna gelap yang sama dengan aplikasi
+ * waktu mode gelap dipakai, jadi pilihan ini kelihatan benar.
  */
 .theme-preview {
   --pv-latar: var(--surface-2);
@@ -2118,38 +2119,24 @@ header {
 .theme-preview i:nth-child(3) {
   background: var(--pv-aksen);
 }
-.dark-preview,
-.system-preview.is-gelap {
+/*
+ * Pratinjau tema.
+ *
+ * Setiap pratinjau memakai variabel yang sama, cuma warnanya yang diganti.
+ * Kalau pratinjau "Gelap" tidak gelap, pemilik warung tidak bisa
+ * membandingkan dua pilihan ini.
+ */
+.dark-preview {
   --pv-latar: #051923;
   --pv-sisi: #0b1c2b;
   --pv-kartu: #102434;
   --pv-aksen: #16405e;
-}
-.system-preview.is-terang {
-  --pv-latar: #f2f7fa;
-  --pv-sisi: #ffffff;
-  --pv-kartu: #ffffff;
-  --pv-aksen: #e6eef4;
 }
 .theme-options > button > span:nth-child(2) {
   margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 8px;
-}
-/*
- * Keterangan di bawah pilihan "Ikuti sistem".
- *
- * Tanpa ini, pratinjaunya sama persis dengan pilihan "Gelap" kalau
- * perangkatnya gelap -- jadi tidak ada bedanya, dan pemilik warung tidak
- * tahu pilihannya itu ikut perangkat atau bukan.
- */
-.theme-hint {
-  margin-top: 4px;
-  padding-left: 24px;
-  color: var(--muted);
-  font-size: 10.5px;
-  text-align: left;
 }
 .theme-options strong {
   font-size: 11.5px;
@@ -3281,7 +3268,7 @@ header {
   margin-top: 12px;
 }
 
-/* Dark theme for the new surfaces. */
+/* Permukaan baru untuk mode gelap. */
 [data-theme="dark"] .confirm-head,
 [data-theme="dark"] .history-toolbar > label {
   background: #12171b;
@@ -3426,7 +3413,7 @@ header {
   }
 }
 
-/* Tanya Warung — pertanyaan bebas yang dijawab dari angka database. */
+/* Tanya Warung: pertanyaan bebas yang dijawab dari angka database. */
 .ask-note {
   display: block;
   margin-top: 8px;
@@ -3434,15 +3421,15 @@ header {
   font-size: 12px;
 }
 
-/* Sinyal warung — ritme tanggal tua + modal bergerak. */
+/* Sinyal warung: ritme tanggal tua + modal bergerak. */
 @media (min-width: 900px) {
 }
 
 /* Saran harga jual penjaga margin. */
 
-/* Daftar barang baru — mode katalog onboarding suara. */
+/* Daftar barang baru: mode katalog onboarding suara. */
 
-/* Simpen Dulu — buku utang warung. */
+/* Simpen Dulu: buku utang warung. */
 .utang-panel {
   margin-top: 16px;
   padding: 16px;
@@ -3537,7 +3524,7 @@ header {
   flex-shrink: 0;
 }
 
-/* Kasir — jalur utama: ketuk barang, atur jumlah, tandai disimpan dulu. */
+/* Kasir: jalur utama: ketuk barang, atur jumlah, tandai disimpan dulu. */
 .cashier-page {
   display: flex;
   flex-direction: column;
@@ -3896,7 +3883,7 @@ header {
   color: var(--green);
 }
 
-/* Kartu stok per barang — riwayat masuk/keluar, opname, restok cepat. */
+/* Kartu stok per barang: riwayat masuk/keluar, opname, restok cepat. */
 .restock-tip {
   display: block;
   margin-top: 2px;
@@ -3910,15 +3897,15 @@ header {
   color: var(--green);
 }
 
-/* Riwayat nota belanja — bukti barang masuk dan siapa yang menambahkannya. */
+/* Riwayat nota belanja: bukti barang masuk dan siapa yang menambahkannya. */
 @media (min-width: 640px) {
 }
 @media (min-width: 1100px) {
 }
 
-/* Cek Stok — catatan vs kenyataan, temuan ditautkan ke nota. */
+/* Cek Stok: catatan vs kenyataan, temuan ditautkan ke nota. */
 
-/* Tutup buku — ritual harian pemilik warung. */
+/* Tutup buku: ritual harian pemilik warung. */
 .closing-page {
   display: flex;
   flex-direction: column;
@@ -4137,7 +4124,7 @@ header {
   color: var(--green);
 }
 
-/* Buku pelanggan — kasir mencatat barang, buku ini mengingat orangnya. */
+/* Buku pelanggan: kasir mencatat barang, buku ini mengingat orangnya. */
 .customers-page {
   display: flex;
   flex-direction: column;
@@ -4448,7 +4435,7 @@ header {
   color: #c4d5e2;
 }
 
-/* Titip jual (konsinyasi) — barang milik orang lain. */
+/* Titip jual (konsinyasi): barang milik orang lain. */
 .consignments-page {
   display: flex;
   flex-direction: column;
@@ -4675,7 +4662,7 @@ header {
   color: #b7c3e8;
 }
 
-/* Menu lengkap untuk HP — semua halaman bisa diakses dari header. */
+/* Menu lengkap untuk HP: semua halaman bisa diakses dari header. */
 .mobile-menu-trigger {
   display: none;
   width: 44px;
@@ -4819,7 +4806,7 @@ header {
 
 /* Kenali pelanggan saat mengetik + ubah data pelanggan. */
 
-/* Asisten warung — panel dengan sesi percakapan. */
+/* Asisten warung: panel dengan sesi percakapan. */
 @keyframes chat-in {
   from {
     transform: translateX(-12px);
@@ -5137,14 +5124,14 @@ textarea.input {
 }
 
 /* ---------------------------------------------------------------------------
-   Asisten warung — halaman ala ChatGPT: kolom kiri sesi & proyek, kolom
+   Asisten warung: halaman ala ChatGPT: kolom kiri sesi & proyek, kolom
    kanan percakapan.
    --------------------------------------------------------------------------- */
 .asisten-halaman {
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
   /* Tinggi mengikuti wadahnya (`.content-penuh`), bukan dihitung ulang dari
-     viewport — kalau dihitung dua kali, halaman jadi lebih tinggi dari
+     viewport: kalau dihitung dua kali, halaman jadi lebih tinggi dari
      tempatnya dan kolom tulis tertutup nav bawah. */
   height: 100%;
   min-height: 0;
@@ -5705,7 +5692,7 @@ textarea.input {
     z-index: 70;
     transform: translateX(-100%);
     /* visibility supaya tombol di dalamnya tidak bisa difokus saat kolom
-       tersembunyi — kalau cuma digeser, masih bisa ditabari. */
+       tersembunyi: kalau cuma digeser, masih bisa ditabari. */
     visibility: hidden;
     transition: transform 0.2s ease-out, visibility 0.2s;
     box-shadow: 0 0 34px rgba(9, 32, 48, 0.24);

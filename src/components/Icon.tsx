@@ -29,7 +29,6 @@ export type IconName =
   | "logout"
   | "wallet"
   | "tag"
-  | "auto"
 
 const iconPaths: Record<IconName, ReactNode> = {
   home: (
@@ -136,14 +135,6 @@ const iconPaths: Record<IconName, ReactNode> = {
     <>
       <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" />
       <path d="M7 7h.01" />
-    </>
-  ),
-  /* Lingkaran setengah terisi: setengah matahari, setengah bulan.
-     Dipakai untuk "ikuti sistem" -- bukan matahari atau bulan, tapi dua-duanya. */
-  auto: (
-    <>
-      <circle cx="12" cy="12" r="8" />
-      <path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none" />
     </>
   ),
 }
