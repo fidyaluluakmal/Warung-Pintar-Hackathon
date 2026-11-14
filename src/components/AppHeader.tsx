@@ -152,7 +152,7 @@ export function AppHeader({
             </span>
             {utangJalan.slice(0, 3).map((item) => (
               <p key={item.id}>
-                <span className="orange-dot" /> {item.pelanggan} — {item.nama_barang}{" "}
+                <span className="orange-dot" /> {item.pelanggan}: {item.nama_barang}{" "}
                 {rupiah(Math.max(item.total - item.dibayar, 0))}.
               </p>
             ))}
@@ -171,7 +171,7 @@ export function AppHeader({
               </span>
               {sinyalMargin.slice(0, 2).map((sinyal) => (
                 <p key={sinyal.barangId}>
-                  <span className="orange-dot" /> {sinyal.nama} — modal naik{" "}
+                  <span className="orange-dot" /> {sinyal.nama}, modal naik{" "}
                   {sinyal.kenaikanModalPersen}%.
                 </p>
               ))}

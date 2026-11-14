@@ -526,7 +526,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
           <h2>AI baca buku dagangmu</h2>
           <p>
             Angka dihitung dari catatan Anda sendiri, lalu AI menyusun sarannya. Tidak ada angka
-            yang dikarang — kalau datanya kurang, AI bilang begitu.
+            yang dikarang. Kalau datanya kurang, AI bilang begitu.
           </p>
           <button type="button" onClick={() => void mintaAi()} disabled={sibuk}>
             {sibuk ? "Membaca…" : "Minta AI membaca"}

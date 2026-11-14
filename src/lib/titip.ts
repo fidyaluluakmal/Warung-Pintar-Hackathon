@@ -117,7 +117,7 @@ export function teksPembayaranTitip(rows: Titip[]): string {
   for (const row of aktif) {
     const jual = omzetTitip(row)
     lines.push(
-      `- ${row.pemilik}: ${angka(row.terjual)} ${row.satuan} ${row.nama_barang} — ` +
+      `- ${row.pemilik}: ${angka(row.terjual)} ${row.satuan} ${row.nama_barang}, ` +
         `omzet ${rupiah(jual.omzet)}, komisi warung ${persen(row.komisi_persen)} ` +
         `(${rupiah(jual.komisi)}), bagian Anda ${rupiah(jual.bagianPemilik)}`,
     )
@@ -136,10 +136,10 @@ export function teksPembayaranTitip(rows: Titip[]): string {
  */
 export function saranTitip(row: Titip): string {
   const sisa = sisaTitip(row)
-  if (row.status === "selesai") return "Selesai — sudah dibayar ke pemilik barang."
+  if (row.status === "selesai") return "Selesai, sudah dibayar ke pemilik barang."
   if (row.terjual === 0) return "Belum ada yang terjual."
   if (sisa === 0) {
-    return `Semua ${angka(row.qty)} ${row.satuan} terjual — bisa dibayar ke ${row.pemilik}.`
+    return `Semua ${angka(row.qty)} ${row.satuan} terjual, bisa dibayar ke ${row.pemilik}.`
   }
   return `${angka(row.terjual)} ${row.satuan} terjual, sisa ${angka(sisa)} ${row.satuan} masih di rak.`
 }

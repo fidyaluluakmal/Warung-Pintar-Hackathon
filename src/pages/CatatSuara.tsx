@@ -172,7 +172,7 @@ export function CatatSuara({ onClose }: { onClose?: () => void }) {
       <span className="modal-kicker">CATAT DULU, LALU SIMPAN</span>
       <h2>Catat penjualan dengan suara</h2>
       <p>
-        Ucapkan apa yang terjual. Hasilnya dicek dulu sebelum disimpan — tidak
+        Ucapkan apa yang terjual. Hasilnya dicek dulu sebelum disimpan. Tidak
         ada yang langsung masuk stok tanpa Anda setujui.
       </p>
 

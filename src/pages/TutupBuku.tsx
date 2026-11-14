@@ -280,7 +280,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
             <span>{rupiah(harapanLaci)}</span>
           </div>
           <p className="cash-expected">
-            Seharusnya ada di laci <strong>{rupiah(harapanLaci)}</strong> — penjualan{" "}
+            Seharusnya ada di laci <strong>{rupiah(harapanLaci)}</strong> dari penjualan{" "}
             {rupiah(ringkasan.omzet)}
             {ringkasan.kreditHariIni > 0 && ` dikurangi utang ${rupiah(ringkasan.kreditHariIni)}`}
             {ringkasan.biayaBelanja > 0 && ` dikurangi belanja ${rupiah(ringkasan.biayaBelanja)}`}.
@@ -330,7 +330,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
             </ul>
           )}
           <small className="ask-note">
-            Riwayat laci tersimpan di perangkat ini. Selisih belum tentu salah — bisa saja salah
+            Riwayat laci tersimpan di perangkat ini. Selisih belum tentu salah, bisa saja salah
             hitung.
           </small>
         </section>
@@ -360,7 +360,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
           )}
           {ringkasan.utangLewatTujuh.length > 0 && (
             <small className="ask-note">
-              {ringkasan.utangLewatTujuh.length} catatan sudah lewat 7 hari — bagusnya ditagih besok
+              {ringkasan.utangLewatTujuh.length} catatan sudah lewat 7 hari, bagusnya ditagih besok
               pagi.
             </small>
           )}
@@ -390,7 +390,10 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
             </div>
           </div>
           {ringkasan.belanjaHariIni.length === 0 ? (
-            <p className="cashier-empty">Belum ada belanja stok hari ini.</p>
+            <p className="cashier-empty">
+              Belum ada belanja stok hari ini. Kalau kamu baru kulakan, catat di Stok Barang
+              supaya pengeluaran hari ini ikut terhitung.
+            </p>
           ) : (
             <div className="transaction-list">
               {ringkasan.belanjaHariIni.slice(0, 5).map((trx) => (
@@ -498,7 +501,7 @@ function susunHeadline(input: {
 }): string {
   if (input.jumlahTransaksi === 0) {
     if (input.jumlahStokTipis > 0) {
-      return `Belum ada penjualan hari ini. ${input.jumlahStokTipis} barang tinggal sedikit — siapkan dulu sebelum buka.`
+      return `Belum ada penjualan hari ini. ${input.jumlahStokTipis} barang tinggal sedikit, siapkan dulu sebelum buka.`
     }
     return "Belum ada penjualan hari ini. Catatan tetap aman, ya."
   }
@@ -506,7 +509,7 @@ function susunHeadline(input: {
     `Penjualan hari ini ${rupiah(input.omzet)} dari ${input.jumlahTransaksi} transaksi`,
   ]
   if (input.jumlahUtangLewatTujuh > 0) {
-    bagian.push(`${input.jumlahUtangLewatTujuh} utang sudah lewat 7 hari — tagih besok pagi`)
+    bagian.push(`${input.jumlahUtangLewatTujuh} utang sudah lewat 7 hari, tagih besok pagi`)
   } else if (input.totalUtang > 0) {
     bagian.push(`Utang berjalan ${rupiah(input.totalUtang)}`)
   }

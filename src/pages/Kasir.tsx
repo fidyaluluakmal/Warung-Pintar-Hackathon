@@ -433,7 +433,7 @@ export function Kasir() {
             {sibuk
               ? "Menyimpan…"
               : adaUtang
-                ? `Simpan — ${rupiah(bagi.dibayar)} dibayar, ${rupiah(bagi.utang)} ngutang`
+                ? `Simpan: ${rupiah(bagi.dibayar)} dibayar, ${rupiah(bagi.utang)} ngutang`
                 : `Simpan ${keranjang.length} barang`}
             {!sibuk && <Icon name="check" size={16} />}
           </button>

@@ -245,7 +245,11 @@ export function AsistenSidebar({
 
       <section className="asisten-grup asisten-grup-sesi">
         <p className="asisten-grup-label">Sesi</p>
-        {sesi.length === 0 && <p className="asisten-kosong">Belum ada percakapan.</p>}
+        {sesi.length === 0 && (
+          <p className="asisten-kosong">
+            Belum ada percakapan. Tekan "Sesi baru" lalu tulis pertanyaannya.
+          </p>
+        )}
         {kelompok.map((grup) => (
           <div className="asisten-grup-items" key={grup.kunci}>
             <p className="asisten-grup-label">{grup.label}</p>

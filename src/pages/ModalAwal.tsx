@@ -149,7 +149,7 @@ export function ModalAwal() {
               <small>
                 {selisih >= 0
                   ? "Uang Anda bertambah."
-                  : "Uang Anda berkurang — cek barang hilang atau harga jual."}
+                  : "Uang Anda berkurang. Cek barang hilang atau harga jual."}
               </small>
             </article>
           </div>

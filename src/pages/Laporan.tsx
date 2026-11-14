@@ -257,7 +257,7 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
               {data.produkTeratas.length === 0 && (
                 <p>
                   <i className="legend-gray" />
-                  <span>Belum ada penjualan</span>
+                  <span>Belum ada penjualan di periode ini</span>
                   <strong>0%</strong>
                 </p>
               )}

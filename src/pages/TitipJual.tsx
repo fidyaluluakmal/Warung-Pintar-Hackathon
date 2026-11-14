@@ -272,7 +272,7 @@ export function TitipJual() {
                 const jual = omzetTitip(row)
                 return (
                   <p key={row.id}>
-                    {row.nama_barang} dari {row.pemilik} — {angka(row.terjual)} {row.satuan} laku,
+                    {row.nama_barang} dari {row.pemilik}: {angka(row.terjual)} {row.satuan} laku,
                     bagian pemilik {rupiah(jual.bagianPemilik)}.
                   </p>
                 )

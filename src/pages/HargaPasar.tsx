@@ -204,7 +204,7 @@ export function HargaPasar() {
           </div>
         </div>
         <p className="form-note">
-          Catat harga yang Anda lihat di toko atau agen lain — misalnya "di tempat lain
+          Catat harga yang Anda lihat di toko atau agen lain, misalnya "di tempat lain
           beras 15 ribu, di sini 14 ribu". Aplikasi membandingkan dengan modal Anda,
           lalu memberi saran harga jual supaya margin {MARGIN_TARGET}% tetap aman.
         </p>

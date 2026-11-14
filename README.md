@@ -14,7 +14,7 @@ lalu dapat saran belanja besok yang ada alasannya.
 
 Warung kecil mencatat penjualan di buku tulis. Stok tidak terpantau, belanja
 berikutan berdasarkan perkiraan, dan laba tidak pernah dihitung. Kasir digital
-untuk minimarket tidak membantu: warung punya cara jual sendiri — utang pakai
+untuk minimarket tidak membantu: warung punya cara jual sendiri: utang pakai
 nama panggilan, pembeli datang saat tanggal tua, harga modal naik diam-diam.
 
 ## Solusi

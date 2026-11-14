@@ -159,7 +159,7 @@ export function CekStok() {
         </div>
         <p className="form-note">
           Hitung fisik bukan fitur minimarket. Ini cara paling murah buat warung tahu
-          barangnya benar-benar ada atau tidak — dan sekarang juga bisa dicatat sendiri.
+          barangnya benar-benar ada atau tidak, dan sekarang juga bisa dicatat sendiri.
         </p>
       </section>
 

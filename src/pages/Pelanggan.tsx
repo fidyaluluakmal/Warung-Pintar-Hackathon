@@ -102,7 +102,7 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
         <div>
           <span className="date-label">Buku pelanggan</span>
           <h1>Pelanggan</h1>
-          <p>Kasir mencatat barang; buku ini mengingat orangnya — utang, favorit, kapan datang.</p>
+          <p>Kasir mencatat barang; buku ini mengingat orangnya: utang, favorit, kapan datang.</p>
         </div>
         <div className="page-actions">
           <button type="button" className="primary-action" onClick={() => void tambah()}>
@@ -216,7 +216,7 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
         <div className="panel-heading">
           <div>
             <h2>Tambah pelanggan</h2>
-            <p>Nama boleh tanpa nomor telepon — warung banyak pelanggan yang cuma punya nama panggilan.</p>
+            <p>Nama boleh tanpa nomor telepon. Warung banyak pelanggan yang cuma punya nama panggilan.</p>
           </div>
         </div>
         <div className="capital-form" style={{ marginTop: 14 }}>
