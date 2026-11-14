@@ -19,6 +19,7 @@ import {
   type ReactNode,
 } from "react"
 import { supabase, modeDemoLokal } from "./supabase"
+import { ambilSemua } from "./supabaseQuery"
 import { hitungStok, hitungSaranBeli, round2 } from "./inventory"
 import { bagiPembayaran, cariSinyalMargin, type SinyalMargin } from "./margin"
 import type {
@@ -130,23 +131,21 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     const [b, a, t, br, ut, mg] = await Promise.all([
       supabase.from("barang").select("*").order("nama"),
       supabase.from("alias_barang").select("*"),
-      supabase.from("transaksi").select("*").order("tanggal", { ascending: false }),
-      supabase.from("baris_transaksi").select("*"),
+      ambilSemua<Transaksi>("transaksi", "*", "tanggal", false),
+      ambilSemua<BarisTransaksi>("baris_transaksi", "*"),
       supabase.from("utang_berjalan").select("*").order("tanggal", { ascending: false }),
       supabase.from("margin_barang").select("*").order("nama"),
     ])
 
     if (b.error) throw b.error
     if (a.error) throw a.error
-    if (t.error) throw t.error
-    if (br.error) throw br.error
     if (ut.error) throw ut.error
     if (mg.error) throw mg.error
 
     setBarang((b.data ?? []) as Barang[])
     setAlias((a.data ?? []) as Alias[])
-    setTransaksi((t.data ?? []) as Transaksi[])
-    setBaris((br.data ?? []) as BarisTransaksi[])
+    setTransaksi(t)
+    setBaris(br)
     setUtang((ut.data ?? []) as UtangBerjalan[])
     setMargin((mg.data ?? []) as MarginBarang[])
   }, [])
@@ -539,6 +538,16 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
 
   return <Konteks.Provider value={nilai}>{children}</Konteks.Provider>
 }
+
+
+/**
+ * Ambil semua baris sebuah tabel, sedikit demi sedikit.
+ *
+ * PostgREST memotong jawaban di 1000 baris. Kalau tabel lebih besar,
+ * baris yang terpotong hilang tanpa tanda — stok jadi negatif, laba kotor
+ * salah, dan pelanggan kehilangan barang favorit. Jadi ambil bertahap
+ * sampai habis.
+ */
 
 /* -------------------------------------------------------------------------- */
 /* Mode lokal                                                                 */

@@ -58,18 +58,18 @@ begin
   insert into public.barang
     (owner_id, nama, satuan, stok_awal, min_stok, harga_modal, harga_jual, lead_time_hari)
   values
-    (demo_owner, 'Beras Premium',   'kg',      400, 40,  14000, 16000, 2),
-    (demo_owner, 'Gula Pasir',       'kg',      300, 30,  17000, 19000, 2),
-    (demo_owner, 'Minyak Goreng',    'liter',   250, 25,  15000, 17000, 3),
-    (demo_owner, 'Telur Ayam',       'kg',      200, 20,  28000, 32000, 1),
-    (demo_owner, 'Mi Instan',        'bungkus', 300, 60,   3000,  3500, 1),
-    (demo_owner, 'Kopi Sachet',      'sachet',  350, 70,   1200,  1500, 2),
-    (demo_owner, 'Susu UHT',         'pcs',     250, 50,   5000,  6000, 2),
-    (demo_owner, 'Air Mineral',      'botol',   400, 80,   2500,  4000, 1),
-    (demo_owner, 'Rokok Kretek',     'bungkus', 300, 60,  22000, 24000, 1),
-    (demo_owner, 'Sabun Mandi',      'pcs',     200, 40,   4500,  5500, 2),
-    (demo_owner, 'Sarden',           'pcs',     200, 40,   6000,  7500, 3),
-    (demo_owner, 'Pisang',           'kg',      120, 24,  12000, 15000, 1);
+    (demo_owner, 'Beras Premium',   'kg',      30, 40,  14000, 16000, 2),
+    (demo_owner, 'Gula Pasir',       'kg',      45, 30,  17000, 19000, 2),
+    (demo_owner, 'Minyak Goreng',    'liter',   60, 25,  15000, 17000, 3),
+    (demo_owner, 'Telur Ayam',       'kg',      34, 20,  28000, 32000, 1),
+    (demo_owner, 'Mi Instan',        'bungkus', 45, 60,   3000,  3500, 1),
+    (demo_owner, 'Kopi Sachet',      'sachet',  85, 70,   1200,  1500, 2),
+    (demo_owner, 'Susu UHT',         'pcs',     90, 50,   5000,  6000, 2),
+    (demo_owner, 'Air Mineral',      'botol',   60, 80,   2500,  4000, 1),
+    (demo_owner, 'Rokok Kretek',     'bungkus', 50, 60,  22000, 24000, 1),
+    (demo_owner, 'Sabun Mandi',      'pcs',     70, 40,   4500,  5500, 2),
+    (demo_owner, 'Sarden',           'pcs',     75, 40,   6000,  7500, 3),
+    (demo_owner, 'Pisang',           'kg',      46, 24,  12000, 15000, 1);
 
   -- Alias: cara orang menyebut barang di warung.
   insert into public.alias_barang (owner_id, barang_id, alias)
@@ -120,24 +120,27 @@ begin
   cross join generate_series(1, 3 + (extract(doy from hari.tanggal)::int % 3)) as n
   where extract(dow from hari.tanggal)::int <> 0;
 
-  -- Baris penjualan: tiap transaksi punya 1-4 barang.
+  -- Baris penjualan: tiap transaksi punya 1-3 barang, diambil acak dan
+  -- merata dari semua barang.
   insert into public.baris_transaksi (owner_id, transaksi_id, barang_id, jumlah, satuan, harga_satuan)
   select
     t.owner_id,
     t.id,
     b.id,
-    round((1 + random() * 3)::numeric, 2),
+    (1 + (abs(hashtext(t.id::text || 'q')) % 4))::numeric,
     b.satuan,
     b.harga_jual
   from public.transaksi t
-  join lateral (
+  cross join lateral (
     select bb.id, bb.satuan, bb.harga_jual
     from public.barang bb
     where bb.owner_id = t.owner_id
-      and bb.nama in ('Beras Premium', 'Gula Pasir', 'Mi Instan', 'Kopi Sachet', 'Air Mineral', 'Rokok Kretek', 'Pisang')
-      and random() < 0.4
-    limit 4
-  ) b on true
+    -- Urutan dari hash transaksi + barang. Dengan `random()` di dalam
+    -- lateral, Postgres bisa menilai nilainya sekali untuk seluruh
+    -- pernyataan, sehingga semua transaksi memilih barang yang sama.
+    order by md5(t.id::text || bb.id::text)
+    limit 1 + (abs(hashtext(t.id::text)) % 3)
+  ) b
   where t.owner_id = demo_owner
     and t.tipe = 'jual';
 
@@ -170,7 +173,8 @@ begin
   -- tidak menumpuk.
   --
   -- Total terjual per barang dibagi rata ke semua nota pembelian, lalu
-  -- dikasih buffer 1,6x biar stok akhir tidak pas-pasan.
+  -- Pembelian sama dengan penjualan, jadi stok mengurus seperti warung
+  -- sungguhan: barang laku tinggal sedikit dan perlu restok.
   with penjualan_per_barang as (
     select bt.barang_id, sum(bt.jumlah) as total_terjual
     from public.baris_transaksi bt
@@ -187,7 +191,7 @@ begin
     btrans.owner_id,
     btrans.id,
     b.id,
-    greatest(10, ceil(coalesce(p.total_terjual, 0) * 1.6 / greatest(j.n, 1)))::numeric,
+    greatest(10, ceil(coalesce(p.total_terjual, 0) / greatest(j.n, 1)))::numeric,
     b.satuan,
     b.harga_modal
   from public.transaksi btrans

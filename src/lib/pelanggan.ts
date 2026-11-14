@@ -18,6 +18,7 @@
  */
 
 import { supabase } from "./supabase"
+import { ambilSemua } from "./supabaseQuery"
 import type { BarisTransaksi, Transaksi } from "./types"
 
 /* --------------------------------------------------------------------- tipe */
@@ -486,20 +487,19 @@ export async function muatBukuPelanggan(): Promise<DataBukuPelanggan> {
   const [daftarPelanggan, daftarTransaksi, daftarBaris, daftarBarang, daftarUtang] =
     await Promise.all([
       supabase.from("pelanggan").select("*").eq("owner_id", ownerId).order("nama"),
-      supabase
-        .from("transaksi")
-        .select("*")
-        .eq("owner_id", ownerId)
-        .eq("tipe", "jual")
-        .order("tanggal", { ascending: false }),
-      supabase.from("baris_transaksi").select("*").eq("owner_id", ownerId),
+      ambilSemua<Transaksi>("transaksi", "*", "tanggal", false, {
+        kolom: "owner_id",
+        nilai: ownerId,
+      }),
+      ambilSemua<BarisTransaksi>("baris_transaksi", "*", undefined, false, {
+        kolom: "owner_id",
+        nilai: ownerId,
+      }),
       supabase.from("barang").select("id, nama").eq("owner_id", ownerId),
       supabase.from("utang_berjalan").select("*").eq("owner_id", ownerId),
     ])
 
   if (daftarPelanggan.error) throw daftarPelanggan.error
-  if (daftarTransaksi.error) throw daftarTransaksi.error
-  if (daftarBaris.error) throw daftarBaris.error
   if (daftarBarang.error) throw daftarBarang.error
   if (daftarUtang.error) throw daftarUtang.error
 
@@ -511,8 +511,8 @@ export async function muatBukuPelanggan(): Promise<DataBukuPelanggan> {
 
   return {
     pelanggan: (daftarPelanggan.data ?? []) as DataPelanggan[],
-    transaksi: (daftarTransaksi.data ?? []) as Transaksi[],
-    baris: (daftarBaris.data ?? []) as BarisTransaksi[],
+    transaksi: daftarTransaksi.filter((t) => t.tipe === "jual") as Transaksi[],
+    baris: daftarBaris,
     barang: (daftarBarang.data ?? []) as BarangRingkas[],
     utang: barisUtang.map((row) => ({
       pelanggan: row.pelanggan,

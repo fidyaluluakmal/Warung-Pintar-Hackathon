@@ -106,7 +106,7 @@ function Kerangka() {
           {nav === "Catat Suara" && <CatatSuara />}
           {nav === "Foto Nota" && <PindaiNota />}
           {nav === "Tanya AI" && <TanyaAi />}
-          {nav === "Stok Barang" && <StokBarang cari={cari} />}
+          {nav === "Stok Barang" && <StokBarang cari={cari} onPindah={buka} />}
           {nav === "Simpen Dulu" && <SimpenDulu />}
           {nav === "Penjaga Margin" && <PenjagaMargin />}
           {nav === "Cek Stok" && <CekStok />}
