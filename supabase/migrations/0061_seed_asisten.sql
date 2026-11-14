@@ -64,7 +64,8 @@ begin
       sesi_beli,
       'assistant',
       'Berdasarkan catatan, besok disarankan beli Air Mineral sebanyak 19 botol, Mi Instan 12 bungkus, Rokok Kretek 8 bungkus, dan Beras Premium 7 kg. Semua angka ini adalah estimasi dari catatan warung, jadi cek lagi kondisinya sebelum belanja.',
-      now() - interval '2 hours'
+      -- Detik berikutnya: kalau sama persis, urutan pesan bisa terbalik.
+      now() - interval '2 hours' + interval '1 second'
     );
 
   -- ---------------------------------------------------------------------------
@@ -94,6 +95,6 @@ begin
       sesi_utang,
       'assistant',
       'Paling besar utangnya Pak Yono, sisa Rp198.500 dari 3 catatan. Yang terlama sudah 15 hari. Catatan utangnya ada di menu Simpen Dulu.',
-      now() - interval '35 minutes'
+      now() - interval '35 minutes' + interval '1 second'
     );
 end $$;

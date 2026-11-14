@@ -42,6 +42,15 @@ export interface KelompokSesi {
 export const BATAS_SESI_SIDEBAR = 40
 
 /**
+ * Batas panjang pertanyaan.
+ *
+ * Edge Function `ai-ask` menolak di atas 300 karakter dengan status 400.
+ * Batas yang sama dipasang di sini, jadi kegagalan terjadi sebelum dikirim dan
+ * pesannya bisa dijelaskan.
+ */
+export const BATAS_PERTANYAAN = 300
+
+/**
  * Judul otomatis dari pertanyaan pertama.
  *
  * Dipotong di batas kata supaya tidak jadi satu baris panjang. Kalau
@@ -103,7 +112,9 @@ export function kelompokkanSesi(
   const urutan: Array<{ kunci: string; label: string; batas: number }> = [
     { kunci: "hari-ini", label: "Hari ini", batas: 0 },
     { kunci: "kemarin", label: "Kemarin", batas: 1 },
-    { kunci: "minggu", label: "7 hari terakhir", batas: 7 },
+    // Batas 6, bukan 7: hari ini dan kemarin sudah ambil dua hari, jadi
+    // kelompok ini menutup 2..6 -- tujuh hari altogether.
+    { kunci: "minggu", label: "7 hari terakhir", batas: 6 },
   ]
 
   for (const item of sesi) {
@@ -131,26 +142,14 @@ export function kelompokkanSesi(
     .concat(buckets.has("lama") ? [buckets.get("lama")!] : [])
 }
 
-/** Umur sebuah sesi dalam hari, dihitung di zona waktu warung. */
+/**
+ * Umur sebuah sesi dalam hari, dihitung di zona waktu warung.
+ *
+ * Memakai `selisihHari` dari kalender, bukan menyalin perhitungannya: dua
+ * versi yang berbeda pasti akan berbeda someday.
+ */
 export function umurHari(iso: string, sekarang: Date = new Date()): number {
-  const hariIni = formatHari(sekarang)
-  const hariSesi = formatHari(new Date(iso))
-  if (!hariIni || !hariSesi) return 0
-  const selisih = Math.round(
-    (Date.parse(`${hariIni}T00:00:00Z`) - Date.parse(`${hariSesi}T00:00:00Z`)) / 86_400_000,
-  )
-  return Math.max(0, selisih)
-}
-
-/** Tanggal YYYY-MM-DD di zona waktu warung. */
-function formatHari(nilai: Date): string {
-  if (Number.isNaN(nilai.getTime())) return ""
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(nilai)
+  return Math.max(0, selisihHari(iso, sekarang))
 }
 
 /** Proyek yang dipakai sebuah sesi. */

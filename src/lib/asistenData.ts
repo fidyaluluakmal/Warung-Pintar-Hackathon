@@ -179,12 +179,17 @@ class PenyimpananLokal implements PenyimpananAsisten {
 /**
  * Impor sekali sesi dari penyimpanan lama (drawer).
  *
- * Setelah diimpor, kunci lamanya dihapus supaya tidak diimpor dua kali.
- * Kalau belum ada sesi baru, tidak ada yang perlu diimpor.
+ * Id lamanya bukan uuid, jadi id baru dibiarkan dibuat database. Yang
+ * penting: kuncinya HANYA dihapus kalau semua sesi benar-benar tersimpan.
+ * Kalau tidak, percakapan lama hilang tanpa ada yang masuk ke database.
  */
 async function imporSesiLama(): Promise<void> {
   if (typeof localStorage === "undefined") return
-  let lama: Array<{ id: string; judul: string; pesan: Array<{ id: string; role: string; text: string }> }>
+  let lama: Array<{
+    id: string
+    judul: string
+    pesan: Array<{ role: string; text: string }>
+  }>
   try {
     const mentah = localStorage.getItem(KUNCI_LAMA)
     if (!mentah) return
@@ -197,75 +202,108 @@ async function imporSesiLama(): Promise<void> {
     return
   }
 
-  try {
-    const sekarang = new Date().toISOString()
-    for (const sesi of lama) {
-      const id = `lama-${sesi.id}`
-      const adaPesan = Array.isArray(sesi.pesan) ? sesi.pesan : []
-      if (adaPesan.length === 0) continue
-      await simpanSesiLama({
-        id,
+  const tersimpan: string[] = []
+  for (const sesi of lama) {
+    const pesan = Array.isArray(sesi.pesan) ? sesi.pesan : []
+    if (pesan.length === 0) continue
+    try {
+      const idBaru = await simpanSesiLama({
         judul: sesi.judul || "Sesi lama",
-        pesan: adaPesan.map((p, index) => ({
-          id: `lama-${sesi.id}-${index}`,
+        pesan: pesan.map((p) => ({
           role: p.role === "user" ? "user" : "assistant",
           teks: p.text ?? "",
-          dibuat_pada: `${sekarang}-${String(index).padStart(4, "0")}`,
         })),
       })
+      if (idBaru) tersimpan.push(idBaru)
+    } catch {
+      // Gagal mengimpor satu sesi tidak boleh menggagalkan yang lain.
     }
-    localStorage.removeItem(KUNCI_LAMA)
-  } catch {
-    // Gagal mengimpor tidak boleh menggagalkan halaman.
+  }
+
+  // Kunci lama baru dihapus kalau SEMUA sesi berhasil masuk.
+  if (tersimpan.length === lama.length) {
+    try {
+      localStorage.removeItem(KUNCI_LAMA)
+    } catch {
+      // Penyimpanan diblokir.
+    }
   }
 }
 
-/** Simpan satu sesi lama ke tempat penyimpanan yang aktif. */
+/**
+ * Simpan satu sesi lama ke tempat penyimpanan yang aktif.
+ *
+ * Balikkan id barunya kalau tersimpan.
+ */
 async function simpanSesiLama(sesi: {
-  id: string
   judul: string
-  pesan: Array<{ id: string; role: "user" | "assistant"; teks: string; dibuat_pada: string }>
-}): Promise<void> {
+  pesan: Array<{ role: "user" | "assistant"; teks: string }>
+}): Promise<string | null> {
+  const dasar = new Date()
+  const dibuatPada = (index: number) =>
+    new Date(dasar.getTime() + index).toISOString()
+
   if (!supabase) {
     const lokal = bacaLokal()
     const owner = "lokal"
+    const id = idLokal("sesi-lama")
     tulisLokal({
       ...lokal,
       sesi: [
         {
-          id: sesi.id,
+          id,
           owner_id: owner,
           judul: sesi.judul,
           proyek_id: null,
-          dibuat_pada: sesi.pesan[0]?.dibuat_pada ?? new Date().toISOString(),
-          diperbarui_pada: new Date().toISOString(),
+          dibuat_pada: dibuatPada(0),
+          diperbarui_pada: dibuatPada(0),
         },
         ...lokal.sesi,
       ],
-      pesan: [...lokal.pesan, ...sesi.pesan.map((p) => ({ ...p, owner_id: owner, sesi_id: sesi.id }))],
+      pesan: [
+        ...lokal.pesan,
+        ...sesi.pesan.map((p, index) => ({
+          id: idLokal("pesan-lama"),
+          owner_id: owner,
+          sesi_id: id,
+          role: p.role,
+          teks: p.teks,
+          dibuat_pada: dibuatPada(index),
+        })),
+      ],
     })
-    return
+    return id
   }
 
   const { data: auth } = await supabase.auth.getUser()
   const owner = auth.user?.id
-  if (!owner) return
-  await supabase.from("sesi_asisten").insert({
-    id: sesi.id,
-    owner_id: owner,
-    judul: sesi.judul,
-    proyek_id: null,
-  })
-  await supabase.from("pesan_asisten").insert(
-    sesi.pesan.map((p) => ({
-      id: p.id,
+  if (!owner) return null
+
+  const { data: sesiBaru, error: errorSesi } = await supabase
+    .from("sesi_asisten")
+    .insert({
       owner_id: owner,
-      sesi_id: sesi.id,
+      judul: sesi.judul,
+      proyek_id: null,
+      dibuat_pada: dibuatPada(0),
+      diperbarui_pada: dibuatPada(0),
+    })
+    .select("id")
+    .single()
+  if (errorSesi) throw errorSesi
+  if (!sesiBaru) return null
+
+  const { error: errorPesan } = await supabase.from("pesan_asisten").insert(
+    sesi.pesan.map((p, index) => ({
+      owner_id: owner,
+      sesi_id: sesiBaru.id,
       role: p.role,
       teks: p.teks,
-      dibuat_pada: p.dibuat_pada,
+      dibuat_pada: dibuatPada(index),
     })),
   )
+  if (errorPesan) throw errorPesan
+  return sesiBaru.id
 }
 
 /* -------------------------------------------------------------------------- */
@@ -396,6 +434,15 @@ class PenyimpananSupabase implements PenyimpananAsisten {
       .select()
       .single()
     if (error) throw error
+
+    // Sesi yang baru dipakai harus naik ke atas daftar. Tanpa ini, sesi yang
+    // dilanjutkan hari ini tetap tersimpan di tempat lamanya.
+    const { error: errorSesi } = await supabase!
+      .from("sesi_asisten")
+      .update({ diperbarui_pada: new Date().toISOString() })
+      .eq("id", input.sesi_id)
+    if (errorSesi) throw errorSesi
+
     return data as PesanAsisten
   }
 }

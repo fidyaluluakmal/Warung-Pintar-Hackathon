@@ -5,6 +5,7 @@ import App from "./App"
 import { bacaTemaTersimpan, terapkanTema } from "./lib/theme"
 import { PenyediaWarung } from "./lib/store"
 import { TitipJual } from "./pages/TitipJual"
+import { AsistenAi } from "./pages/AsistenAi"
 
 /**
  * Uji asap: aplikasi harus bisa dirender tanpa error.
@@ -32,6 +33,18 @@ describe("render aplikasi", () => {
       </PenyediaWarung>,
     )
     expect(html).toContain("Barang titipan")
+  })
+
+  it("merender halaman asisten tanpa error", () => {
+    // `bangunKonteks` jalan saat render, jadi kalau ada data rusak di
+    // sini halamannya akan mati -- dan itu tidak ketahuan kalau tidak
+    // dirender.
+    const html = renderToString(
+      <PenyediaWarung>
+        <AsistenAi />
+      </PenyediaWarung>,
+    )
+    expect(html).toContain("Asisten warung")
   })
 })
 

@@ -2,8 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../components/Icon"
 import { AsistenSidebar } from "../components/AsistenSidebar"
 import { useWarung } from "../lib/store"
+import { useSekarang } from "../hooks/useSekarang"
 import { callAskWarung } from "../lib/api"
+import { pesanUntukUser } from "../lib/pesan"
 import {
+  BATAS_PERTANYAAN,
   bangunKonteks,
   instruksiUntukSesi,
   judulOtomatis,
@@ -15,6 +18,29 @@ import { penyimpananAsisten } from "../lib/asistenData"
 import type { PesanAsisten, Proyek } from "../lib/types"
 
 /**
+ * Pesan error dari panggilan AI.
+ *
+ * Bedakan tiga hal: sesi masuk habis, pertanyaannya kepanjangan, dan
+ * masalah jaringan. Kalau semuanya jadi satu kalimat, pemilik warung tidak
+ * tahu harus-biaya apa.
+ */
+function pesanAI(kesalahan: unknown): string {
+  const pesan = kesalahan instanceof Error ? kesalahan.message : String(kesalahan ?? "")
+  const status = (kesalahan as { status?: number } | null)?.status
+
+  if (/invalid login|session missing|auth session/i.test(pesan)) {
+    return "Sesi masuk sudah habis. Masuk ulang, lalu coba lagi."
+  }
+  if (status === 400 || /pertanyaan terlalu panjang/i.test(pesan)) {
+    return "Pertanyaannya terlalu panjang. Ringkas sedikit, lalu coba lagi."
+  }
+  if (/jaringan|network|fetch failed/i.test(pesan)) {
+    return "Jaringan sedang bermasalah. Angka di panel lain tetap bisa dipakai."
+  }
+  return "AI sedang tidak bisa menjawab. Angka di panel lain tetap bisa dipakai."
+}
+
+/**
  * Asisten warung — halaman penuh, ala ChatGPT.
  *
  * Kolom kiri berisi sesi dan proyek, kolom kanan berisi percakapan. Semua
@@ -23,6 +49,7 @@ import type { PesanAsisten, Proyek } from "../lib/types"
  */
 export function AsistenAi() {
   const { sesi: akun, transaksi, baris, barang, stok, utang, saranBeli } = useWarung()
+  const sekarang = useSekarang()
   const [sesi, setSesi] = useState<SesiLengkap[]>([])
   const [proyek, setProyek] = useState<Proyek[]>([])
   const [pesan, setPesan] = useState<PesanAsisten[]>([])
@@ -31,7 +58,11 @@ export function AsistenAi() {
   const [sibuk, setSibuk] = useState(false)
   const [galat, setGalat] = useState("")
   const [koloTerbuka, setKoloTerbuka] = useState(false)
+  const [tersalin, setTersalin] = useState(false)
+  /** Proyek tujuan untuk percakapan yang sedang dibuat. */
+  const [proyekSesiBaru, setProyekSesiBaru] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const kolomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const simpanan = useMemo(() => penyimpananAsisten(), [])
@@ -75,9 +106,11 @@ export function AsistenAi() {
     [pesan, sesiAktifId],
   )
 
+  // `sekarang` ikut jadi dependensi: kalau aplikasi dibiarkan semalaman,
+  // "omzet hari ini" harus ikut berganti tanggalnya.
   const konteks = useMemo(
-    () => bangunKonteks({ transaksi, baris, barang, stok, utang, saranBeli }),
-    [transaksi, baris, barang, stok, utang, saranBeli],
+    () => bangunKonteks({ transaksi, baris, barang, stok, utang, saranBeli }, sekarang),
+    [transaksi, baris, barang, stok, utang, saranBeli, sekarang],
   )
 
   const instruksi = useMemo(
@@ -85,23 +118,81 @@ export function AsistenAi() {
     [sesiAktif, proyek],
   )
 
+  /**
+   * Instructions that were just typed.
+   *
+   * The textarea saves on blur, so the stored instruction is still the old
+   * one when the question is sent right after typing. The question would
+   * then go to the AI without the instruction — the main feature of a
+   * project. So the freshest value is kept separately and sent right away.
+   */
+  const [instruksiSegar, setInstruksiSegar] = useState<Record<string, string>>({})
+
+  const instruksiTerpakai = useMemo(() => {
+    if (sesiAktif?.proyek_id) {
+      const segar = instruksiSegar[sesiAktif.proyek_id]
+      if (segar !== undefined) return segar.trim()
+    }
+    return instruksi
+  }, [instruksi, instruksiSegar, sesiAktif])
+
+  // The database write is delayed so it doesn't happen on every keystroke.
+  const timerInstruksi = useRef<number | null>(null)
+  function ubahInstruksi(proyekId: string, nilai: string) {
+    setInstruksiSegar((prev) => ({ ...prev, [proyekId]: nilai }))
+    if (timerInstruksi.current !== null) window.clearTimeout(timerInstruksi.current)
+    timerInstruksi.current = window.setTimeout(() => {
+      setProyek((prev) =>
+        prev.map((p) => (p.id === proyekId ? { ...p, instruksi: nilai.trim() || null } : p)),
+      )
+      void simpanan.ubahProyek(proyekId, { instruksi: nilai.trim() || null })
+    }, 600)
+  }
+
   // Scroll ke pesan terakhir.
   useEffect(() => {
     const node = scrollRef.current
     if (node) node.scrollTop = node.scrollHeight
   }, [pesanSesi.length, sibuk])
 
-  // Escape menutup kolom sesi di HP.
+  // Kolom sesi di HP: Escape menutup, fokus masuk ke kolom, dan kembali
+  // ke tombol pemicunya setelah ditutup.
   useEffect(() => {
     if (!koloTerbuka) return
+    const kolom = kolomRef.current
+    const sebelumnya = document.activeElement as HTMLElement | null
+    const fokusPertama = kolom?.querySelector<HTMLElement>("button")
+    fokusPertama?.focus()
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault()
         setKoloTerbuka(false)
+        return
+      }
+      // Fokus tidak boleh keluar dari kolom yang terbuka.
+      if (event.key !== "Tab" || !kolom) return
+      const bisaFokus = Array.from(
+        kolom.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+      if (bisaFokus.length === 0) return
+      const pertama = bisaFokus[0]
+      const terakhir = bisaFokus[bisaFokus.length - 1]
+      if (event.shiftKey && document.activeElement === pertama) {
+        event.preventDefault()
+        terakhir.focus()
+      } else if (!event.shiftKey && document.activeElement === terakhir) {
+        event.preventDefault()
+        pertama.focus()
       }
     }
     document.addEventListener("keydown", onKeyDown)
-    return () => document.removeEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("keydown", onKeyDown)
+      sebelumnya?.focus()
+    }
   }, [koloTerbuka])
 
   // Area ketik ikut melebar mengikuti isinya, sampai batas maksimumnya.
@@ -125,13 +216,14 @@ export function AsistenAi() {
       // Sesi pertama: dibuat otomatis dari pertanyaan yang pertama.
       let idSesi = sesiAktifId
       if (!idSesi) {
-        const baru = await simpanan.buatSesi(judulOtomatis(teks), null)
+        const baru = await simpanan.buatSesi(judulOtomatis(teks), proyekSesiBaru)
         idSesi = baru.id
         setSesi((prev) => [{ ...baru, jumlahPesan: 0 }, ...prev])
         setSesiAktifId(baru.id)
       }
 
-      await simpanan.simpanPesan({ sesi_id: idSesi, role: "user", teks })
+      // Pesan user langsung masuk ke layar dulu, baru disimpan. Kalau
+      // disimpan dulu dan gagal, pertanyaannya hilang tanpa jejak.
       const pesanUser = {
         id: `lokal-${Date.now()}`,
         owner_id: akun?.userId ?? "lokal",
@@ -141,10 +233,16 @@ export function AsistenAi() {
         dibuat_pada: new Date().toISOString(),
       }
       setPesan((prev) => [...prev, pesanUser])
+      try {
+        await simpanan.simpanPesan({ sesi_id: idSesi, role: "user", teks })
+      } catch {
+        // Pesan tetap tampil di layar; hanya riwayat serverside yang belum
+        // lengkap.
+      }
 
       const hasil = await callAskWarung(teks, {
         ...konteks,
-        ...(instruksi ? { instruksiProyek: instruksi } : {}),
+        ...(instruksiTerpakai ? { instruksiProyek: instruksiTerpakai } : {}),
       })
 
       const jawaban = hasil?.answer ?? "AI belum menjawab. Angka di panel lain tetap bisa dipakai."
@@ -161,11 +259,7 @@ export function AsistenAi() {
         },
       ])
     } catch (kesalahan) {
-      setGalat(
-        kesalahan instanceof Error && /Invalid login/i.test(kesalahan.message)
-          ? "Sesi masuk sudah habis. Masuk ulang, lalu coba lagi."
-          : "AI sedang tidak bisa menjawab. Angka di panel lain tetap bisa dipakai.",
-      )
+      setGalat(pesanAI(kesalahan))
     } finally {
       setSibuk(false)
       inputRef.current?.focus()
@@ -187,36 +281,98 @@ export function AsistenAi() {
   }
 
   async function buatProyek(nama: string, instruksiProyek: string) {
-    const baru = await simpanan.simpanProyek({ nama, instruksi: instruksiProyek || null })
-    setProyek((prev) => [baru, ...prev])
+    try {
+      const baru = await simpanan.simpanProyek({ nama, instruksi: instruksiProyek || null })
+      setProyek((prev) => [baru, ...prev])
+      setGalat("")
+    } catch (kesalahan) {
+      setGalat(pesanUntukUser(kesalahan, "Proyeknya belum bisa disimpan. Coba lagi."))
+    }
   }
 
   async function ubahProyek(
     id: string,
     ubah: { nama?: string; instruksi?: string | null },
   ) {
-    await simpanan.ubahProyek(id, ubah)
-    setProyek((prev) => prev.map((p) => (p.id === id ? { ...p, ...ubah } : p)))
+    try {
+      await simpanan.ubahProyek(id, ubah)
+      setProyek((prev) => prev.map((p) => (p.id === id ? { ...p, ...ubah } : p)))
+      setGalat("")
+    } catch (kesalahan) {
+      setGalat(pesanUntukUser(kesalahan, "Instruksi proyeknya belum bisa disimpan. Coba lagi."))
+    }
   }
 
   async function hapusProyek(id: string) {
-    await simpanan.hapusProyek(id)
-    setProyek((prev) => prev.filter((p) => p.id !== id))
-    setSesi((prev) => prev.map((s) => (s.proyek_id === id ? { ...s, proyek_id: null } : s)))
+    try {
+      await simpanan.hapusProyek(id)
+      setProyek((prev) => prev.filter((p) => p.id !== id))
+      setSesi((prev) => prev.map((s) => (s.proyek_id === id ? { ...s, proyek_id: null } : s)))
+      setGalat("")
+    } catch (kesalahan) {
+      setGalat(pesanUntukUser(kesalahan, "Proyeknya belum bisa dihapus. Coba lagi."))
+    }
   }
 
   async function pindahkanSesi(sesiId: string, proyekId: string | null) {
-    await simpanan.ubahSesi(sesiId, { proyek_id: proyekId })
-    setSesi((prev) =>
-      prev.map((s) =>
-        s.id === sesiId ? { ...s, proyek_id: proyekId, diperbarui_pada: new Date().toISOString() } : s,
-      ),
-    )
+    try {
+      await simpanan.ubahSesi(sesiId, { proyek_id: proyekId })
+      setSesi((prev) =>
+        prev.map((s) =>
+          s.id === sesiId
+            ? { ...s, proyek_id: proyekId, diperbarui_pada: new Date().toISOString() }
+            : s,
+        ),
+      )
+      setGalat("")
+    } catch (kesalahan) {
+      setGalat(pesanUntukUser(kesalahan, "Sesi itu belum bisa dipindahkan. Coba lagi."))
+    }
+  }
+
+  async function hapusSesi(sesiId: string) {
+    try {
+      await simpanan.hapusSesi(sesiId)
+      setSesi((prev) => prev.filter((s) => s.id !== sesiId))
+      setPesan((prev) => prev.filter((p) => p.sesi_id !== sesiId))
+      setSesiAktifId((sekarang) => (sekarang === sesiId ? null : sekarang))
+      setGalat("")
+    } catch (kesalahan) {
+      setGalat(pesanUntukUser(kesalahan, "Sesi itu belum bisa dihapus. Coba lagi."))
+    }
+  }
+
+  /**
+   * Salin teks ke papan klip.
+   *
+   * `navigator.clipboard` tidak ada di konteks yang tidak aman — persis seperti
+   * saat demo di HP lewat alamat jaringan lokal. Jadi ada cara cadangan.
+   */
+  async function salin(teks: string): Promise<void> {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(teks)
+      } else {
+        const sementara = document.createElement("textarea")
+        sementara.value = teks
+        sementara.setAttribute("readonly", "")
+        sementara.style.position = "fixed"
+        sementara.style.opacity = "0"
+        document.body.appendChild(sementara)
+        sementara.select()
+        document.execCommand("copy")
+        document.body.removeChild(sementara)
+      }
+      setTersalin(true)
+      window.setTimeout(() => setTersalin(false), 2000)
+    } catch {
+      setGalat("Teksnya belum bisa disalin. Pilih dan salin manual ya.")
+    }
   }
 
   return (
     <div className={koloTerbuka ? "asisten-halaman kolom-terbuka" : "asisten-halaman"}>
-      <aside className="asisten-sisi" aria-label="Sesi dan proyek">
+      <aside className="asisten-sisi" aria-label="Sesi dan proyek" ref={kolomRef}>
         <AsistenSidebar
           sesi={sesiLengkap}
           proyek={proyek}
@@ -230,6 +386,9 @@ export function AsistenAi() {
           onUbahProyek={ubahProyek}
           onHapusProyek={hapusProyek}
           onPindahkanSesi={pindahkanSesi}
+          onHapusSesi={hapusSesi}
+          onUbahInstruksi={ubahInstruksi}
+          onPilihProyekSesiBaru={setProyekSesiBaru}
           onTutup={() => setKoloTerbuka(false)}
           bisaTutup
           namaPemilik={akun?.pemilik}
@@ -257,16 +416,16 @@ export function AsistenAi() {
           </button>
           <div>
             <strong>{sesiAktif?.judul ?? "Percakapan baru"}</strong>
-            {instruksi && (
+            {instruksiTerpakai && (
               <small className="asisten-instruksi">
-                <Icon name="box" size={12} /> {instruksi}
+                <Icon name="box" size={12} /> {instruksiTerpakai}
               </small>
             )}
           </div>
         </header>
 
         <div className="asisten-putar" ref={scrollRef}>
-          {pesanSesi.length === 0 ? (
+          {pesanSesi.length === 0 && !sibuk ? (
             <div className="asisten-kosong-layar">
               <span className="asisten-orb">
                 <Icon name="spark" size={26} />
@@ -285,7 +444,12 @@ export function AsistenAi() {
               </div>
             </div>
           ) : (
-            <div className="asisten-pesan">
+            <div
+              className="asisten-pesan"
+              role="log"
+              aria-live="polite"
+              aria-busy={sibuk}
+            >
               {pesanSesi.map((item) => (
                 <div key={item.id} className={`asisten-pesan-baris ${item.role}`}>
                   {item.role === "assistant" && (
@@ -299,25 +463,25 @@ export function AsistenAi() {
                       <button
                         type="button"
                         className="asisten-salin"
-                        onClick={() => void navigator.clipboard.writeText(item.teks)}
+                        onClick={() => void salin(item.teks)}
                         aria-label="Salin jawaban"
                       >
-                        <Icon name="receipt" size={13} /> Salin
+                        <Icon name="receipt" size={13} /> {tersalin ? "Tersalin" : "Salin"}
                       </button>
                     )}
                   </div>
                 </div>
               ))}
-              {sibuk && (
-                <div className="asisten-pesan-baris assistant">
-                  <span className="asisten-pesan-avatar">
-                    <Icon name="spark" size={13} />
-                  </span>
-                  <div className="asisten-pesan-isi">
-                    <p className="asisten-menghitung">Menghitung dari data warung…</p>
-                  </div>
-                </div>
-              )}
+            </div>
+          )}
+          {sibuk && (
+            <div className="asisten-pesan-baris assistant">
+              <span className="asisten-pesan-avatar">
+                <Icon name="spark" size={13} />
+              </span>
+              <div className="asisten-pesan-isi">
+                <p className="asisten-menghitung">Menghitung dari data warung…</p>
+              </div>
             </div>
           )}
         </div>
@@ -337,6 +501,7 @@ export function AsistenAi() {
             rows={1}
             placeholder="Tanya apa saja soal warung ini…"
             aria-label="Tulis pertanyaan untuk asisten"
+            maxLength={BATAS_PERTANYAAN}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {

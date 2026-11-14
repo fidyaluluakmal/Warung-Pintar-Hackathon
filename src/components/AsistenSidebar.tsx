@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react"
 import { Icon } from "./Icon"
 import {
+  BATAS_SESI_SIDEBAR,
   kelompokkanSesi,
   judulOtomatis,
   namaProyekDefault,
+  proyekSesi,
   sesiTanpaProyek,
   urutProyek,
   type SesiLengkap,
@@ -29,6 +31,9 @@ export function AsistenSidebar({
   onUbahProyek,
   onHapusProyek,
   onPindahkanSesi,
+  onHapusSesi,
+  onUbahInstruksi,
+  onPilihProyekSesiBaru,
   onTutup,
   bisaTutup,
   namaPemilik,
@@ -42,11 +47,15 @@ export function AsistenSidebar({
   onUbahProyek: (id: string, ubah: { nama?: string; instruksi?: string | null }) => Promise<void>
   onHapusProyek: (id: string) => Promise<void>
   onPindahkanSesi: (sesiId: string, proyekId: string | null) => Promise<void>
+  onHapusSesi: (sesiId: string) => Promise<void>
+  onUbahInstruksi: (proyekId: string, instruksi: string) => void
+  onPilihProyekSesiBaru: (proyekId: string | null) => void
   onTutup?: () => void
   bisaTutup?: boolean
   namaPemilik?: string | null
 }) {
   const [proyekTerbuka, setProyekTerbuka] = useState<string | null>(null)
+  const [proyekSesiBaru, setProyekSesiBaru] = useState<string | null>(null)
   const [sedangBuat, setSedangBuat] = useState(false)
   const [namaBaru, setNamaBaru] = useState("")
   const [galat, setGalat] = useState("")
@@ -75,9 +84,9 @@ export function AsistenSidebar({
         {bisaTutup && onTutup && (
           <button
             type="button"
-            className="modal-close"
+            className="modal-close asisten-tutup"
             onClick={onTutup}
-            aria-label="Tutup asisten"
+            aria-label="Tutup daftar sesi"
           >
             <Icon name="close" />
           </button>
@@ -89,10 +98,31 @@ export function AsistenSidebar({
       </button>
 
       {daftarProyek.length > 0 && (
+        <label className="asisten-pilih-proyek">
+          <span>Sesi baru masuk ke</span>
+          <select
+            value={proyekSesiBaru ?? ""}
+            onChange={(event) => {
+              const nilai = event.target.value || null
+              setProyekSesiBaru(nilai)
+              onPilihProyekSesiBaru(nilai)
+            }}
+          >
+            <option value="">Tanpa proyek</option>
+            {daftarProyek.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.nama}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {daftarProyek.length > 0 && (
         <section className="asisten-grup">
           <p className="asisten-grup-label">Proyek</p>
           {daftarProyek.map((item) => {
-            const isi = sesi.filter((s) => s.proyek_id === item.id)
+            const isi = proyekSesi(sesi, item.id)
             const terbuka = proyekTerbuka === item.id
             return (
               <div className="asisten-proyek" key={item.id}>
@@ -128,7 +158,8 @@ export function AsistenSidebar({
                       className="input"
                       rows={3}
                       defaultValue={item.instruksi ?? ""}
-                      placeholder="mis. Fokus saja utang Pak Yono, jangan bringing barang lain."
+                      placeholder="mis. Fokus saja utang Pak Yono, jangan membawa barang lain."
+                      onChange={(event) => onUbahInstruksi(item.id, event.target.value)}
                       onBlur={(event) => {
                         const nilai = event.target.value.trim()
                         if (nilai !== (item.instruksi ?? "")) {
@@ -218,18 +249,28 @@ export function AsistenSidebar({
         {kelompok.map((grup) => (
           <div className="asisten-grup-items" key={grup.kunci}>
             <p className="asisten-grup-label">{grup.label}</p>
-            {grup.sesi.map((item) => (
-              <button
-                type="button"
-                key={item.id}
-                className={
-                  item.id === sesiAktifId ? "asisten-daftar-item aktif" : "asisten-daftar-item"
-                }
-                onClick={() => onPilihSesi(item.id)}
-                title={item.judul}
-              >
-                {item.judul || judulOtomatis(item.judul)}
-              </button>
+            {grup.sesi.slice(0, BATAS_SESI_SIDEBAR).map((item) => (
+              <span className="asisten-daftar-baris" key={item.id}>
+                <button
+                  type="button"
+                  className={
+                    item.id === sesiAktifId ? "asisten-daftar-item aktif" : "asisten-daftar-item"
+                  }
+                  onClick={() => onPilihSesi(item.id)}
+                  title={item.judul}
+                >
+                  {item.judul || judulOtomatis(item.judul)}
+                </button>
+                <button
+                  type="button"
+                  className="asisten-proyek-aksi"
+                  onClick={() => void onHapusSesi(item.id)}
+                  aria-label={`Hapus sesi ${item.judul}`}
+                  title="Hapus sesi"
+                >
+                  <Icon name="trash" size={13} />
+                </button>
+              </span>
             ))}
           </div>
         ))}

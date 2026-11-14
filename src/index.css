@@ -8475,6 +8475,9 @@ textarea.input {
   flex-direction: column;
   gap: 14px;
 }
+.asisten-tutup {
+  display: none;
+}
 .asisten-kolom-head {
   display: flex;
   align-items: flex-start;
@@ -8517,6 +8520,26 @@ textarea.input {
   border-color: var(--brand-mid);
   background: var(--surface-2);
 }
+.asisten-pilih-proyek {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.asisten-pilih-proyek span {
+  padding: 0 9px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+.asisten-pilih-proyek select {
+  height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-input);
+  color: var(--ink);
+  font-size: 11.5px;
+}
 .asisten-grup {
   margin-top: 18px;
 }
@@ -8540,6 +8563,15 @@ textarea.input {
   padding: 0 8px;
   font-size: 10px;
   letter-spacing: 0.04em;
+}
+.asisten-daftar-baris {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.asisten-daftar-baris .asisten-daftar-item {
+  flex: 1;
+  min-width: 0;
 }
 .asisten-daftar-item {
   width: 100%;
@@ -8863,6 +8895,8 @@ textarea.input {
   font-size: 13.5px;
   line-height: 1.68;
   white-space: pre-wrap;
+  /* Angka panjang atau kata tanpa spasi tidak boleh keluar dari balon. */
+  overflow-wrap: anywhere;
 }
 .asisten-pesan-baris.assistant .asisten-pesan-isi p {
   color: var(--ink);
@@ -9014,9 +9048,15 @@ textarea.input {
   .asisten-catatan {
     width: calc(100% - 28px);
   }
-  /* Di layar sentuh tidak ada hover, jadi tombol salin selalu terlihat. */
-  .asisten-salin {
+  /* Di layar sentuh tidak ada hover, jadi tombol ini selalu terlihat.
+     Kalau tidak, tombolnya tetap bisa diklik padahal tidak kelihatan. */
+  .asisten-salin,
+  .asisten-proyek-aksi {
     opacity: 1;
+  }
+  /* Tombol tutup kolom hanya untuk laci geser di HP. */
+  .asisten-tutup {
+    display: grid;
   }
   .asisten-kosong-layar h2 {
     font-size: 21px;

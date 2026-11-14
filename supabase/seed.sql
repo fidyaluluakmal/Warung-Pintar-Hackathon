@@ -13,6 +13,10 @@
 
 -- ---------------------------------------------------------------------------
 -- 1. Akun demo
+--
+-- Akun demo sebenarnya dibuat di migration 0025_akun_demo.sql, supaya seed
+-- lain yang jalan setelah migrasi bisa menemukan akunnya. Blok ini cuma
+-- cadangan untuk kalau seed.sql dijalankan tanpa migration.
 -- ---------------------------------------------------------------------------
 do $$
 begin
