@@ -138,8 +138,10 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
             {sapaan()}, {sesi?.pemilik ?? "Pemilik Warung"}. Berikut kondisi warung Anda.
           </p>
         </div>
+        {/* Ikon panah, bukan chevron ke bawah: tombol ini membuka tutup buku
+            untuk hari ini, bukan membuka daftar pilihan. */}
         <button className="period-button" onClick={() => onPindah("Tutup Buku")}>
-          Hari ini <Icon name="down" size={16} />
+          Hari ini <Icon name="arrow" size={16} />
         </button>
       </section>
 

@@ -188,15 +188,17 @@ export function Pengaturan() {
             >
               <Icon name="arrow" size={17} /> Muat ulang data
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                resetDemo()
-                notify("Data demo berhasil direset")
-              }}
-            >
-              Reset data demo <span>lokal</span>
-            </button>
+            {modeLokal && (
+              <button
+                type="button"
+                onClick={() => {
+                  resetDemo()
+                  notify("Data demo berhasil direset")
+                }}
+              >
+                Reset data demo <span>lokal</span>
+              </button>
+            )}
           </div>
         </section>
 

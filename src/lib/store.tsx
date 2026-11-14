@@ -850,11 +850,27 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     [sesi, muatData],
   )
 
+  /**
+   * Kembalikan data mode lokal ke kondisi semula.
+   *
+   * Bukan sekadar menghapus transaksi: kalau cuma dihapus, warung jadi
+   * kosong dan tidak ada cara mengisinya lagi tanpa internet.
+   */
   const resetDemo = useCallback(() => {
-    const lokal = bacaLokal()
-    simpanLokal({ ...lokal, transaksi: [], baris: [] })
-    setTransaksi([])
-    setBaris([])
+    const demo = dataDemoLokal()
+    simpanLokal(demo)
+    setBarang(demo.barang)
+    setAlias(demo.alias)
+    setTransaksi(demo.transaksi)
+    setBaris(demo.baris)
+    setUtang(
+      demo.utang.map((u) => ({
+        ...u,
+        nama_barang: demo.barang.find((b) => b.id === u.barang_id)?.nama ?? "",
+        sisa: Math.max(u.total - u.dibayar, 0),
+      })),
+    )
+    setTitip(demo.titip)
   }, [])
 
   // Stok dihitung dari history, bukan disimpan terpisah.
