@@ -336,7 +336,7 @@
   height: 20px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 6px;
   background: #ef6b50;
   color: white;
   font-style: normal;
@@ -424,7 +424,7 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 10px;
   background: #b8d5e9;
   color: #254660;
   font-size: 12px;
@@ -641,7 +641,7 @@ header {
   height: 7px;
   background: #ef6b50;
   border: 1.5px solid white;
-  border-radius: 50%;
+  border-radius: 2px;
 }
 .mini-profile {
   padding-left: 20px;
@@ -730,7 +730,7 @@ header {
 .orange-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 2px;
   background: #ef6b50;
 }
 .info-dot {
@@ -1832,53 +1832,53 @@ header {
 .chart-summary strong {
   color: var(--green-dark);
 }
-.donut-wrap {
+/*
+ * Komposisi omzet.
+ *
+ * Batang datar, bukan pie. Alasannya dua: pie butuh lingkaran, dan batang
+ * ini muat lebih banyak ruang di layar HP kecil, jadi bagian tiap barang
+ * lebih mudah dibandingkan.
+ */
+.composition {
   min-height: 283px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  gap: 14px;
 }
-.donut {
-  width: 137px;
-  height: 137px;
-  padding: 18px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--green) 0 46%,
-    #7db2d6 46% 74%,
-    #5e94c4 74% 92%,
-    #dce0e3 92% 100%
-  );
-}
-.donut > div {
-  width: 100%;
-  height: 100%;
+.composition-total {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: white;
+  gap: 2px;
 }
-.donut strong {
-  font-size: 14px;
+.composition-total strong {
+  font-size: 20px;
+  letter-spacing: -0.3px;
 }
-.donut small {
-  margin-top: 4px;
+.composition-total small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 11.5px;
 }
-.donut-legend {
+.composition-bar {
+  height: 28px;
+  display: flex;
+  gap: 2px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.composition-seg {
+  min-width: 3px;
+  height: 100%;
+}
+.composition-legend {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 6px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px 16px;
 }
-.donut-legend p {
+.composition-legend p {
   margin: 0;
   display: grid;
   grid-template-columns: 7px 1fr auto;
@@ -1886,7 +1886,7 @@ header {
   gap: 6px;
   font-size: 11px;
 }
-.donut-legend p i {
+.composition-legend p i {
   width: 7px;
   height: 7px;
   border-radius: 2px;
@@ -1894,7 +1894,7 @@ header {
 .legend-gray {
   background: var(--surface-3);
 }
-.donut-legend p span {
+.composition-legend p span {
   color: var(--muted);
 }
 .top-product {
@@ -1984,7 +1984,7 @@ header {
   display: grid;
   place-items: center;
   border: 3px solid #fff;
-  border-radius: 50%;
+  border-radius: 14px;
   background: #b8d5e9;
   color: #254660;
   font-size: 14px;
@@ -2162,7 +2162,7 @@ header {
   bottom: 8px;
   display: none;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 5px;
   background: var(--brand-solid);
   color: white;
 }
@@ -2200,7 +2200,7 @@ header {
   padding: 2px;
   flex: 0 0 auto;
   border: 0;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--surface-3);
   transition: background 0.2s;
 }
@@ -2208,7 +2208,7 @@ header {
   width: 18px;
   height: 18px;
   display: block;
-  border-radius: 50%;
+  border-radius: 5px;
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
@@ -2408,9 +2408,6 @@ header {
   color: var(--ink);
   background: #252c31;
 }
-[data-theme="dark"] .donut > div {
-  background: #171d21;
-}
 [data-theme="dark"] .bar-chart {
   background: repeating-linear-gradient(
     to bottom,
@@ -2448,14 +2445,8 @@ header {
   .report-grid {
     grid-template-columns: 1fr;
   }
-  .profit-panel .donut-wrap {
+  .profit-panel .composition {
     min-height: 220px;
-    flex-direction: row;
-    gap: 34px;
-  }
-  .profit-panel .donut-legend {
-    width: min(310px, 50%);
-    margin-top: 0;
   }
 }
 
@@ -2544,7 +2535,7 @@ header {
     right: 19px;
     width: 5px;
     height: 5px;
-    border-radius: 50%;
+    border-radius: 1px;
     background: #ef6b50;
   }
 }
@@ -2729,14 +2720,8 @@ header {
     flex-direction: column;
     gap: 4px;
   }
-  .profit-panel .donut-wrap {
-    min-height: 300px;
-    flex-direction: column;
-    gap: 0;
-  }
-  .profit-panel .donut-legend {
-    width: 100%;
-    margin-top: 22px;
+  .profit-panel .composition {
+    min-height: 240px;
   }
   .greeting {
     align-items: flex-start;
@@ -5045,13 +5030,15 @@ textarea.input {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 10px;
   background: var(--green-light);
   color: var(--green-dark);
   font-size: 12px;
   font-weight: 600;
 }
-.debt-item > div {
+/* Selector ini tidak boleh ikut mengenai avatar: kalau ikut, avatar ikut
+   melebar dan bentuknya jadi elips. */
+.debt-item > div:not(.debt-avatar) {
   min-width: 0;
   flex: 1;
   display: flex;
@@ -5108,7 +5095,7 @@ textarea.input {
 }
 .margin-bar {
   width: 10px;
-  border-radius: 3px 3px 0 0;
+  border-radius: 2px 2px 0 0;
   background: var(--green-light);
 }
 .margin-bar.now {

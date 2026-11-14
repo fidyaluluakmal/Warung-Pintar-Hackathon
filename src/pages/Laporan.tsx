@@ -12,6 +12,16 @@ type Periode = "7 hari" | "30 hari" | "3 bulan"
 const PERIODE: Periode[] = ["7 hari", "30 hari", "3 bulan"]
 
 /**
+ * Warna bagian komposisi.
+ *
+ * Deret warna dari gelap ke terang, jadi bagian yang berdempetan di batang
+ * tetap bisa dibedakan. "Lainnya" memakai abu-abu netral supaya jelas bukan
+ * salah satu barang.
+ */
+const WARNA_BAR = ["#006494", "#00a6fb", "#0582ca", "#3d78ae", "#6b9cc4"]
+const WARNA_LAINNYA = "#8fa3b5"
+
+/**
  * Laporan warung.
  *
  * Pola penjualan, laba kotor, dan barang yang paling diminati. Grafik dan
@@ -95,9 +105,27 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
 
   const maksOmzet = Math.max(...data.seri.map((s) => s.omzet), 1)
   const margin = data.omzet > 0 ? round2((data.laba / data.omzet) * 100) : 0
-  const totalOmzetProduk = data.produkTeratas.reduce((sum, p) => sum + p.omzet, 0)
 
-  const warna = ["var(--brand)", "var(--accent)", "#3d78ae", "#8fa3b5"]
+  /**
+   * Bagian komposisi omzet.
+   *
+   * Baris batang dan legenda memakai daftar yang sama, jadi bagiannya selalu
+   * cocok. Sisanya digabung jadi satu baris "Lainnya" supaya batangnya tidak
+   * penuh dengan potongan kecil yang tidak terbaca.
+   */
+  const segmen = useMemo(() => {
+    const hasil = data.produkTeratas.map((produk, index) => ({
+      nama: produk.nama,
+      persen: data.omzet > 0 ? (produk.omzet / data.omzet) * 100 : 0,
+      warna: WARNA_BAR[index % WARNA_BAR.length],
+    }))
+    const terpakai = hasil.reduce((sum, s) => sum + s.persen, 0)
+    const sisa = Math.max(0, 100 - terpakai)
+    if (sisa > 0.05) {
+      hasil.push({ nama: "Lainnya", persen: sisa, warna: WARNA_LAINNYA })
+    }
+    return hasil
+  }, [data])
 
   function pilihPeriode(nanti: Periode) {
     setPeriode(nanti)
@@ -204,57 +232,39 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
               <p>Bagian tiap barang dari total penjualan.</p>
             </div>
           </div>
-          <div className="donut-wrap">
-            <div
-              className="donut"
-              style={{
-                // Setiap warna dimulai dari offset sebelumnya, bukan dari 0.
-                // Kalau semua mulai dari 0, warnanya saling menimpa dan
-                // lingkaran tidak cocok dengan legenda di sebelahnya.
-                background: `conic-gradient(${(() => {
-                  let offset = 0
-                  return data.produkTeratas
-                    .map((produk, index) => {
-                      const bagian =
-                        data.omzet > 0 ? (produk.omzet / data.omzet) * 100 : 0
-                      const awal = offset
-                      offset += bagian
-                      return `${warna[index] ?? "#8fa3b5"} ${awal}% ${offset}%`
-                    })
-                    .join(", ")
-                })()})`,
-              }}
-            >
-              <div>
-                <strong>{rupiahRingkas(data.omzet)}</strong>
-                <small>Total omzet</small>
-              </div>
+          <div className="composition">
+            <div className="composition-total">
+              <strong>{rupiahRingkas(data.omzet)}</strong>
+              <small>Total omzet</small>
             </div>
-            <div className="donut-legend">
-              {data.produkTeratas.map((produk, index) => (
-                <p key={produk.nama}>
-                  <i style={{ background: warna[index] ?? "#8fa3b5" }} />
-                  <span>{produk.nama}</span>
-                  <strong>
-                    {angka(data.omzet > 0 ? (produk.omzet / data.omzet) * 100 : 0, 0)}%
-                  </strong>
+            <div
+              className="composition-bar"
+              role="img"
+              aria-label={
+                segmen.length > 0
+                  ? `Komposisi omzet: ${segmen
+                      .map((s) => `${s.nama} ${angka(s.persen, 0)} persen`)
+                      .join(", ")}`
+                  : "Belum ada penjualan di periode ini"
+              }
+            >
+              {segmen.map((s) => (
+                <span
+                  key={s.nama}
+                  className="composition-seg"
+                  style={{ width: `${s.persen}%`, background: s.warna }}
+                />
+              ))}
+            </div>
+            <div className="composition-legend">
+              {segmen.map((s) => (
+                <p key={s.nama}>
+                  <i style={{ background: s.warna }} />
+                  <span>{s.nama}</span>
+                  <strong>{angka(s.persen, 0)}%</strong>
                 </p>
               ))}
-              {data.produkTeratas.length > 0 &&
-                totalOmzetProduk < data.omzet && (
-                  <p>
-                    <i className="legend-gray" />
-                    <span>Lainnya</span>
-                    <strong>
-                      {Math.max(
-                        0,
-                        100 - Math.round((totalOmzetProduk / Math.max(1, data.omzet)) * 100),
-                      )}
-                      %
-                    </strong>
-                  </p>
-                )}
-              {data.produkTeratas.length === 0 && (
+              {segmen.length === 0 && (
                 <p>
                   <i className="legend-gray" />
                   <span>Belum ada penjualan di periode ini</span>
