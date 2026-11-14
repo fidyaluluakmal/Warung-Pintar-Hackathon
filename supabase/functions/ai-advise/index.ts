@@ -23,6 +23,8 @@ Tugas: ubah DATA yang sudah dihitung menjadi maksimal 3 tips singkat.
 
 Aturan:
 - Gunakan HANYA angka yang ada di DATA. Jangan menghitung ulang, menambah, atau mengarang angka.
+- "MingguIni" berarti 7 hari terakhir. Kalau menyebut omzet atau laba, sebut periode yang benar
+  ("7 hari terakhir"), jangan menulis "hari ini".
 - Jangan pernah menyebut "laba bersih". Kalau menyebut laba, sebut "laba kotor".
 - Setiap tip punya "text" (tindakan yang bisa dilakukan) dan "reason" (alasan berbasis angka dari DATA).
 - Bahasa Indonesia sehari-hari, jelas, dan singkat. Maksimal 2 kalimat per field.

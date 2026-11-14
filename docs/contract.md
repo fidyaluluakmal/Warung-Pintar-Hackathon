@@ -120,6 +120,9 @@ Menerima angka yang sudah dihitung aplikasi, mengembalikan saran beralasan.
 
 **Request**
 
+Semua angka sudah dihitung aplikasi. `MingguIni` berarti 7 hari terakhir di
+kalender warung (Asia/Jakarta) — bukan omzet hari ini.
+
 ```json
 {
   "omzetMingguIni": 1850000,
@@ -151,3 +154,47 @@ dari DATA.
 | --- | --- |
 | 400 | Body bukan JSON |
 | 502 | Model tidak mengembalikan tips yang bisa dipakai |
+
+---
+
+## `ai-ask`
+
+Menjawab pertanyaan bebas dari catatan warung sendiri. Angka dikirim sebagai
+konteks, jadi model hanya menyusun kalimat — tidak pernah menghitung ulang.
+
+**Request**
+
+```json
+{
+  "question": "Beli apa besok?",
+  "context": {
+    "omzetHariIni": 238500,
+    "labaKotorHariIni": 29900,
+    "transaksiHariIni": 3,
+    "omzetMingguIni": 1675500,
+    "labaKotorMingguIni": 167460,
+    "stokTipis": [{ "nama": "Air Mineral", "stok": 61, "satuan": "botol" }],
+    "saranBeli": [{ "nama": "Air Mineral", "qty": 19, "satuan": "botol" }],
+    "pelangganUtang": [{ "nama": "Pak Yono", "sisa": 198500 }],
+    "totalTransaksi": 363,
+    "jumlahBaris": 1054
+  }
+}
+```
+
+`MingguIni` berarti 7 hari terakhir di kalender warung (Asia/Jakarta).
+
+**Response**
+
+```json
+{
+  "answer": "Besok bisa beli Air Mineral 19 botol. Datanya estimasi dari catatan stok tipis."
+}
+```
+
+**Error**
+
+| Status | Arti |
+| --- | --- |
+| 400 | `question` kosong atau terlalu panjang |
+| 502 | Model tidak mengembalikan jawaban yang bisa dipakai |

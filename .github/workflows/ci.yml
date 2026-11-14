@@ -47,10 +47,14 @@ jobs:
 
       # Function AI harus tetap bisa dikompilasi. Kalau prompt-nya rusak,
       # ini gagal sebelum demo — jauh lebih murah daripada ketahuan di depan juri.
+      #
+      # Semua function wajib masuk daftar. Function yang lupa dicek tetap
+      # lolos CI, lalu baru rusak saat dipanggil di depan juri.
       - name: Typecheck Edge Functions
         run: |
           deno check \
             supabase/functions/ai-advise/index.ts \
+            supabase/functions/ai-ask/index.ts \
             supabase/functions/ai-extract-voice/index.ts \
             supabase/functions/ai-read-receipt/index.ts \
             supabase/functions/_shared/ai.ts \
