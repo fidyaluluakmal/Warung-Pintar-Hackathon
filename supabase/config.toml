@@ -40,3 +40,6 @@ verify_jwt = true
 
 [functions.ai-advise]
 verify_jwt = true
+
+[functions.ai-ask]
+verify_jwt = true

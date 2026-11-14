@@ -20,4 +20,5 @@ export const EDGE_FUNCTIONS = {
   ekstrakSuara: "ai-extract-voice",
   bacaNota: "ai-read-receipt",
   saran: "ai-advise",
+  tanya: "ai-ask",
 } as const

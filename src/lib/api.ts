@@ -55,6 +55,24 @@ export async function bacaNota(imageBase64: string, mimeType: string): Promise<H
  * `payload` hanya berisi angka turunan dari database. AI tidak boleh
  * menghitung ulang — tugasnya menyusun bahasa.
  */
+/**
+ * Tanya asisten warung.
+ *
+ * `context` berisi angka yang sudah dihitung aplikasi. AI hanya menyusun
+ * kalimatnya, tidak pernah menghitung ulang.
+ */
+export async function callAskWarung(
+  question: string,
+  context: Record<string, unknown>,
+): Promise<{ answer: string } | null> {
+  if (!supabase) return null
+  const { data, error } = await supabase.functions.invoke(EDGE_FUNCTIONS.tanya, {
+    body: { question, context },
+  })
+  if (error) throw error
+  return (data as { answer: string } | null) ?? null
+}
+
 export async function mintaSaran(payload: {
   omzetMingguIni: number
   labaKotorMingguIni: number
