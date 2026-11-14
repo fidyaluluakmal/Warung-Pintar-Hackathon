@@ -3058,7 +3058,22 @@ header {
   border-color: var(--green);
   box-shadow: 0 0 0 2px rgba(19, 123, 89, 0.08);
 }
+/*
+ * Pratinjau tema.
+ *
+ * Warnanya diambil dari token yang sama dengan aplikasinya, jadi
+ * pratinjaunya bukan gambarCorporate yang karangan — tapi miniatur
+ * tampilan yang sebenarnya.
+ *
+ * Pratinjau "Ikuti sistem" mengikuti tema sistem yang sedang aktif: kalau
+ * perangkatnya gelap, pratinjaunya gelap. Kalau selalu setengah terang,
+ * yang muncul di layar justru kelihatan seperti tema terang.
+ */
 .theme-preview {
+  --pv-latar: var(--surface-2);
+  --pv-sisi: #ffffff;
+  --pv-kartu: #ffffff;
+  --pv-aksen: #e6eef4;
   height: 82px;
   padding: 10px;
   display: grid;
@@ -3067,38 +3082,33 @@ header {
   gap: 8px;
   overflow: hidden;
   border-radius: 8px;
-  background: var(--surface-2);
+  background: var(--pv-latar);
 }
 .theme-preview i:first-child {
   grid-row: span 2;
   border-radius: 4px;
-  background: #fff;
+  background: var(--pv-sisi);
 }
 .theme-preview i:nth-child(2),
 .theme-preview i:nth-child(3) {
   border-radius: 4px;
-  background: #fff;
+  background: var(--pv-kartu);
 }
 .theme-preview i:nth-child(3) {
-  background: var(--surface-2);
+  background: var(--pv-aksen);
 }
-.dark-preview {
-  background: #111a16;
+.dark-preview,
+.system-preview.is-gelap {
+  --pv-latar: #051923;
+  --pv-sisi: #0b1c2b;
+  --pv-kartu: #102434;
+  --pv-aksen: #16405e;
 }
-.dark-preview i:first-child {
-  background: #18251f;
-}
-.dark-preview i:nth-child(2) {
-  background: #23332b;
-}
-.dark-preview i:nth-child(3) {
-  background: #1e432f;
-}
-.system-preview {
-  background: linear-gradient(90deg, #f3f5f3 50%, #111a16 50%);
-}
-.system-preview i:first-child {
-  background: linear-gradient(90deg, #fff 50%, #18251f 50%);
+.system-preview.is-terang {
+  --pv-latar: #f2f7fa;
+  --pv-sisi: #ffffff;
+  --pv-kartu: #ffffff;
+  --pv-aksen: #e6eef4;
 }
 .theme-options > button > span:nth-child(2) {
   margin-top: 10px;

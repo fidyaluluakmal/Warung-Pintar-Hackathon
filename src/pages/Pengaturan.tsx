@@ -46,6 +46,25 @@ export function Pengaturan() {
     }
   }
 
+  /**
+   * Tema sistem saat ini.
+   *
+   * Pratinjau "Ikuti sistem" harus menunjukkan tampilan yang benar-benar
+   * akan dipakai. Kalau sistemnya gelap, pratinjaunya gelap — bukan
+   * setengah terang.
+   */
+  const [sistemGelap, setSistemGelap] = useState(() => {
+    if (typeof window === "undefined") return false
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+  })
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)")
+    const dengar = () => setSistemGelap(media.matches)
+    media.addEventListener("change", dengar)
+    return () => media.removeEventListener("change", dengar)
+  }, [])
+
   const opsiTema: Array<{
     nilai: Tema
     label: string
@@ -127,7 +146,15 @@ export function Pengaturan() {
                 className={tema === opsi.nilai ? "active" : ""}
                 onClick={() => ganti(opsi.nilai)}
               >
-                <span className={`theme-preview ${opsi.pratinjau}`}>
+                <span
+                  className={`theme-preview ${opsi.pratinjau}${
+                    opsi.nilai === "sistem"
+                      ? sistemGelap
+                        ? " is-gelap"
+                        : " is-terang"
+                      : ""
+                  }`}
+                >
                   <i />
                   <i />
                   <i />

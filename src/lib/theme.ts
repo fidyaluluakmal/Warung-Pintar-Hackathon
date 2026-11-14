@@ -28,15 +28,26 @@ export function simpanTema(tema: Tema) {
   }
 }
 
-/** Terapkan tema ke elemen <html>. */
+/**
+ * Terapkan tema ke elemen <html>.
+ *
+ * "sistem" diselesaikan ke tema yang sedang aktif di perangkat, jadi
+ * fungsi ini aman dipanggil dengan nilai apa pun.
+ */
 export function terapkanTema(tema: Tema): "terang" | "gelap" {
-  const gelap = tema === "gelap"
+  const gelap = tema === "sistem" ? sistemGelap() : tema === "gelap"
   // `document` tidak ada saat render di server. Lewati saja — tema berlaku
   // begitu aplikasi jalan di browser.
   if (typeof document !== "undefined") {
     document.documentElement.dataset.theme = gelap ? "dark" : "light"
   }
   return gelap ? "gelap" : "terang"
+}
+
+/** Apakah perangkat ini memilih tema gelap. */
+export function sistemGelap(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
 }
 
 /**
@@ -54,8 +65,19 @@ export function useTema(): {
   const [tema, setTema] = useState<Tema>(() =>
     typeof window === "undefined" ? "sistem" : bacaTemaTersimpan(),
   )
+  // Keadaan awal ikut tema sistem, bukan selalu terang. Kalau tema yang
+  // disimpan "sistem" dan perangkatnya gelap, aplikasi sempat menampilkan
+  // tema terang sebelum efek berjalan — kedipan putih di layar.
   const [aktif, setAktif] = useState<"terang" | "gelap">(() =>
-    typeof window === "undefined" ? "terang" : tema === "gelap" ? "gelap" : "terang",
+    typeof window === "undefined"
+      ? "terang"
+      : tema === "sistem"
+        ? sistemGelap()
+          ? "gelap"
+          : "terang"
+        : tema === "gelap"
+          ? "gelap"
+          : "terang",
   )
 
   useEffect(() => {
