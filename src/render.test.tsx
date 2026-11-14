@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import { renderToString } from "react-dom/server"
 import App from "./App"
 import { bacaTemaTersimpan, terapkanTema } from "./lib/theme"
+import { PenyediaWarung } from "./lib/store"
+import { TitipJual } from "./pages/TitipJual"
 
 /**
  * Uji asap: aplikasi harus bisa dirender tanpa error.
@@ -21,6 +23,15 @@ describe("render aplikasi", () => {
     // Sesi dimuat di efek, jadi render pertama selalu menampilkan keadaan
     // awal. Efeknya tidak jalan di renderToString.
     expect(html).toContain("Menyiapkan warung")
+  })
+
+  it("merender halaman Titip Jual tanpa error", () => {
+    const html = renderToString(
+      <PenyediaWarung>
+        <TitipJual />
+      </PenyediaWarung>,
+    )
+    expect(html).toContain("Barang titipan")
   })
 })
 
