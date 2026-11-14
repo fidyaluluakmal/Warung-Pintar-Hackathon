@@ -5,6 +5,9 @@ import { MobileNav } from "./components/MobileNav"
 import { Sidebar } from "./components/Sidebar"
 import { LayarMasuk } from "./pages/LayarMasuk"
 import { Beranda } from "./pages/Beranda"
+import { CekStok } from "./pages/CekStok"
+import { HargaPasar } from "./pages/HargaPasar"
+import { Pelanggan } from "./pages/Pelanggan"
 import { Kasir } from "./pages/Kasir"
 import { CatatSuara } from "./pages/CatatSuara"
 import { PindaiNota } from "./pages/PindaiNota"
@@ -106,6 +109,9 @@ function Kerangka() {
           {nav === "Stok Barang" && <StokBarang cari={cari} />}
           {nav === "Simpen Dulu" && <SimpenDulu />}
           {nav === "Penjaga Margin" && <PenjagaMargin />}
+          {nav === "Cek Stok" && <CekStok />}
+          {nav === "Pelanggan" && <Pelanggan />}
+          {nav === "Harga Pasar" && <HargaPasar />}
           {nav === "Modal Awal" && <ModalAwal />}
           {nav === "Tutup Buku" && <TutupBuku />}
           {nav === "Riwayat" && <Riwayat />}

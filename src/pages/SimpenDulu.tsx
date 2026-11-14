@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 import { useWarung } from "../lib/store"
+import { selisihHari } from "../lib/calendar"
 import { rupiah } from "../lib/format"
 
 /**
@@ -12,7 +13,8 @@ export function SimpenDulu() {
   const { utang, lunasiUtang } = useWarung()
 
   const belumLunas = useMemo(
-    () => utang.filter((item) => item.status === "belum_lunas"),
+    // View `utang_berjalan` sudah hanya memuat yang belum lunas.
+    () => utang,
     [utang],
   )
 
@@ -40,9 +42,7 @@ export function SimpenDulu() {
   }, [belumLunas])
 
   const hariLalu = (tanggal: string) => {
-    const selisih = Math.floor(
-      (Date.now() - new Date(tanggal).getTime()) / 86_400_000,
-    )
+    const selisih = selisihHari(tanggal)
     if (selisih <= 0) return "hari ini"
     if (selisih === 1) return "kemarin"
     return `${selisih} hari lalu`
@@ -145,9 +145,7 @@ export function SimpenDulu() {
             <ul className="debt-list">
               {belumLunas.map((item) => {
                 const sisa = Math.max(item.total - item.dibayar, 0)
-                const lama = Math.floor(
-                  (Date.now() - new Date(item.tanggal).getTime()) / 86_400_000,
-                )
+                const lama = selisihHari(item.tanggal)
                 return (
                   <li className="debt-item" key={item.id}>
                     <div className="debt-avatar">{item.pelanggan.slice(0, 2).toUpperCase()}</div>

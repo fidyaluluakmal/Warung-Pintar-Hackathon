@@ -40,4 +40,11 @@ describe("tema", () => {
   it("bacaTemaTersimpan mengembalikan sistem saat belum ada pilihan", () => {
     expect(bacaTemaTersimpan()).toBe("sistem")
   })
+
+  it("bacaTemaTersimpan mengembalikan pilihan yang tersimpan", () => {
+    // Pilihan yang disimpan harus dipakai lagi saat halaman dimuat ulang.
+    window.localStorage.setItem("warung-pintar-tema", "gelap")
+    expect(bacaTemaTersimpan()).toBe("gelap")
+    window.localStorage.removeItem("warung-pintar-tema")
+  })
 })

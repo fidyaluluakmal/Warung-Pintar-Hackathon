@@ -120,6 +120,7 @@ select
   u.harga_satuan,
   u.total,
   u.dibayar,
+  u.status,
   u.tanggal,
   greatest(u.total - u.dibayar, 0) as sisa
 from public.utang u
