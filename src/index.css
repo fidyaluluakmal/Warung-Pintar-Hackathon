@@ -8560,6 +8560,16 @@ textarea.input {
   padding: 0;
   list-style: none;
 }
+/* Sesi di dalam proyek: satu tingkat lebih masuk, supaya hierarkinya terbaca. */
+.asisten-proyek-isi .asisten-daftar-item {
+  padding-left: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.asisten-proyek-isi .asisten-daftar-item:hover,
+.asisten-proyek-isi .asisten-daftar-item.aktif {
+  color: var(--ink);
+}
 .asisten-kosong {
   margin: 0;
   padding: 0 8px;

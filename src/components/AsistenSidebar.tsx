@@ -71,7 +71,6 @@ export function AsistenSidebar({
       <div className="asisten-kolom-head">
         <div>
           <strong>Asisten warung</strong>
-          <small>Tanya apa saja soal warung ini</small>
         </div>
         {bisaTutup && onTutup && (
           <button
