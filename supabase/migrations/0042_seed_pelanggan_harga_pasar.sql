@@ -24,7 +24,7 @@ begin
   -- ---------------------------------------------------------------------------
   insert into public.pelanggan (owner_id, nama, telepon, catatan)
   values
-    (demo_owner, 'Pak Yono',  '0812-3456-7890', 'Langganan tetap, belirugby saja'),
+    (demo_owner, 'Pak Yono',  '0812-3456-7890', 'Langganan tetap, beli barang bulanan saja'),
     (demo_owner, 'Bu Sri',    null,              'Sering beli kopi sachet'),
     (demo_owner, 'Mas Togo',  null,              'Datang sore, suka barang segar'),
     (demo_owner, 'Pak Hadi',  '0813-9876-5432', 'Pembayaran sering tempo'),

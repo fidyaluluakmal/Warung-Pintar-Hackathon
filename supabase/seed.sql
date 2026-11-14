@@ -94,34 +94,52 @@ begin
   -- -------------------------------------------------------------------------
   -- 3. Riwayat 90 hari
   --
-  -- Setiap hari buka (kecuali Minggu) dibuat beberapa transaksi penjualan.
-  -- Jam transaksi antara 08:00 dan 18:00, dihitung deterministik supaya
-  -- data contoh selalu sama setiap seed diulang.
+  -- Setiap hari buka dibuat beberapa transaksi penjualan. Jam transaksi
+  -- antara 08:00 dan 18:00, dihitung deterministik supaya data contoh
+  -- selalu sama setiap seed diulang. Sebagian transaksi menyebut nama
+  -- pelanggan, supaya buku pelanggan punya riwayat belanja.
   -- -------------------------------------------------------------------------
-  insert into public.transaksi (owner_id, tipe, tanggal, sumber, total)
+  insert into public.transaksi (owner_id, tipe, tanggal, sumber, total, teks_mentah)
   select
     demo_owner,
     'jual',
-    -- Jam warung (WIB) lalu dikonversi ke UTC, supaya tanggalnya tetap benar
-    -- saat dibaca di zona waktu warung. Dihitung dari hash tanggal + nomor
-    -- urut, bukan acak, supaya data contoh selalu sama setiap seed diulang
-    -- dan demo bisa diulang persis.
-    (hari.tanggal::date
-      + time '08:00'
-      + (abs(hashtext(hari.tanggal::text || '-' || n::text)) % 600) * interval '1 minute')
-      at time zone 'Asia/Jakarta' as tanggal,
-    case when extract(doy from hari.tanggal)::int % 4 = 0 then 'nota' else 'suara' end,
-    0
+    w.tanggal,
+    case when extract(doy from w.tanggal)::int % 4 = 0 then 'nota' else 'suara' end,
+    0,
+    -- Sebagian transaksi menyebut nama pelanggan. Buku pelanggan membaca
+    -- nama dari `teks_mentah` — jadi tanpa ini, halaman Pelanggan hanya
+    -- punya utang, tidak punya riwayat belanja dan barang favorit.
+    case
+      when w.pelanggan_nama is null then null
+      else 'terjual buat ' || w.pelanggan_nama
+    end
   from (
-    select d::date as tanggal
-    from generate_series(
-      (now() at time zone 'Asia/Jakarta')::date - interval '90 days',
-      (now() at time zone 'Asia/Jakarta')::date,
-      '1 day'
-    ) as d
-  ) hari
-  cross join generate_series(1, 3 + (extract(doy from hari.tanggal)::int % 3)) as n
-  where extract(dow from hari.tanggal)::int <> 0;
+    select
+      (h.tanggal::date
+        + time '08:00'
+        + (abs(hashtext(h.tanggal::text || '-' || s.n::text)) % 600) * interval '1 minute')
+        at time zone 'Asia/Jakarta' as tanggal,
+      case
+        when abs(hashtext(h.tanggal::text || '-' || s.n::text || '-p')) % 100 < 55
+        then case (abs(hashtext(h.tanggal::text || '-' || s.n::text || '-c')) % 5)
+          when 0 then 'Pak Yono'
+          when 1 then 'Bu Sri'
+          when 2 then 'Mas Togo'
+          when 3 then 'Pak Hadi'
+          else 'Bu Ratna'
+        end
+        else null
+      end as pelanggan_nama
+    from (
+      select d::date as tanggal
+      from generate_series(
+        (now() at time zone 'Asia/Jakarta')::date - interval '90 days',
+        (now() at time zone 'Asia/Jakarta')::date,
+        '1 day'
+      ) as d
+    ) h
+    cross join generate_series(1, 3 + (extract(doy from h.tanggal)::int % 3)) as s(n)
+  ) w;
 
   -- Baris penjualan: tiap transaksi punya 1-3 barang, diambil acak dan
   -- merata dari semua barang.

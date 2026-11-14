@@ -59,8 +59,10 @@ jadi tidak mungkin melenceng."
 1. Buka menu **Simpen Dulu**.
 2. Tampilkan buku utang per orang: total belum lunas, catatan per pelanggan,
    dan tombol **Lunas**.
-3. Kembali ke **Kasir**: tambah barang, centang **Simpen dulu**, isi nama
-   peminjam dan jumlah yang dibayar, lalu simpan.
+3. Kembali ke **Kasir**: tambah barang, tekan **Simpen dulu (ngutang)** di baris
+   itu, isi nama peminjam dan jumlah yang dibayar, lalu simpan.
+4. Tunjukkan **Pelanggan**: 5 orang, tanggal kapan terakhir datang, barang
+   favorit, dan badge "Ada utang · Rp198.500 · 15 hari".
 
 Poin: "Pelanggan warung sering cuma punya nama panggilan, jadi buku utangnya
 menyimpan nama, bukan nomor telepon. Dan barang tetap keluar untuk seluruh
@@ -114,8 +116,6 @@ bertambah atau berkurang? Dan kalau berkurang, mau kulakan apa besok?"
 
 ## Angka yang bisa dikutip di presentasi
 
-| Angka | Nilai |
-| --- | --- |
 Angka ini dari data demo dan **tidak berubah** — seed-nya deterministik,
 jadi demo bisa diulang persis.
 
@@ -124,12 +124,14 @@ jadi demo bisa diulang persis.
 | Omzet hari ini | Rp238.500 (3 transaksi) |
 | Laba kotor hari ini | Rp29.900 (margin 12,5%) |
 | Belanja stok hari ini | Rp155.000 (dua barang dari vendors keliling) |
-| Penghasilan bersih hari ini | Rp83.500 |
-| Omzet 7 hari | Rp1.577.500 (24 transaksi) |
-| Laba kotor 7 hari | Rp158.280 (margin 10,0%) |
+| Penghasilan bersih hari ini | Rp83.500 (marjin bersih 35,0%) |
+| Omzet 7 hari | Rp1.675.500 (27 transaksi) |
+| Laba kotor 7 hari | Rp167.460 (margin 10,0%) |
 | Barang perlu restok | 4 dari 12 (Air Mineral, Beras Premium, Mi Instan, Rokok Kretek) |
-| Nilai persediaan | Rp7,0 jt |
+| Nilai persediaan | Rp7,2 jt |
 | Total utang berjalan | Rp258.500 (5 catatan, 3 pelanggan) |
-| Utang terlama | Pak Yono, Rp198.500 |
+| Utang terlama | Pak Yono, Rp198.500 (15 hari) |
+| Menunggak lebih dari 7 hari | 2 orang |
+| Pelanggan tercatat | 5 orang, semuanya punya riwayat belanja |
 | Modal naik | Beras Premium Rp14.000 → Rp15.120, margin 12,5% → 5,5% |
 | Modal naik | Telur Ayam Rp28.000 → Rp31.360, margin 12,5% → 2% |

@@ -179,7 +179,7 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
                 >
                   <span className="bar-tooltip">{rupiah(titik.omzet)}</span>
                   <i style={{ height: `${(titik.omzet / maksOmzet) * 100}%` }} />
-                  <em>{titik.label}</em>
+                  <small>{titik.label}</small>
                 </button>
               ))}
             </div>

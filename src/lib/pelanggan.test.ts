@@ -348,6 +348,33 @@ describe("hitungRingkasanPelanggan", () => {
     expect(hasil[0].nama).toBe("Bu Endah")
     expect(hasil[0].initials).toBe("BE")
   })
+
+  it("utang terlama diambil dari tanggal utang paling awal", () => {
+    const hasil = hitungRingkasanPelanggan(
+      [pelanggan("Pak Yono", "p1")],
+      [],
+      [],
+      BARANG,
+      [
+        { pelanggan: "Pak Yono", total: 50000, dibayar: 0, tanggal: "2026-11-01" },
+        { pelanggan: "Pak Yono", total: 30000, dibayar: 0, tanggal: "2026-10-20" },
+      ],
+      HARI_INI,
+    )
+    expect(hasil[0].utangTerlama).toBe("2026-10-20")
+  })
+
+  it("pelanggan tanpa utang tidak punya tanggal utang terlama", () => {
+    const hasil = hitungRingkasanPelanggan(
+      [pelanggan("Pak Yono", "p1")],
+      [],
+      [],
+      BARANG,
+      [{ pelanggan: "Pak Yono", total: 50000, dibayar: 50000, tanggal: "2026-10-20" }],
+      HARI_INI,
+    )
+    expect(hasil[0].utangTerlama).toBeNull()
+  })
 })
 
 describe("rataRataBelanja", () => {

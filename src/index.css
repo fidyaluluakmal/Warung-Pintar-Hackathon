@@ -2569,6 +2569,7 @@ header {
 }
 .report-panel {
   padding: 20px;
+  min-width: 0;
   background: white;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -2614,6 +2615,7 @@ header {
 .chart-area {
   height: 220px;
   margin-top: 20px;
+  min-width: 0;
   display: flex;
 }
 .chart-scale {
@@ -2627,6 +2629,7 @@ header {
 }
 .bar-chart {
   flex: 1;
+  min-width: 0;
   padding: 0 4px;
   display: flex;
   align-items: flex-end;
@@ -2642,6 +2645,7 @@ header {
 .bar-chart button {
   height: calc(100% - 24px);
   flex: 1;
+  min-width: 0;
   position: relative;
   display: flex;
   align-items: flex-end;
@@ -2666,8 +2670,11 @@ header {
 .bar-chart button > small {
   position: absolute;
   bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
   color: #7e8b84;
   font-size: 11px;
+  white-space: nowrap;
 }
 .bar-tooltip {
   position: absolute;

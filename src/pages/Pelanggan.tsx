@@ -157,7 +157,7 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
           <div>
             <small>Menunggak lebih dari 7 hari</small>
             <strong>
-              {ringkasan.filter((p) => p.totalUtang > 0 && p.kunjunganTerakhir !== null && selisihHari(p.kunjunganTerakhir) > 7).length}{" "}
+              {ringkasan.filter((p) => p.totalUtang > 0 && p.utangTerlama !== null && selisihHari(p.utangTerlama) > 7).length}{" "}
               <em>orang</em>
             </strong>
           </div>
@@ -275,6 +275,7 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
               {pelanggan.totalUtang > 0 ? (
                 <span className="customer-status menunggak">
                   Ada utang · {rupiah(pelanggan.totalUtang)}
+                  {pelanggan.utangTerlama ? ` · ${selisihHari(pelanggan.utangTerlama)} hari` : ""}
                 </span>
               ) : (
                 <span className="customer-status lunas">Lunas</span>

@@ -44,6 +44,8 @@ export interface UtangRingkas {
   total: number
   dibayar: number
   status?: string
+  /** Tanggal utangnya dibuat. Dipakai untuk menghitung umur utang. */
+  tanggal?: string | null
 }
 
 /** Satu baris pembelian yang dilakukan pelanggan. */
@@ -75,6 +77,13 @@ export interface RingkasanPelanggan {
   qtyFavorit: number
   /** Sisa utang yang harus dibayar. */
   totalUtang: number
+  /**
+   * Tanggal utang paling lama yang masih belum lunas.
+   *
+   * Dipakai untuk tahu sudah berapa lama pelanggan menunggak. Null kalau
+   * pelanggan ini tidak punya utang berjalan.
+   */
+  utangTerlama: string | null
   labelKunjungan: string
   labelUtang: string
   /** Riwayat pembelian, terbaru dulu. */
@@ -286,6 +295,7 @@ export function hitungRingkasanPelanggan(
       favorit: new Map<string, { qty: number; kali: number }>(),
       pembelian: [],
       utang: 0,
+      utangTerlama: null,
     })
   }
 
@@ -322,7 +332,7 @@ export function hitungRingkasanPelanggan(
     }
   }
 
-  // Utang: dicocokkan dari nama pada baris utang.
+  /** Utang: dicocokkan dari nama pada baris utang. */
   const pelangganPerNama = new Map<string, DataPelanggan>()
   for (const c of daftar) pelangganPerNama.set(normalisasiNama(c.nama), c)
 
@@ -332,7 +342,13 @@ export function hitungRingkasanPelanggan(
     if (!c) continue
     const ak = akumulator.get(c.id)
     if (!ak) continue
-    ak.utang = round2(ak.utang + Math.max(row.total - row.dibayar, 0))
+    const sisa = Math.max(row.total - row.dibayar, 0)
+    if (sisa <= 0) continue
+    ak.utang = round2(ak.utang + sisa)
+    // Utang paling lama = yang paling lama belum dibayar.
+    if (row.tanggal && (!ak.utangTerlama || row.tanggal < ak.utangTerlama)) {
+      ak.utangTerlama = row.tanggal
+    }
   }
 
   const hasil: RingkasanPelanggan[] = []
@@ -351,6 +367,7 @@ export function hitungRingkasanPelanggan(
       barangFavorit: favorit?.nama ?? null,
       qtyFavorit: favorit?.qty ?? 0,
       totalUtang: round2(ak.utang),
+      utangTerlama: ak.utangTerlama,
       labelKunjungan: labelKunjungan(jumlahKunjungan, ak.kunjunganTerakhir, hariIni),
       labelUtang: labelUtang(ak.utang),
       pembelian: [...ak.pembelian].sort((a, b) => {
@@ -407,6 +424,7 @@ interface Akumulator {
   favorit: Map<string, { qty: number; kali: number }>
   pembelian: PembelianPelanggan[]
   utang: number
+  utangTerlama: string | null
 }
 
 /** Pelanggan yang namanya disebut di teks. Nama paling panjang menang. */
@@ -507,6 +525,7 @@ export async function muatBukuPelanggan(): Promise<DataBukuPelanggan> {
     pelanggan: string
     total: number
     dibayar: number
+    tanggal: string | null
   }>
 
   return {
@@ -519,6 +538,7 @@ export async function muatBukuPelanggan(): Promise<DataBukuPelanggan> {
       total: Number(row.total),
       dibayar: Number(row.dibayar),
       status: "belum_lunas",
+      tanggal: row.tanggal ?? null,
     })),
   }
 }
