@@ -138,3 +138,19 @@ test yang menjaganya: `src/lib/satuan.test.ts`.
 - [ ] Alur demo dicoba 3 kali berturut-turut di HP sungguhan
 - [ ] Rekaman video demo tersimpan di laptop dan HP
 - [ ] Link demo aktif dan bisa dibuka dari luar
+
+<!-- antislop:start -->
+## antislop
+
+Untuk pekerjaan UI, copy, orang, layout mobile, atau komentar kode, baca
+`antislop.md` (core) lalu skill untuk tugas itu:
+
+- UI / visual: `antislop-ui/SKILL.md`
+- Copy & text: `antislop-copywriting/SKILL.md`
+- People: `antislop-human/SKILL.md`
+- Mobile / responsive: `antislop-layoutmobile/SKILL.md`
+- Code comments: `antislop-code/SKILL.md`
+
+Sebelum mulai, tanyakan ke pengguna kapan antislop dipakai: selama
+pekerjaan, atau setelah selesai.
+<!-- antislop:end -->
