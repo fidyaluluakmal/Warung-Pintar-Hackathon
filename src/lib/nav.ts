@@ -15,6 +15,7 @@ export type NavLabel =
   | "Modal Awal"
   | "Tutup Buku"
   | "Riwayat"
+  | "Laporan"
   | "Pengaturan"
 
 /**
@@ -39,6 +40,7 @@ export const nav: Array<{ label: NavLabel; icon: IconName }> = [
 export const navLain: Array<{ label: NavLabel; icon: IconName }> = [
   { label: "Modal Awal", icon: "chart" },
   { label: "Tutup Buku", icon: "clock" },
+  { label: "Laporan", icon: "chart" },
   { label: "Riwayat", icon: "clock" },
   { label: "Pengaturan", icon: "settings" },
 ]

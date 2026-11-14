@@ -16,6 +16,7 @@ import { PenjagaMargin } from "./pages/PenjagaMargin"
 import { SimpenDulu } from "./pages/SimpenDulu"
 import { StokBarang } from "./pages/StokBarang"
 import { TanyaAi } from "./pages/TanyaAi"
+import { Laporan } from "./pages/Laporan"
 import { ModalAwal } from "./pages/ModalAwal"
 import { Pengaturan } from "./pages/Pengaturan"
 import { Riwayat } from "./pages/Riwayat"
@@ -126,6 +127,7 @@ function Kerangka() {
           {nav === "Modal Awal" && <ModalAwal />}
           {nav === "Tutup Buku" && <TutupBuku onPindah={buka} />}
           {nav === "Riwayat" && <Riwayat />}
+          {nav === "Laporan" && <Laporan onPindah={buka} />}
           {nav === "Pengaturan" && <Pengaturan />}
         </div>
       </main>
