@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/*
+ * Tema Warung Pintar.
+ *
+ * Warna dasar: hijau tua (uang, tumbuh, warung), dengan latar netral supaya
+ * angka dan tombol menonjol. Semua styling global ada di sini; utility
+ * Tailwind di JSX tetap menang karena utility diletakkan setelah base.
+ */
+
+@theme {
+  --color-hijau-50: #f0f9f4;
+  --color-hijau-100: #d8f0e3;
+  --color-hijau-200: #b4e1cb;
+  --color-hijau-300: #83cbaa;
+  --color-hijau-400: #4fae85;
+  --color-hijau-500: #2f9269;
+  --color-hijau-600: #1f7554;
+  --color-hijau-700: #195d45;
+  --color-hijau-800: #164b39;
+  --color-hijau-900: #133e31;
+}
+
+:root {
+  --latar: #f6f7f6;
+  --permukaan: #ffffff;
+  --teks: #1a1d1c;
+  --teks-lembut: #5f6664;
+  --garis: #e3e6e4;
+  --aksen: var(--color-hijau-600);
+  --aksen-lembut: var(--color-hijau-50);
+  --bahaya: #b3261e;
+  --peringatan: #8a5a00;
+}
+
+:root[data-theme="dark"] {
+  --latar: #101312;
+  --permukaan: #181c1a;
+  --teks: #e8ecea;
+  --teks-lembut: #9aa5a1;
+  --garis: #2a302d;
+  --aksen: var(--color-hijau-400);
+  --aksen-lembut: #14261f;
+  --bahaya: #f2b8b5;
+  --peringatan: #e8c37a;
+}
+
+@layer base {
+  html {
+    background: var(--latar);
+  }
+
+  body {
+    margin: 0;
+    background: var(--latar);
+    color: var(--teks);
+    font-family:
+      ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Fokus keyboard harus terlihat, tapi jangan berubah saat pakai mouse. */
+  :focus-visible {
+    outline: 2px solid var(--aksen);
+    outline-offset: 2px;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+  }
+}
+
+@layer components {
+  .kartu {
+    background: var(--permukaan);
+    border: 1px solid var(--garis);
+    border-radius: 1rem;
+  }
+
+  .tombol-utama {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    padding: 0 1.25rem;
+    border-radius: 0.75rem;
+    background: var(--aksen);
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: filter 120ms ease;
+  }
+
+  .tombol-utama:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+
+  .tombol-utama:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .tombol-sekunder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border-radius: 0.75rem;
+    background: var(--permukaan);
+    color: var(--teks);
+    border: 1px solid var(--garis);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .tombol-sekunder:hover:not(:disabled) {
+    background: var(--aksen-lembut);
+  }
+
+  .label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--teks-lembut);
+    margin-bottom: 0.375rem;
+  }
+
+  .input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    border-radius: 0.625rem;
+    border: 1px solid var(--garis);
+    background: var(--permukaan);
+    color: var(--teks);
+  }
+
+  .input:focus {
+    border-color: var(--aksen);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--aksen-lembut);
+    color: var(--aksen);
+  }
+}
