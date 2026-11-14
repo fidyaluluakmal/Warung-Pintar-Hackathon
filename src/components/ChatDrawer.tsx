@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "./Icon"
 import { useWarung } from "../lib/store"
 import { callAskWarung } from "../lib/api"
+import type { Transaksi } from "../lib/types"
 import { selisihHari } from "../lib/calendar"
 
 interface Pesan {
@@ -22,6 +23,7 @@ const PERTANYAAN_CEPAT = [
   "Beli apa besok?",
   "Stok apa yang hampir habis?",
   "Omzet hari ini berapa?",
+  "Berapa laba kotor 7 hari?",
   "Siapa yang paling banyak utang?",
 ]
 
@@ -91,30 +93,36 @@ export function ChatDrawer({ onClose }: { onClose: () => void }) {
     const modeBarang = new Map(barang.map((b) => [b.id, b.harga_modal]))
     const tipeById = new Map(transaksi.map((t) => [t.id, t.tipe]))
 
+    /** Omzet dan laba kotor dari sekumpulan transaksi. */
+    const hitung = (daftar: Transaksi[]) => {
+      const ids = new Set(daftar.map((t) => t.id))
+      let modal = 0
+      for (const row of baris) {
+        if (!ids.has(row.transaksi_id)) continue
+        if (tipeById.get(row.transaksi_id) !== "jual") continue
+        modal += row.jumlah * (modeBarang.get(row.barang_id) ?? 0)
+      }
+      const omzet = daftar.reduce((sum, t) => sum + t.total, 0)
+      return { omzet, labaKotor: omzet - modal }
+    }
+
     // 7 hari terakhir di kalender warung (Asia/Jakarta), bukan 168 jam.
     const mingguIni = transaksi.filter(
       (t) => t.tipe === "jual" && selisihHari(t.tanggal) < 7,
     )
-    const idMingguIni = new Set(mingguIni.map((t) => t.id))
+    const hariIni = transaksi.filter((t) => t.tipe === "jual" && selisihHari(t.tanggal) === 0)
 
-    const omzetMingguIni = mingguIni.reduce((sum, t) => sum + t.total, 0)
-
-    // Laba kotor = penjualan - modal barang terjual. Kalau modalnya ikut
-    // dikirim sebagai omzet, AI akan menjawab "laba kotor = omzet" dan
-    // dock-nya jadi bohong.
-    let modalTerjual = 0
-    for (const row of baris) {
-      if (!idMingguIni.has(row.transaksi_id)) continue
-      if (tipeById.get(row.transaksi_id) !== "jual") continue
-      modalTerjual += row.jumlah * (modeBarang.get(row.barang_id) ?? 0)
-    }
-    const labaKotorMingguIni = omzetMingguIni - modalTerjual
+    const minggu = hitung(mingguIni)
+    const hari = hitung(hariIni)
 
     const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
     const utangJalan = utang.filter((u) => u.status === "belum_lunas")
     return {
-      omzetMingguIni,
-      labaKotorMingguIni,
+      omzetHariIni: hari.omzet,
+      labaKotorHariIni: hari.labaKotor,
+      transaksiHariIni: hariIni.length,
+      omzetMingguIni: minggu.omzet,
+      labaKotorMingguIni: minggu.labaKotor,
       stokTipis: stokTipis.map((s) => ({ nama: s.nama, stok: s.stok, satuan: s.satuan })),
       saranBeli: saranBeli.map((s) => ({ nama: s.nama, qty: s.qty, satuan: s.satuan })),
       pelangganUtang: utangJalan.map((u) => ({

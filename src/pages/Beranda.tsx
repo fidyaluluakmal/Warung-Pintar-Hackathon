@@ -52,6 +52,19 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
       .reduce((sum, row) => sum + row.jumlah * (hargaModal.get(row.barang_id) ?? 0), 0)
 
     const laba = labaKotor(omzet, modalTerjual)
+
+    // Angka 7 hari terakhir, dihitung dari kalender warung. Dipakai untuk
+    // saran AI: nama fieldnya "MingguIni", jadi isinya harus benar-benar
+    // mingguan — bukan omzet hari ini.
+    const tujuhHari = transaksi.filter(
+      (t) => t.tipe === "jual" && selisihHari(t.tanggal) < 7,
+    )
+    const idsTujuhHari = new Set(tujuhHari.map((t) => t.id))
+    const modalTujuhHari = baris
+      .filter((row) => idsTujuhHari.has(row.transaksi_id))
+      .reduce((sum, row) => sum + row.jumlah * (hargaModal.get(row.barang_id) ?? 0), 0)
+    const omzetTujuhHari = tujuhHari.reduce((sum, t) => sum + t.total, 0)
+
     const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
     const utangJalan = utang
     const totalUtang = utangJalan.reduce((sum, u) => sum + Math.max(u.total - u.dibayar, 0), 0)
@@ -75,6 +88,8 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
     return {
       laporanModal,
       pengeluaran,
+      omzetTujuhHari: round2(omzetTujuhHari),
+      labaKotorTujuhHari: labaKotor(omzetTujuhHari, modalTujuhHari),
       omzet: round2(omzet),
       labaKotor: laba,
       belanja: round2(belanja),
@@ -95,8 +110,8 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
     setGalat("")
     try {
       const hasil = await mintaSaran({
-        omzetMingguIni: ringkasan.omzet,
-        labaKotorMingguIni: ringkasan.labaKotor,
+        omzetMingguIni: ringkasan.omzetTujuhHari,
+        labaKotorMingguIni: ringkasan.labaKotorTujuhHari,
         stokTipis: ringkasan.stokTipis.map((s) => ({
           nama: s.nama,
           stok: s.stok,
