@@ -18,7 +18,7 @@ interface BarisKeranjang {
 }
 
 /**
- * Kasir — jalur utama Warung Pintar.
+ * Kasir: jalur utama Warung Pintar.
  *
  * Semua transaksi lahir dari ketukan pemilik warung, jadi tidak pernah ada
  * "hampir benar" yang diam-diam jadi transaksi. Barang yang dibayar sebagian

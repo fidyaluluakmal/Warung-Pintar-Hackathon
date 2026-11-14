@@ -2,7 +2,7 @@
  * Lapisan pemanggilan Edge Function.
  *
  * Semua kunci AI ada di server. Frontend hanya mengirim data dan menerima
- * JSON. Kalau AI gagal, pemanggil tetap bisa jatuh ke fallback lokal —
+ * JSON. Kalau AI gagal, pemanggil tetap bisa jatuh ke fallback lokal -
  * angka tidak pernah hilang hanya karena AI sedang tidak bisa menjawab.
  */
 
@@ -53,7 +53,7 @@ export async function bacaNota(imageBase64: string, mimeType: string): Promise<H
  * Minta AI merapikan angka yang sudah dihitung aplikasi.
  *
  * `payload` hanya berisi angka turunan dari database. AI tidak boleh
- * menghitung ulang — tugasnya menyusun bahasa.
+ * menghitung ulang: tugasnya menyusun bahasa.
  */
 /**
  * Tanya asisten warung.

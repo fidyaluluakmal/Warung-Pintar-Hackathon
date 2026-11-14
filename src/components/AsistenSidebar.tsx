@@ -18,7 +18,7 @@ import type { Proyek } from "../lib/types"
  * Susunannya seperti ChatGPT: "Sesi baru" di atas, lalu daftar proyek, lalu
  * daftar sesi yang dikelompokkan per waktu.
  *
- * Proyek bisa dibuka, diberi nama, diberi instruksi, dan dihapus — semuanya
+ * Proyek bisa dibuka, diberi nama, diberi instruksi, dan dihapus: semuanya
  * langsung di tempatnya, tanpa membuka jendela terpisah.
  */
 export function AsistenSidebar({

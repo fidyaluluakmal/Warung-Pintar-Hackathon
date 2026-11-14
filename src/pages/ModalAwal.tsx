@@ -5,12 +5,12 @@ import { hariIniWib } from "../lib/calendar"
 import { bacaModalAwal, simpanModalAwal, susunLaporanModal } from "../lib/capital"
 
 /**
- * Modal Awal — "uang saya bertambah atau berkurang?"
+ * Modal Awal: "uang saya bertambah atau berkurang?"
  *
  * Pemilik warung tidak butuh laporan laba yang rumit. Dia butuh tahu:
  * modal yang saya pakai dulu, sekarang jadi berapa.
  *
- * Perhitungannya sama dengan panel di Beranda — keduanya baca fungsi yang
+ * Perhitungannya sama dengan panel di Beranda: keduanya baca fungsi yang
  * sama di `src/lib/capital.ts`, jadi angkanya tidak mungkin berbeda.
  */
 export function ModalAwal() {

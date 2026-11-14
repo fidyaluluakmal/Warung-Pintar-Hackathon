@@ -2,7 +2,7 @@
  * Pesan error untuk pengguna.
  *
  * Pesan error dari database berbahasa Inggris dan menyebut nama tabel atau
- * kolom — misalnya "duplicate key value violates unique constraint". Itu
+ * kolom: misalnya "duplicate key value violates unique constraint". Itu
  * tidak ada artinya buat pemilik warung, dan di depan jurit terlihat seperti
  * aplikasi rusak.
  *

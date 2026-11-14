@@ -86,7 +86,7 @@ const STOPWORD = new Set([
  *
  * Dipakai untuk dua hal:
  *  1. Fallback saat AI tidak tersedia.
- *  2. Draft cepat sebelum AI refined — hasilnya selalu bisa diedit.
+ *  2. Draft cepat sebelum AI refined: hasilnya selalu bisa diedit.
  */
 export function parseKalimat(teks: string): HasilParse {
   const kalimat = teks.toLowerCase().trim()
@@ -96,7 +96,7 @@ export function parseKalimat(teks: string): HasilParse {
   const items: HasilParse["items"] = []
 
   // Potong per koma dan "lalu"/"dan" supaya beberapa barang terpisah.
-  // Koma hanya jadi pemisah kalau diikuti spasi atau akhir kalimat — kalau
+  // Koma hanya jadi pemisah kalau diikuti spasi atau akhir kalimat: kalau
   // tidak, "1,5 juta" ikut terpotong jadi "1" dan "5 juta".
   const potongan = kalimat
     .split(/[,;](?=\s|$)|\bdan\b|\blalu\b|\btapi\b|\bnanti\b/)
@@ -208,7 +208,7 @@ export function parseAngkaIndo(teks: string): number | null {
 /**
  * Parse harga dalam bentuk kata: "14 ribu", "1,5 juta", "17.000".
  *
- * Angka polos tanpa kata "ribu/juta" TIDAK dianggap harga di sini —
+ * Angka polos tanpa kata "ribu/juta" TIDAK dianggap harga di sini -
  * pemanggil yang memutuskan, supaya "3 kg" tidak jadi harga 3.
  */
 export function parseHarga(kata: string): number | null {

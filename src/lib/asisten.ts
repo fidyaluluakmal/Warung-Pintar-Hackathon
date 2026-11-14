@@ -71,7 +71,7 @@ const SAPAAN = ["pak", "bu", "mas", "bpk", "sdr", "h", "hj", "drs", "ir"]
 /**
  * Nama yang enak dipanggil.
  *
- * "Pak Andi Warung Sumber Rejeki" jadi "Pak Andi" — sapaan ikut nama depan,
+ * "Pak Andi Warung Sumber Rejeki" jadi "Pak Andi": sapaan ikut nama depan,
  * bukan dipotong di tengah. Kalau nama diawali sapaan, sapaannya ikut
  * diambil: "Pak" saja bukan nama orang.
  */
@@ -164,7 +164,7 @@ export function proyekSesi(
 /**
  * Instruksi proyek yang berlaku untuk sebuah sesi.
  *
- * Kalau sesi tidak punya proyek, tidak ada instruksi tambahan — dan ini
+ * Kalau sesi tidak punya proyek, tidak ada instruksi tambahan: dan ini
  * yang dikirim ke AI.
  */
 export function instruksiUntukSesi(
@@ -179,7 +179,7 @@ export function instruksiUntukSesi(
 /**
  * Urutkan proyek: yang paling baru dipakai lebih dulu.
  *
- * Proyek tanpa sesi tidak ditampilkan di urutan pertama — tapi tetap ada,
+ * Proyek tanpa sesi tidak ditampilkan di urutan pertama: tapi tetap ada,
  * supaya tidak hilang begitu semua sesinya dihapus.
  */
 export function urutProyek(
@@ -246,7 +246,7 @@ export interface KonteksAsisten {
  * Susun konteks untuk AI.
  *
  * Semua angka dihitung di sini, bukan oleh model. Model cuma menyusun
- * kalimat — jadi tidak mungkin mengarang angka.
+ * kalimat: jadi tidak mungkin mengarang angka.
  */
 export function bangunKonteks(data: DataKonteks, sekarang: Date = new Date()): KonteksAsisten {
   const modeBarang = new Map(data.barang.map((b) => [b.id, b.harga_modal]))

@@ -3,7 +3,7 @@
  *
  * Pemilik warung tahu dia mulai dengan modal berapa. Dari situ bisa
  * dibandingkan: sekarang uangnya di rak (stok), di piutang (utang pelanggan),
- * atau sudah jadi laba — atau justru berkurang.
+ * atau sudah jadi laba: atau justru berkurang.
  *
  * Semua angka berasal dari data (stok, transaksi, utang) plus satu angka yang
  * dimasukkan pemilik sendiri: modal awal. Tidak ada angka yang dikarang.
@@ -48,7 +48,7 @@ export function bacaModalAwal(): ModalAwal | null {
     const parsed = JSON.parse(mentah) as ModalAwal
     if (!parsed || !Number.isFinite(parsed.amount) || parsed.amount <= 0) return null
     // Tanggal yang tidak sah membuat halaman Modal Awal mati total, jadi
-    // dikembalikan sebagai kosong — artinya "sejak awal".
+    // dikembalikan sebagai kosong: artinya "sejak awal".
     const since =
       typeof parsed.since === "string" && /\d{4}-\d{2}-\d{2}$/.test(parsed.since)
         ? parsed.since
@@ -92,9 +92,9 @@ function setelahTanggal(iso: string, since: string): boolean {
  * Yang dipakai untuk "nilai stok" adalah stok SEKARANG, bukan stok awal:
  * uang yang dipakai untuk kulakan sudah jadi barang di rak, dan barang yang
  * sudah laku sudah masuk laba kotor. Kalau memakai stok awal, barang yang
- * sudah terjual dihitung dua kali — sekali di laba, sekali di stok.
+ * sudah terjual dihitung dua kali: sekali di laba, sekali di stok.
  *
- * Uang tunai di laci tidak ikut dihitung (belum ada catatan kas harian) —
+ * Uang tunai di laci tidak ikut dihitung (belum ada catatan kas harian) -
  * itu sebabnya hasilnya disebut "perkiraan".
  */
 export function susunLaporanModal(

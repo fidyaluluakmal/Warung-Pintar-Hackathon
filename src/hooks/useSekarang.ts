@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
  * Waktu sekarang, diperbarui tiap menit.
  *
  * Layar yang menghitung "hari ini" memakai nilai ini sebagai dependensi.
- * Kalau tidak, angka "hari ini" beku di waktu layar pertama dibuka — warung
+ * Kalau tidak, angka "hari ini" beku di waktu layar pertama dibuka: warung
  * yang dibiarkan semalaman masih menampilkan angka kemarin.
  */
 export function useSekarang(): Date {

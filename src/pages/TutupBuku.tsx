@@ -8,7 +8,7 @@ import { labaKotor, perluRestok as perluRestokSet, round2 } from "../lib/invento
 import type { NavLabel } from "../lib/nav"
 
 /**
- * Tutup Buku — ritual harian pemilik warung.
+ * Tutup Buku: ritual harian pemilik warung.
  *
  * Satu ringkasan yang bisa langsung dikirim ke supplier (buat order) atau ke
  * pelanggan (buat tagih utang). Semua angka dihitung dari catatan sendiri:
@@ -131,7 +131,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
       .filter((u) => tanggalWib(u.tanggal) === hariIni)
       .reduce((sum, u) => sum + Math.max(u.total - u.dibayar, 0), 0)
 
-    // Stok menipis dan saran beli besok — dari mesin restok yang sama.
+    // Stok menipis dan saran beli besok: dari mesin restok yang sama.
     const stokTipis = stok.filter((s) => perluRestok.has(s.barang_id))
     const saran = saranBeli.map((s) => ({
       ...s,

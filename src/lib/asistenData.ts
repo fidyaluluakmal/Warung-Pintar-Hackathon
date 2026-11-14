@@ -5,7 +5,7 @@
  *   - Supabase (mode cloud): tabel `proyek`, `sesi_asisten`, `pesan_asisten`.
  *   - localStorage (mode demo lokal): key yang sama, bentuk yang sama.
  *
- * Halaman tidak perlu tahu sedang menyimpan ke mana — dia cuma panggil
+ * Halaman tidak perlu tahu sedang menyimpan ke mana: dia cuma panggil
  * antarmuka di bawah ini.
  */
 

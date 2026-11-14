@@ -2,7 +2,7 @@
  * Format tampilan.
  *
  * Semua angka uang dan tanggal dalam bahasa Indonesia, zona waktu warung
- * (Asia/Jakarta) — bukan zona waktu perangkat.
+ * (Asia/Jakarta): bukan zona waktu perangkat.
  */
 
 const RUPIAH = new Intl.NumberFormat("id-ID", {
@@ -27,7 +27,7 @@ export function rupiahRingkas(nilai: number): string {
 /**
  * Angka desimal dengan pemisah koma.
  *
- * `toFixed(1)` memakai titik — "7.2 jt". Angka yang dibaca orang di Indonesia
+ * `toFixed(1)` memakai titik: "7.2 jt". Angka yang dibaca orang di Indonesia
  * pakai koma sebagai pemisah desimal.
  */
 export function angkaDesimal(nilai: number, desimal = 1): string {
@@ -37,7 +37,7 @@ export function angkaDesimal(nilai: number, desimal = 1): string {
 /**
  * Jumlah barang: bulat tanpa desimal, pecahan dengan maksimal 2 desimal.
  *
- * 12 -> "12", 2.5 -> "2,5". `angka(x, 2)` selalu menambah ",00" — buat
+ * 12 -> "12", 2.5 -> "2,5". `angka(x, 2)` selalu menambah ",00": buat
  * jumlah barang itu kelihatan aneh.
  */
 export function angkaRapi(nilai: number): string {

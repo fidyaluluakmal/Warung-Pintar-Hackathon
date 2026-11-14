@@ -39,7 +39,7 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
   /**
    * Ringkasan per pelanggan.
    *
-   * Dihitung dari data store, bukan dibaca langsung dari database — jadi
+   * Dihitung dari data store, bukan dibaca langsung dari database: jadi
    * halaman ini jalan juga di mode demo lokal.
    */
   const ringkasan = useMemo(

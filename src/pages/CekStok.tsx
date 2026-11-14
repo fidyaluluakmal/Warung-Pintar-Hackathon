@@ -14,11 +14,11 @@ import {
 } from "../lib/opname"
 
 /**
- * Cek Stok (opname) — hitung stok fisik lalu catat selisihnya.
+ * Cek Stok (opname): hitung stok fisik lalu catat selisihnya.
  *
  * Halaman ini berdiri sendiri: ia membaca stok sistem langsung dari view
  * `stok_barang` dan menulis penyesuaian ke `transaksi` + `baris_transaksi`.
- * Jadi tidak bergantung sama sekali pada state toko lain — angka yang
+ * Jadi tidak bergantung sama sekali pada state toko lain: angka yang
  * tampil di sini sama dengan angka stok di kasir karena sumbernya sama.
  */
 export function CekStok() {
@@ -32,7 +32,7 @@ export function CekStok() {
   /**
    * Daftar barang untuk dihitung.
    *
-   * diambil dari store, bukan langsung dari database — jadi halaman ini jalan
+   * diambil dari store, bukan langsung dari database: jadi halaman ini jalan
    * juga di mode demo lokal. Angkanya tetap sama dengan kasir karena
    * sumbernya sama: stok yang dihitung dari history transaksi.
    */
@@ -107,7 +107,7 @@ export function CekStok() {
     setGalatSimpan("")
     setSukses("")
     try {
-      // Satu transaksi penyesuaian — semua selisih dicatat dalam satu peristiwa.
+      // Satu transaksi penyesuaian: semua selisih dicatat dalam satu peristiwa.
       await simpanTransaksi({
         tipe: "sesuaikan",
         sumber: "manual",

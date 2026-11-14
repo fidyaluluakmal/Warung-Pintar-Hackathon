@@ -1,5 +1,5 @@
 /**
- * Buku pelanggan — warung mengingat orangnya, bukan cuma angkanya.
+ * Buku pelanggan: warung mengingat orangnya, bukan cuma angkanya.
  *
  * Pelanggan warung sering tidak punya nomor telepon. Yang ada cuma nama
  * panggilan: "Pak Yono". Karena itu modul ini menjadikan nama panggilan
@@ -11,7 +11,7 @@
  * `src/lib/store.tsx`.
  *
  * Cara mengaitkan penjualan dengan pelanggan: tabel `transaksi` tidak punya
- * kolom pelanggan. Jadi penjualan dicocokkan dari `teks_mentah` — kalimat
+ * kolom pelanggan. Jadi penjualan dicocokkan dari `teks_mentah`: kalimat
  * suara atau nota yang menyebut nama panggilan pelanggan. Penjualan yang
  * tidak menyebut pelanggan mana pun dihitung "tanpa pelanggan" dan tidak
  * ikut masuk hitungan per pelanggan.
@@ -161,7 +161,7 @@ export function inisialPelanggan(nama: string): string {
  *
  * Dicocokkan per kata dan mengabaikan huruf besar-kecil, jadi "pak yono"
  * ketemu di kalimat "Beli minyak buat pak yono". Nama yang lebih panjang
- * menang kalau ada beberapa yang cocok — lihat `pelangganDariTeks`.
+ * menang kalau ada beberapa yang cocok: lihat `pelangganDariTeks`.
  */
 export function cocokNamaPelanggan(teks: string | null | undefined, nama: string): boolean {
   if (!teks) return false
@@ -433,7 +433,7 @@ function pilihFavorit(
  * Ringkas baris utang jadi bentuk yang dipakai hitungRingkasanPelanggan.
  *
  * Tanggal utangnya wajib ikut. Kalau tanggalnya hilang, umur utang tidak
- * bisa dihitung — dan "menunggak lebih dari 7 hari" selalu nol, tanpa ada
+ * bisa dihitung: dan "menunggak lebih dari 7 hari" selalu nol, tanpa ada
  * tanda ada yang salah.
  */
 export function ringkasUtang(

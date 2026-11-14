@@ -4,14 +4,14 @@ import { supabase } from "./supabase"
  * Ambil semua baris sebuah tabel, sedikit demi sedikit.
  *
  * PostgREST memotong jawaban di 1000 baris. Kalau tabel lebih besar, baris
- * yang terpotong hilang tanpa tanda — stok jadi negatif, laba kotor salah, dan
+ * yang terpotong hilang tanpa tanda: stok jadi negatif, laba kotor salah, dan
  * pelanggan kehilangan barang favorit. Jadi ambil bertahap sampai habis.
  *
  * `urut` = kolom pengurutan. `naik` = true untuk urutan menaik.
  *
  * Pengurutan selalu ada, bahkan kalau pemanggil tidak menyebut kolomnya.
  * Tanpa pengurutan yang tetap, batas antar halaman bisa bergeser dan baris
- * bisa terlewat atau terulang — persis masalah yang fungsi ini dibuat untuk
+ * bisa terlewat atau terulang: persis masalah yang fungsi ini dibuat untuk
  * mencegahnya.
  */
 export async function ambilSemua<T>(

@@ -21,9 +21,9 @@ interface BarisRiwayat {
 }
 
 /**
- * Riwayat — jejak setiap transaksi.
+ * Riwayat: jejak setiap transaksi.
  *
- * Penting untuk pemilik warung: barang masuk dari nota tetap ada buktinya —
+ * Penting untuk pemilik warung: barang masuk dari nota tetap ada buktinya -
  * siapa yang mencatat, dari mana, dan isinya apa. Semua tanggal dihitung di
  * zona waktu warung (Asia/Jakarta), bukan zona waktu perangkat.
  */

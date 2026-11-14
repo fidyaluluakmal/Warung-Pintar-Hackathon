@@ -2,7 +2,7 @@
  * Kontrak data aplikasi.
  *
  * Satu tempat supaya frontend, Edge Function, dan SQL tidak berbeda bendanya.
- * Field yang dipakai AI selalu angka — bukan teks bebas.
+ * Field yang dipakai AI selalu angka: bukan teks bebas.
  */
 
 /** Satuan yang dipakai di seluruh aplikasi. */
@@ -176,7 +176,7 @@ export interface HargaModalRiwayat {
 /**
  * Barang titipan (konsinyasi).
  *
- * Barang milik orang lain yang dijual warung. Tidak masuk stok warung —
+ * Barang milik orang lain yang dijual warung. Tidak masuk stok warung -
  * yang dihitung cuma komisi warung dan bagian untuk pemilik barang.
  */
 export interface Titip {

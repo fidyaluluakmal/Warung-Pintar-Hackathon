@@ -5,7 +5,7 @@ import { hariIniWib, jamWib, selisihHari, tanggalWib, transaksiHariIni } from ".
  * Regresi zona waktu.
  *
  * Transaksi jam 23:30 WIB disimpan sebagai 16:30 UTC. Kalau dibandingkan
- * dengan tanggal UTC, transaksi itu terlihat "kemarin" — omzet harian jadi
+ * dengan tanggal UTC, transaksi itu terlihat "kemarin": omzet harian jadi
  * nol dan saran belanja meleset.
  */
 

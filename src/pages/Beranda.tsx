@@ -58,7 +58,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
 
     // Angka 7 hari terakhir, dihitung dari kalender warung. Dipakai untuk
     // saran AI: nama fieldnya "MingguIni", jadi isinya harus benar-benar
-    // mingguan — bukan omzet hari ini.
+    // mingguan: bukan omzet hari ini.
     const tujuhHari = transaksi.filter(
       (t) => t.tipe === "jual" && selisihHari(t.tanggal) < 7,
     )

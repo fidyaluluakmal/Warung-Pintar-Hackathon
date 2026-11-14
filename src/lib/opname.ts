@@ -1,5 +1,5 @@
 /**
- * Cek Stok (opname) — bandingkan stok fisik dengan stok sistem.
+ * Cek Stok (opname): bandingkan stok fisik dengan stok sistem.
  *
  * Warung kecil tidak punya pemindai barcode seperti minimarket. Stok sering
  * meleset tanpa disadari: ada yang telat dicatat, ada yang diambil tanpa
@@ -113,7 +113,7 @@ export function mulaiSesiOpname(
 /**
  * Catat hasil hitung fisik satu barang.
  *
- * Sesi lama tidak diubah — fungsi ini mengembalikan sesi baru.
+ * Sesi lama tidak diubah: fungsi ini mengembalikan sesi baru.
  */
 export function catatHitung(
   sesi: SesiOpname,
@@ -219,7 +219,7 @@ export function alasanSelisih(item: {
 /**
  * Baris penyesuaian yang harus disimpan.
  *
- * Barang yang selisihnya nol (atau belum dihitung) tidak ikut — penyesuaian
+ * Barang yang selisihnya nol (atau belum dihitung) tidak ikut: penyesuaian
  * dibuat hanya untuk barang yang benar-benar berubah.
  */
 export function barisPenyesuaian(hasil: HasilOpname[]): BarisPenyesuaian[] {
@@ -262,7 +262,7 @@ export function ringkasanOpname(hasil: HasilOpname[]): RingkasanOpname {
   }
 }
 
-/** Angka untuk alasan: 2,5 tetap 2,5 — bukan 2,50. */
+/** Angka untuk alasan: 2,5 tetap 2,5: bukan 2,50. */
 function formatJumlah(nilai: number): string {
   return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(nilai)
 }

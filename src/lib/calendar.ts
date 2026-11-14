@@ -3,7 +3,7 @@
  *
  * Semua tanggal dihitung dalam zona waktu warung (Asia/Jakarta), bukan zona
  * waktu perangkat. Tanpa ini, transaksi jam 23:30 WIB akan dihitung sebagai
- *Besok — dan omzet harian, laba kotor, sampai "beli apa besok" jadi meleset.
+ *Besok: dan omzet harian, laba kotor, sampai "beli apa besok" jadi meleset.
  *
  * Bandingkan dengan `hariIniWib()`.
  */

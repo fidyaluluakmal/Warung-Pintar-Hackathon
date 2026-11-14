@@ -1,5 +1,5 @@
 /**
- * Penjaga Margin — deteksi harga modal yang naik dan saran harga jual.
+ * Penjaga Margin: deteksi harga modal yang naik dan saran harga jual.
  *
  * Warung kecil jarang memakai mesin kasir. Harga modal naik diam-diam, margin
  * menyusut, dan pemilik baru sadar setelah bulan tutup buku.
@@ -22,7 +22,7 @@ export function bulatkanHarga(harga: number): number {
  *
  * margin = (harga_jual - harga_modal) / harga_jual × 100
  *
- * Kalau harga jual <= 0, margin dianggap 0 — bukan NaN, supaya tampilan
+ * Kalau harga jual <= 0, margin dianggap 0: bukan NaN, supaya tampilan
  * tidak pernah menampilkan "NaN%".
  */
 export function marginPersen(hargaJual: number, hargaModal: number): number {

@@ -5,7 +5,7 @@ import { persen, rupiah } from "../lib/format"
 import { MARGIN_TARGET } from "../lib/margin"
 
 /**
- * Penjaga Margin — harga modal naik diam-diam.
+ * Penjaga Margin: harga modal naik diam-diam.
  *
  * Harga modal naik tidak selalu terasa. Yang terasa belakangan: margin
  * menyusut, dan laba ikut terkikis. Halaman ini membandingkan modal dulu

@@ -5,8 +5,8 @@ import { SATUAN_TERSEDIA } from "./types"
 /**
  * Daftar satuan harus sama di dua tempat:
  *
- *  - `src/lib/types.ts` — satuan yang dipakai katalog dan tampilan.
- *  - `supabase/functions/_shared/normalize.ts` — satuan yang dikenali AI.
+ *  - `src/lib/types.ts`: satuan yang dipakai katalog dan tampilan.
+ *  - `supabase/functions/_shared/normalize.ts`: satuan yang dikenali AI.
  *
  * Kalau satu satuan ada di katalog tapi tidak di daftar AI, AI mengubahnya
  * jadi "pcs". Stok barang jadi tidak cocok dengan katalog dan tidak ada

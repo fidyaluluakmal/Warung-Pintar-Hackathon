@@ -41,7 +41,7 @@ function pesanAI(kesalahan: unknown): string {
 }
 
 /**
- * Asisten warung — halaman penuh, ala ChatGPT.
+ * Asisten warung: halaman penuh, ala ChatGPT.
  *
  * Kolom kiri berisi sesi dan proyek, kolom kanan berisi percakapan. Semua
  * angka yang tampil berasal dari catatan warung sendiri: AI hanya menyusun
@@ -74,7 +74,7 @@ export function AsistenAi() {
       setSesi(data.sesi.map((s) => ({ ...s, jumlahPesan: 0 })))
       setPesan(data.pesan)
       // Tidak langsung membuka percakapan terakhir. Yang dibuka adalah layar
-      // kosong yang menyapa — daftar sesi di kolom kiri untuk melanjutkan
+      // kosong yang menyapa: daftar sesi di kolom kiri untuk melanjutkan
       // yang lama.
     } catch (kesalahan) {
       setGalat(
@@ -123,7 +123,7 @@ export function AsistenAi() {
    *
    * The textarea saves on blur, so the stored instruction is still the old
    * one when the question is sent right after typing. The question would
-   * then go to the AI without the instruction — the main feature of a
+   * then go to the AI without the instruction: the main feature of a
    * project. So the freshest value is kept separately and sent right away.
    */
   const [instruksiSegar, setInstruksiSegar] = useState<Record<string, string>>({})
@@ -269,7 +269,7 @@ export function AsistenAi() {
   /**
    * Mulai percakapan baru.
    *
-   * Baris sesinya belum dibuat di database — baru dibuat waktu pesan
+   * Baris sesinya belum dibuat di database: baru dibuat waktu pesan
    * pertama dikirim, dengan judul otomatis dari pertanyaannya. Kalau tidak,
    * sidebar penuh baris "Sesi baru" yang isinya kosong.
    */
@@ -345,7 +345,7 @@ export function AsistenAi() {
   /**
    * Salin teks ke papan klip.
    *
-   * `navigator.clipboard` tidak ada di konteks yang tidak aman — persis seperti
+   * `navigator.clipboard` tidak ada di konteks yang tidak aman: persis seperti
    * saat demo di HP lewat alamat jaringan lokal. Jadi ada cara cadangan.
    */
   async function salin(teks: string): Promise<void> {

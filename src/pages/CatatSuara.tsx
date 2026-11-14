@@ -320,7 +320,7 @@ export function CatatSuara({ onClose }: { onClose?: () => void }) {
 
 /**
  * Speech-to-text lewat Web Speech API kalau browser mendukung.
- * Kalau tidak, pengguna mengetik manual — jadi alur tetap jalan.
+ * Kalau tidak, pengguna mengetik manual: jadi alur tetap jalan.
  */
 async function transkripBrowser(
   rekaman: MediaRecorder,

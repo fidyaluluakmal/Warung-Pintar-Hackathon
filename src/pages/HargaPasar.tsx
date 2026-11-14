@@ -16,7 +16,7 @@ import {
 } from "../lib/hargaPasar"
 
 /**
- * Harga Pasar — "di tempat lain beras 15 ribu, di sini 14 ribu".
+ * Harga Pasar: "di tempat lain beras 15 ribu, di sini 14 ribu".
  *
  * Warung kecil belanja sambil banding-banding. Catatan seperti itu biasanya
  * cuma ingatan di kepala, lalu hilang. Di sini dicatat, dibandingkan dengan
@@ -101,7 +101,7 @@ export function HargaPasar() {
       barang
         .map((item) => bandingkanHargaPasar(item, catatan))
         .filter((item) => item.jumlahCatatan > 0)
-        // Yang paling hemat duluan — itu yang paling perlu ditindak.
+        // Yang paling hemat duluan: itu yang paling perlu ditindak.
         .sort((a, b) => b.selisihPersen - a.selisihPersen),
     [barang, catatan],
   )

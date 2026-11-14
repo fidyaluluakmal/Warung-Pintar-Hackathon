@@ -4,7 +4,7 @@ import { selisihHari } from "../lib/calendar"
 import { rupiah } from "../lib/format"
 
 /**
- * Simpen Dulu — buku utang pelanggan.
+ * Simpen Dulu: buku utang pelanggan.
  *
  * Pelanggan warung sering tidak punya nomor telepon, cuma nama panggilan:
  * "Pak Yono". Karena itu buku ini menyimpan nama, bukan kontak.
@@ -50,7 +50,7 @@ export function SimpenDulu() {
       .sort((a, b) => b.total - a.total)
   }, [belumLunas])
 
-  /** Pelanggan dengan utang paling lama — bukan yang utangnya paling besar. */
+  /** Pelanggan dengan utang paling lama: bukan yang utangnya paling besar. */
   const palingLama = useMemo(() => {
     let hasil: (typeof perPelanggan)[number] | null = null
     for (const entry of perPelanggan) {

@@ -7,7 +7,7 @@ import { nav, navLain, type NavLabel } from "../lib/nav"
  *
  * Di layar kecil, sidebar disembunyikan dan nav bawah hanya memuat 4 menu
  * utama. Halaman lain (Pelanggan, Harga Pasar, Tutup Buku, Pengaturan) tetap
- * harus bisa dibuka — lewat menu ini.
+ * harus bisa dibuka: lewat menu ini.
  */
 export function MobileMenu({
   activeNav,
@@ -21,7 +21,7 @@ export function MobileMenu({
   const panelRef = useRef<HTMLElement>(null)
 
   // Dialog harus bisa ditutup dengan Escape dan fokusnya harus masuk ke
-  // panel — kalau tidak, pengguna keyboard tersesat di overlay.
+  // panel: kalau tidak, pengguna keyboard tersesat di overlay.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {

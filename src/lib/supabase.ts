@@ -2,7 +2,7 @@
  * Klien Supabase.
  *
  * Kalau environment belum diisi, aplikasi tetap jalan dalam mode demo lokal
- * (data di localStorage). Jadi `supabase` boleh null — pemanggilnya yang
+ * (data di localStorage). Jadi `supabase` boleh null: pemanggilnya yang
  * memeriksa.
  */
 

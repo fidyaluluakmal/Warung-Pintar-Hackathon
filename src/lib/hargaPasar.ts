@@ -1,5 +1,5 @@
 /**
- * Harga Pasar — bandingkan modal sendiri dengan harga barang di tempat lain.
+ * Harga Pasar: bandingkan modal sendiri dengan harga barang di tempat lain.
  *
  * Warung kecil belanja sambil banding-banding: "di tempat lain beras 15
  * ribu, di sini 14 ribu". Catatan seperti itu biasanya cuma ingatan di
@@ -7,7 +7,7 @@
  * lalu jadi saran harga jual.
  *
  * Modul ini murni: masuk dan keluar sama, tanpa database atau jaringan.
- * Semua angka berasal dari harga yang dicatat pemilik warung — tidak ada
+ * Semua angka berasal dari harga yang dicatat pemilik warung: tidak ada
  * angka yang dikarang.
  *
  * Perhitungan harga jual memakai mesin yang sama dengan Penjaga Margin
@@ -41,7 +41,7 @@ export interface BarangPasar {
   id: string
   nama: string
   satuan: string
-  /** Harga modal sendiri — dasar perbandingan. */
+  /** Harga modal sendiri: dasar perbandingan. */
   hargaModal: number
   /** Harga jual yang sedang dipakai. */
   hargaJual: number
@@ -198,7 +198,7 @@ export function saranHargaJual(
 /**
  * Catatan yang paling berguna ditampilkan: paling baru.
  *
- * Kalau dua catatan bertanggal sama, yang lebih murah yang dipilih —
+ * Kalau dua catatan bertanggal sama, yang lebih murah yang dipilih -
  * harga termurah biasanya yang paling menarik buat pemilik warung.
  */
 export function pilihHargaPasar(catatan: CatatanHargaPasar[]): CatatanHargaPasar | null {
@@ -224,7 +224,7 @@ export function hariLewat(tanggal: string, sekarang: Date = new Date()): number 
  * Label kesegaran data harga, dalam bahasa sehari-hari.
  *
  * "hari ini", "kemarin", "3 hari lalu", dan "data lama" kalau sudah lewat
- * seminggu — harga pasar berubah cepat, jadi data lama perlu dicek lagi.
+ * seminggu: harga pasar berubah cepat, jadi data lama perlu dicek lagi.
  */
 export function labelKesegaran(tanggal: string, sekarang: Date = new Date()): string {
   const umur = hariLewat(tanggal, sekarang)
@@ -237,7 +237,7 @@ export function labelKesegaran(tanggal: string, sekarang: Date = new Date()): st
 /**
  * Ringkasan angka untuk kartu di layar.
  *
- * Rata-rata hemat dihitung dari barang yang di luar lebih murah saja —
+ * Rata-rata hemat dihitung dari barang yang di luar lebih murah saja -
  * barang yang di luar lebih mahal bukan penghematan.
  */
 export function hitungRingkasan(
@@ -281,7 +281,7 @@ function waktuCatatan(catatan: CatatanHargaPasar): number {
 
 /**
  * Tanggal menurut zona waktu warung (Asia/Jakarta), dihitung sebagai
- * tengah malam UTC — jadi selisihnya murni selisih hari kalender.
+ * tengah malam UTC: jadi selisihnya murni selisih hari kalender.
  */
 function hariJakarta(nilai: string | Date): number {
   const waktu = typeof nilai === "string" ? new Date(nilai) : nilai

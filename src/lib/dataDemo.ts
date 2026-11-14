@@ -3,7 +3,7 @@
  *
  * Tanpa Supabase, aplikasi masih harus jalan: pemilik warung bisa login
  * dengan nama saja, lalu mencatat penjualan. Kalau datanya kosong, aplikasi
- * jadi tidak bisa dicoba sama sekali — jadi ada katalog kecil dan beberapa
+ * jadi tidak bisa dicoba sama sekali: jadi ada katalog kecil dan beberapa
  * transaksi supaya alurnya bisa dijalankan.
  *
  * Datanya sengaja dibuat dari fungsi murni, bukan `random()`, supaya
@@ -208,7 +208,7 @@ function pelangganDemo(): DataPelanggan[] {
 /**
  * Susun data demo lokal.
  *
- * Semua id dibuat dari pola yang tetap, jadi data lokal selalu sama —
+ * Semua id dibuat dari pola yang tetap, jadi data lokal selalu sama -
  * tidak ada `random()` yang bikin berbeda tiap dibuka.
  */
 export function dataDemoLokal(): DataWarungLokal {

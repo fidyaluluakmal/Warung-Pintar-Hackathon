@@ -34,7 +34,7 @@ export function hitungStok(
  * Saran beli        = target stok - stok, minimal 0
  *
  * "Hari aktif" = hari sejak barang pertama terjual, dibatasi 30 hari.
- * Warung yang baru buka 2 hari tidak boleh dibagi 30 — sarannya jadi terlalu kecil.
+ * Warung yang baru buka 2 hari tidak boleh dibagi 30: sarannya jadi terlalu kecil.
  */
 export function hitungSaranBeli(
   stokBarang: StokBarang[],
@@ -73,7 +73,7 @@ export function hitungSaranBeli(
     // Hari aktif: sejak penjualan pertama, dibatasi 30 hari.
     // Dihitung dari tanggal warung (Asia/Jakarta), bukan selisih milidetik.
     // Kalau pakai milidetik mentah, penjualan jam 23:30 dihitung masih
-    // "hari yang sama" — laju jualan jadi terlalu besar dan saran beli berlebihan.
+    // "hari yang sama": laju jualan jadi terlalu besar dan saran beli berlebihan.
     const hariAktif = Math.min(30, Math.max(1, selisihHari(pertama, hariIni) + 1))
 
     const qtyTerjual = jualRows.reduce((sum, row) => {
@@ -123,7 +123,7 @@ function findTanggal(
  * Satu aturan untuk semua layar: barang yang perlu restok = barang yang
  * punya saran beli dari mesin restok. Kalau layar memakai aturan sendiri
  * (misal "stok <= minimum"), angkanya bisa berbeda dari saran di halaman
- * yang sama — dan dua layar jadiappeared berbeda untuk warung yang sama.
+ * yang sama: dan dua layar jadiappeared berbeda untuk warung yang sama.
  */
 export function perluRestok(saranBeli: SaranBeli[]): Set<string> {
   return new Set(saranBeli.map((saran) => saran.barangId))

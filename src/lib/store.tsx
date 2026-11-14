@@ -333,7 +333,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       if (!sesi) throw new Error("Belum masuk.")
 
       // Setiap baris harus menunjuk barang yang benar-benar ada. Kalau id-nya
-      // kosong, database menolaknya dan seluruh transaksi gagal — dengan pesan
+      // kosong, database menolaknya dan seluruh transaksi gagal: dengan pesan
       // error bahasa Inggris yang tidak ada artinya buat pemilik warung.
       const idValid = new Set(barang.map((b) => b.id))
       const barisTanpaId = input.baris.find((b) => !idValid.has(b.barangId))
@@ -344,7 +344,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       }
 
       // Penyesuaian tidak punya nilai jual, jadi totalsnya 0. Kalau dihitung
-      // dari baris, selisih negatif membuat total negatif — dan database
+      // dari baris, selisih negatif membuat total negatif: dan database
       // menolak transaksi dengan total di bawah nol.
       const total =
         input.tipe === "sesuaikan"
@@ -581,7 +581,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
   /**
    * Simpan pelanggan baru ke buku pelanggan.
    *
-   * Nama panggilan jadi identitas. Nomor telepon dan catatan opsional —
+   * Nama panggilan jadi identitas. Nomor telepon dan catatan opsional -
    * banyak pelanggan warung cuma punya nama.
    */
   const simpanPelanggan = useCallback(
@@ -643,7 +643,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       if (!Number.isFinite(input.komisiPersen) || input.komisiPersen < 0) {
         throw new Error("Komisi warung tidak boleh negatif.")
       }
-      // Di atas 100% berarti bagian pemilik barang jadi minus — tolak.
+      // Di atas 100% berarti bagian pemilik barang jadi minus: tolak.
       if (input.komisiPersen > 100) {
         throw new Error("Komisi warung tidak boleh lebih dari 100%.")
       }
@@ -694,7 +694,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
    * Tambah barang baru ke katalog.
    *
    * Satu barang = satu nama baku. Kalau nama sudah dipakai, database
-   * menolak (unik per pemilik) — pesannya diterjemahkan supaya pemilik
+   * menolak (unik per pemilik): pesannya diterjemahkan supaya pemilik
    * tahu harus menambah alias, bukan membuat barang baru.
    */
   const simpanBarang = useCallback(
@@ -714,7 +714,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
 
       // Cek nama yang sama sebelum menyentuh database. Database memang menolak
       // (unik per pemilik), tapi errornya bahasa Inggris dan muncul sebagai
-      // 409 di konsol — terlihat seperti aplikasi rusak.
+      // 409 di konsol: terlihat seperti aplikasi rusak.
       const sudahAda = barang.find((b) => b.nama.toLowerCase() === nama.toLowerCase())
       if (sudahAda) {
         throw new Error(`Sudah ada barang bernama "${nama}".`)
@@ -794,7 +794,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
    *  1. Transaksi pembelian tercatat, jadi stok naik dari history.
    *  2. Harga modal lama disimpan sebagai riwayat, lalu harga modal barang
    *     diupdate ke harga beli yang baru. Tanpa ini, Penjaga Margin tidak
-   *     pernah tahu harga modal naik — fitur itu diam-diam tidak jalan.
+   *     pernah tahu harga modal naik: fitur itu diam-diam tidak jalan.
    */
   const catatPembelian = useCallback(
     async (input: CatatPembelianInput) => {
@@ -1022,7 +1022,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
  *  1. Harga modal LAMA disimpan sebagai riwayat.
  *  2. Harga modal barang diupdate ke harga beli yang baru.
  *
- * Tanpa ini, Penjaga Margin tidak pernah tahu harga modal naik — fitur itu
+ * Tanpa ini, Penjaga Margin tidak pernah tahu harga modal naik: fitur itu
  * diam-diam tidak jalan. Dan karena laba kotor memakai harga modal dari
  * katalog, laba kotornya juga ikut salah.
  *

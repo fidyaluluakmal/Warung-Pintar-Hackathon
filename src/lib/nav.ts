@@ -24,7 +24,7 @@ export type NavLabel =
  * Menu sidebar (desktop).
  *
  * Kasir jadi menu pertama: itu yang dipakai sehari-hari. "Catat suara",
- * "foto nota", dan "tanya AI" dibuka dari kartu aksi di Beranda — bukan
+ * "foto nota", dan "tanya AI" dibuka dari kartu aksi di Beranda: bukan
  * menu, supaya sidebar tidak berdesakan.
  *
  * Tiap menu pakai ikon sendiri. Ikon yang sama buat dua menu di grup yang
@@ -52,7 +52,7 @@ export const navLain: Array<{ label: NavLabel; icon: IconName }> = [
   { label: "Pengaturan", icon: "settings" },
 ]
 
-/** Menu bawah (mobile) — 4 menu utama. */
+/** Menu bawah (mobile): 4 menu utama. */
 export const mobileNav: Array<{ label: NavLabel; icon: IconName }> = [
   { label: "Kasir", icon: "receipt" },
   { label: "Beranda", icon: "home" },
