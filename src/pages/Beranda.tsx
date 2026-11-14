@@ -1,30 +1,49 @@
 import { useMemo, useState } from "react"
 import { useWarung } from "../lib/store"
-import { hariIniWib, tanggalWib } from "../lib/calendar"
 import { Icon } from "../components/Icon"
-import { hariIni, rupiah, sapaan } from "../lib/format"
+import { hariIniWib, jamWib, selisihHari, tanggalWib } from "../lib/calendar"
+import { angka, rupiah, sapaan } from "../lib/format"
 import { labaKotor, round2 } from "../lib/inventory"
+import {
+  bacaModalAwal,
+  simpanModalAwal,
+  susunLaporanModal,
+  type ModalAwal,
+} from "../lib/capital"
 import { mintaSaran } from "../lib/api"
 import type { NavLabel } from "../lib/nav"
 import type { TipsAi } from "../lib/types"
 
 /**
- * Beranda: ringkasan hari ini + aksi cepat.
+ * Beranda: ringkasan hari ini.
  *
- * Semua angka dihitung dari data yang sudah dimuat, bukan dari AI.
+ * Urutannya mengikuti alur pemilik warung: kondisi hari ini -> modal awal ->
+ * mau catat apa -> tutup buku -> pengeluaran -> utang -> saran AI.
  */
 export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
-  const { sesi, transaksi, baris, stok, saranBeli, utang, sinyalMargin } = useWarung()
+  const { sesi, transaksi, baris, stok, barang, saranBeli, utang, sinyalMargin } = useWarung()
   const [tips, setTips] = useState<TipsAi[]>([])
   const [sibuk, setSibuk] = useState(false)
   const [galat, setGalat] = useState("")
+  const [modalAwal, setModalAwal] = useState<ModalAwal | null>(() => bacaModalAwal())
+  const [modalAwalEdit, setModalAwalEdit] = useState(false)
+  const [modalAwalDraft, setModalAwalDraft] = useState(() => ({
+    amount: modalAwal ? String(modalAwal.amount) : "",
+    since: modalAwal?.since ?? hariIniWib(),
+  }))
+  const [modalAwalGalat, setModalAwalGalat] = useState("")
 
   const ringkasan = useMemo(() => {
-    const hariIniIso = hariIniWib()
+    const hariIni = hariIniWib()
     const penjualanHariIni = transaksi.filter(
-      (t) => t.tipe === "jual" && tanggalWib(t.tanggal) === hariIniIso,
+      (t) => t.tipe === "jual" && tanggalWib(t.tanggal) === hariIni,
     )
+    const pembelianHariIni = transaksi.filter(
+      (t) => t.tipe === "beli" && tanggalWib(t.tanggal) === hariIni,
+    )
+
     const omzet = penjualanHariIni.reduce((sum, t) => sum + t.total, 0)
+    const belanja = pembelianHariIni.reduce((sum, t) => sum + t.total, 0)
 
     const hargaModal = new Map(stok.map((s) => [s.barang_id, s.harga_modal]))
     const idsHariIni = new Set(penjualanHariIni.map((t) => t.id))
@@ -32,23 +51,44 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
       .filter((row) => idsHariIni.has(row.transaksi_id))
       .reduce((sum, row) => sum + row.jumlah * (hargaModal.get(row.barang_id) ?? 0), 0)
 
+    const laba = labaKotor(omzet, modalTerjual)
     const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
-    // View `utang_berjalan` sudah hanya memuat yang belum lunas.
     const utangJalan = utang
-    const totalUtang = utangJalan.reduce(
-      (sum, u) => sum + Math.max(u.total - u.dibayar, 0),
-      0,
+    const totalUtang = utangJalan.reduce((sum, u) => sum + Math.max(u.total - u.dibayar, 0), 0)
+
+    // Kemarin, buat pembanding.
+    const kemarin = hariIniWib(new Date(Date.now() - 86_400_000))
+    const penjualanKemarin = transaksi.filter(
+      (t) => t.tipe === "jual" && tanggalWib(t.tanggal) === kemarin,
+    )
+    const omzetKemarin = penjualanKemarin.reduce((sum, t) => sum + t.total, 0)
+
+    const laporanModal = modalAwal
+      ? susunLaporanModal(modalAwal, barang, transaksi, baris, utang)
+      : null
+
+    // Pengeluaran belanja hari ini.
+    const pengeluaran = transaksi.filter(
+      (t) => t.tipe === "beli" && tanggalWib(t.tanggal) === hariIni,
     )
 
     return {
+      laporanModal,
+      pengeluaran,
       omzet: round2(omzet),
-      labaKotor: labaKotor(omzet, modalTerjual),
+      labaKotor: laba,
+      belanja: round2(belanja),
+      bersih: round2(omzet - belanja),
       jumlahTransaksi: penjualanHariIni.length,
+      omzetKemarin: round2(omzetKemarin),
+      tren: omzetKemarin > 0 ? round2(((omzet - omzetKemarin) / omzetKemarin) * 100) : 0,
+      margin: omzet > 0 ? round2((laba / omzet) * 100) : 0,
       stokTipis,
       totalUtang,
       utangJalan,
+      totalBarang: stok.length,
     }
-  }, [transaksi, baris, stok, utang])
+  }, [transaksi, baris, stok, utang, modalAwal, barang])
 
   async function mintaAi() {
     setSibuk(true)
@@ -74,215 +114,387 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
   }
 
   return (
-    <div>
-      <div className="greeting">
+    <>
+      <section className="greeting">
         <div>
-          <span className="date-label">{hariIni()}</span>
-          <h1>
-            {sapaan()}, {sesi?.pemilik ?? "Pak Andi"}
-          </h1>
-          <p>Ini yang perlu dilihat hari ini di warungmu.</p>
+          <span className="date-label">{tanggalLengkap()}</span>
+          <h1>Ringkasan hari ini</h1>
+          <p>
+            {sapaan()}, {sesi?.pemilik ?? "Pemilik Warung"}. Berikut kondisi warung Anda.
+          </p>
         </div>
+        <button className="period-button" onClick={() => onPindah("Tutup Buku")}>
+          Hari ini <Icon name="down" size={16} />
+        </button>
+      </section>
 
-      </div>
-
-      <div className="stats-grid">
+      <section className="stats-grid">
         <article className="stat-card">
           <div className="stat-top">
-            <div className="stat-icon revenue">Rp</div>
-            <span className="trend positive">{ringkasan.jumlahTransaksi} transaksi</span>
+            <span className="stat-icon revenue">Rp</span>
+            {ringkasan.omzetKemarin > 0 && (
+              <span
+                className={`trend ${ringkasan.tren >= 0 ? "positive" : "warning"}`}
+              >
+                <Icon name={ringkasan.tren >= 0 ? "up" : "down"} size={13} />{" "}
+                {angka(Math.abs(ringkasan.tren), 1)}% vs kemarin
+              </span>
+            )}
           </div>
-          <span className="stat-label">Omzet hari ini</span>
+          <span className="stat-label">Penjualan hari ini</span>
           <strong>{rupiah(ringkasan.omzet)}</strong>
-          <small>Laba kotor {rupiah(ringkasan.labaKotor)} — belum laba bersih.</small>
+          <small>{ringkasan.jumlahTransaksi} transaksi tercatat hari ini</small>
         </article>
 
         <article className="stat-card">
           <div className="stat-top">
-            <div className="stat-icon profit">!</div>
-            <span className="trend warning">
-              {ringkasan.stokTipis.length > 0 ? "perlu dicek" : "aman"}
+            <span className="stat-icon profit">
+              <Icon name="chart" size={20} />
+            </span>
+            <span className="trend">Margin {angka(ringkasan.margin, 1)}%</span>
+          </div>
+          <span className="stat-label">Laba kotor hari ini</span>
+          <strong>{rupiah(ringkasan.labaKotor)}</strong>
+          <small>Penjualan dikurangi modal barang terjual</small>
+        </article>
+
+        <article className="stat-card stock-summary">
+          <div className="stat-top">
+            <span className="stat-icon inventory">
+              <Icon name="box" size={20} />
+            </span>
+            <span
+              className={`trend ${ringkasan.stokTipis.length > 0 ? "warning" : "positive"}`}
+            >
+              <Icon
+                name={ringkasan.stokTipis.length > 0 ? "warning" : "check"}
+                size={13}
+              />{" "}
+              {ringkasan.stokTipis.length > 0 ? "Perlu dicek" : "Aman"}
             </span>
           </div>
-          <span className="stat-label">Stok hampir habis</span>
-          <strong>{ringkasan.stokTipis.length}</strong>
-          <small>dari {stok.length} barang</small>
+          <span className="stat-label">Total jenis barang</span>
+          <strong>
+            {ringkasan.totalBarang} <em>barang</em>
+          </strong>
+          <small>
+            <b>{ringkasan.stokTipis.length} barang</b> di bawah stok minimum
+          </small>
         </article>
+      </section>
 
-        <article className="stat-card">
-          <div className="stat-top">
-            <div className="stat-icon inventory">Rp</div>
-            <span className="trend warning">belum lunas</span>
+      <section className="panel capital-panel" id="modal-awal">
+        <div className="panel-heading">
+          <div>
+            <h2>Modal awal & untung/rugi</h2>
+            <p>
+              Masukkan modal yang Anda pakai mulai berjualan, lalu bandingkan dengan uang Anda
+              sekarang.
+            </p>
           </div>
-          <span className="stat-label">Utang pelanggan</span>
-          <strong>{rupiah(ringkasan.totalUtang)}</strong>
-          <small>{ringkasan.utangJalan.length} catatan di buku utang</small>
-        </article>
-      </div>
+          {modalAwal && (
+            <button onClick={() => setModalAwalEdit((current) => !current)}>
+              {modalAwalEdit ? "Sembunyikan" : "Ubah"} <Icon name="arrow" size={16} />
+            </button>
+          )}
+        </div>
 
-      <div className="quick-section">
+        {(!modalAwal || modalAwalEdit) && (
+          <div className="capital-form">
+            <label>
+              Modal awal (stok + kas)
+              <input
+                inputMode="numeric"
+                value={modalAwalDraft.amount}
+                onChange={(event) =>
+                  setModalAwalDraft({ ...modalAwalDraft, amount: event.target.value })
+                }
+                placeholder="Contoh: 5000000"
+              />
+            </label>
+            <label>
+              Mulai sejak
+              <input
+                type="date"
+                value={modalAwalDraft.since}
+                onChange={(event) =>
+                  setModalAwalDraft({ ...modalAwalDraft, since: event.target.value })
+                }
+              />
+            </label>
+            <button
+              className="primary-action"
+              onClick={() => {
+                const amount = Number(modalAwalDraft.amount.replace(/[^\d]/g, "")) || 0
+                if (amount <= 0) {
+                  setModalAwalGalat("Isi modal awalnya lebih dari nol.")
+                  return
+                }
+                const input = { amount, since: modalAwalDraft.since }
+                simpanModalAwal(input)
+                setModalAwal(input)
+                setModalAwalEdit(false)
+                setModalAwalGalat("")
+              }}
+            >
+              <Icon name="check" size={16} /> Simpan modal awal
+            </button>
+            {modalAwalGalat && <div className="form-error">{modalAwalGalat}</div>}
+          </div>
+        )}
+
+        {modalAwal && ringkasan.laporanModal && (
+          <>
+            <div className={`capital-verdict ${ringkasan.laporanModal.verdict}`}>
+              <strong>{ringkasan.laporanModal.message}</strong>
+              <small>
+                Modal awal {rupiah(ringkasan.laporanModal.initial)} · posisi modal sekarang{" "}
+                {rupiah(ringkasan.laporanModal.estimatedNow)}
+              </small>
+            </div>
+            <div className="capital-metrics">
+              <div>
+                <small>Di rak (stok)</small>
+                <strong>{rupiah(ringkasan.laporanModal.stockValue)}</strong>
+              </div>
+              <div>
+                <small>Laba kotor</small>
+                <strong>{rupiah(ringkasan.laporanModal.grossProfit)}</strong>
+              </div>
+              <div>
+                <small>Piutang (utang)</small>
+                <strong>{rupiah(ringkasan.laporanModal.openDebt)}</strong>
+              </div>
+              <div>
+                <small>Modal awal</small>
+                <strong>{rupiah(ringkasan.laporanModal.initial)}</strong>
+              </div>
+            </div>
+            <small className="ask-note">
+              Perhitungan dari catatan: nilai stok memakai harga modal, laba kotor dari penjualan
+              setelah tanggal modal awal, piutang dari utang yang belum lunas. Uang tunai di laci
+              belum ikut dihitung.
+            </small>
+          </>
+        )}
+      </section>
+
+      <section className="quick-section">
         <div className="section-heading">
-          <h2>Catat cepat</h2>
-          <p>Tiga cara, semuanya asks konfirmasi dulu sebelum disimpan.</p>
+          <div>
+            <h2>Mau catat apa sekarang?</h2>
+            <p>Pilih cara paling mudah untuk mencatat aktivitas warung.</p>
+          </div>
         </div>
         <div className="quick-grid">
           <button type="button" className="quick-card voice" onClick={() => onPindah("Catat Suara")}>
             <span className="quick-icon">
-              <Icon name="mic" size={26} />
+              <Icon name="mic" size={30} />
             </span>
             <span>
-              <strong>Catat suara</strong>
-              <small>Ucapkan barang yang terjual</small>
+              <strong>Catat dengan suara</strong>
+              <small>Cukup sebutkan barang yang terjual</small>
             </span>
-            <Icon name="arrow" size={20} className="quick-arrow" />
+            <Icon name="arrow" className="quick-arrow" />
           </button>
 
           <button type="button" className="quick-card receipt" onClick={() => onPindah("Foto Nota")}>
             <span className="quick-icon">
-              <Icon name="camera" size={26} />
+              <Icon name="camera" size={30} />
             </span>
             <span>
-              <strong>Foto nota</strong>
-              <small>Nota agen jadi data stok</small>
+              <strong>Foto nota belanja</strong>
+              <small>Stok diperbarui setelah Anda mengonfirmasi</small>
             </span>
-            <Icon name="arrow" size={20} className="quick-arrow" />
+            <Icon name="arrow" className="quick-arrow" />
           </button>
 
-          <button type="button" className="quick-card credit" onClick={() => onPindah("Kasir")}>
+          <button type="button" className="quick-card stockin" onClick={() => onPindah("Kasir")}>
             <span className="quick-icon">
-              <Icon name="wallet" size={26} />
+              <Icon name="box" size={30} />
             </span>
             <span>
-              <strong>Kasir · Simpen dulu</strong>
-              <small>Pelanggan bayar sebagian, sisanya jadi utang</small>
+              <strong>Tambah stok manual</strong>
+              <small>Pilih barang dari stok, isi jumlah masuk dan biaya belanjanya</small>
             </span>
-            <Icon name="arrow" size={20} className="quick-arrow" />
+            <Icon name="arrow" className="quick-arrow" />
           </button>
         </div>
-      </div>
+      </section>
 
-      <div className="dashboard-grid">
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Stok perlu dibeli</h2>
-              <p>Dihitung dari penjualan 30 hari terakhir</p>
-            </div>
-            <button onClick={() => onPindah("Stok Barang")}>Lihat stok</button>
+      <section className="panel closing-panel" id="tutup-buku">
+        <div className="panel-heading">
+          <div>
+            <h2>Tutup buku hari ini</h2>
+            <p>Ringkasan singkat sebelum tutup warung: uang, utang, dan yang harus dibeli besok.</p>
           </div>
+          <button onClick={() => onPindah("Tutup Buku")}>
+            Buka <Icon name="arrow" size={16} />
+          </button>
+        </div>
+        <div className="closing-inline">
+          <div>
+            <small>Penjualan hari ini</small>
+            <strong>{rupiah(ringkasan.omzet)}</strong>
+          </div>
+          <div>
+            <small>Laba kotor</small>
+            <strong>{rupiah(ringkasan.labaKotor)}</strong>
+          </div>
+          <div>
+            <small>Belanja stok</small>
+            <strong>{rupiah(ringkasan.belanja)}</strong>
+          </div>
+          <div>
+            <small>Bersih hari ini</small>
+            <strong>{rupiah(ringkasan.bersih)}</strong>
+          </div>
+          <div>
+            <small>Utang berjalan</small>
+            <strong>{rupiah(ringkasan.totalUtang)}</strong>
+          </div>
+          <div>
+            <small>Perlu restok</small>
+            <strong>{ringkasan.stokTipis.length}</strong>
+          </div>
+        </div>
+      </section>
 
-          {saranBeli.length === 0 ? (
-            <p className="form-note" style={{ marginTop: 20 }}>
-              Semua stok masih di atas batas minimum. Tidak ada yang perlu dibeli.
+      <section className="panel pengeluaran-panel" id="pengeluaran">
+        <div className="panel-heading">
+          <div>
+            <h2>Pengeluaran belanja hari ini</h2>
+            <p>Biaya stok yang masuk hari ini, dipotong dari penjualan untuk penghasilan bersih.</p>
+          </div>
+          <button onClick={() => onPindah("Foto Nota")}>
+            <Icon name="plus" size={16} /> Catat belanja
+          </button>
+        </div>
+        <div className="closing-inline">
+          <div>
+            <small>Pengeluaran belanja</small>
+            <strong>{rupiah(ringkasan.belanja)}</strong>
+          </div>
+          <div>
+            <small>Penjualan hari ini</small>
+            <strong>{rupiah(ringkasan.omzet)}</strong>
+          </div>
+          <div>
+            <small>Penghasilan bersih</small>
+            <strong>{rupiah(ringkasan.bersih)}</strong>
+          </div>
+          <div>
+            <small>Marjin bersih</small>
+            <strong>
+              {angka(ringkasan.omzet > 0 ? (ringkasan.bersih / ringkasan.omzet) * 100 : 0, 1)}%
+            </strong>
+          </div>
+        </div>
+        {ringkasan.pengeluaran.length === 0 ? (
+          <div className="inline-empty">
+            <Icon name="receipt" size={22} />
+            <strong>Belum ada pengeluaran belanja hari ini</strong>
+            <span>Setelah menambah stok, biaya belanjanya muncul di sini.</span>
+          </div>
+        ) : (
+          <div className="transaction-list">
+            {ringkasan.pengeluaran.slice(0, 5).map((trx) => (
+              <div className="transaction-item" key={trx.id}>
+                <span className="transaction-icon orange">
+                  <Icon name="down" size={19} />
+                </span>
+                <div>
+                  <strong>{trx.agen ?? "Pembelian"} · stok masuk</strong>
+                  <small>{jamWib(trx.tanggal)} WIB</small>
+                </div>
+                <b className="orange">−{rupiah(trx.total)}</b>
+              </div>
+            ))}
+          </div>
+        )}
+        <small className="ask-note">
+          Penghasilan bersih = penjualan hari ini {rupiah(ringkasan.omzet)} − pengeluaran belanja{" "}
+          {rupiah(ringkasan.belanja)}.
+        </small>
+      </section>
+
+      <section className="panel utang-panel" id="simpen-dulu">
+        <div className="panel-heading">
+          <div>
+            <h2>Simpen dulu</h2>
+            <p>
+              Buku utang per orang: catatannya, total, dan kapan jatuh tempo. Pelanggan warung
+              sering cuma punya nama panggilan.
             </p>
-          ) : (
-            <ul className="stock-list">
-              {saranBeli.slice(0, 5).map((saran) => (
-                <li className="stock-item" key={saran.barangId}>
-                  <div className="product-code">{saran.satuan.slice(0, 2).toUpperCase()}</div>
-                  <div className="stock-info">
-                    <div>
-                      <strong>{saran.nama}</strong>
-                      <span>beli {saran.qty}</span>
+          </div>
+          <span className={`utang-badge ${ringkasan.utangJalan.length > 0 ? "warning" : ""}`}>
+            {ringkasan.utangJalan.length > 0
+              ? `${ringkasan.utangJalan.length} catatan`
+              : "Lunas semua"}
+          </span>
+        </div>
+
+        {ringkasan.utangJalan.length === 0 ? (
+          <div className="inline-empty">
+            <Icon name="check" size={22} />
+            <strong>Buku utang bersih</strong>
+            <span>Semua utang sudah lunas. Catat utang baru lewat suara.</span>
+          </div>
+        ) : (
+          <>
+            <div className="utang-total">
+              <span>Total belum lunas</span>
+              <strong>{rupiah(ringkasan.totalUtang)}</strong>
+            </div>
+            <div className="debtors-list">
+              {ringkasan.utangJalan.slice(0, 5).map((utang) => (
+                <div className="debtor-group" key={utang.id}>
+                  <div className="debtor-row">
+                    <div className="product-code">{inisial(utang.pelanggan)}</div>
+                    <div className="debtor-main">
+                      <strong>{utang.pelanggan}</strong>
+                      <small>
+                        {utang.nama_barang} · {utang.qty} {utang.satuan} ·{" "}
+                        {hariLalu(utang.tanggal)}
+                      </small>
                     </div>
-                    <small>{saran.alasan}</small>
+                    <b>{rupiah(Math.max(utang.total - utang.dibayar, 0))}</b>
+                    <button
+                      className="row-action"
+                      onClick={() => onPindah("Simpen Dulu")}
+                      aria-label={`Kelola utang ${utang.pelanggan}`}
+                    >
+                      Urus
+                    </button>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Buku utang</h2>
-              <p>Yang bayar sebagian</p>
             </div>
-            <button onClick={() => onPindah("Simpen Dulu")}>Buka buku</button>
-          </div>
-
-          {ringkasan.utangJalan.length === 0 ? (
-            <p className="form-note" style={{ marginTop: 20 }}>
-              Buku utang bersih. Semua penjualan dibayar penuh.
-            </p>
-          ) : (
-            <ul className="debt-list">
-              {ringkasan.utangJalan.slice(0, 5).map((item) => (
-                <li className="debt-item" key={item.id}>
-                  <div className="debt-avatar">
-                    {item.pelanggan.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <strong>{item.pelanggan}</strong>
-                    <small>
-                      {item.nama_barang} · {item.qty} {item.satuan}
-                    </small>
-                  </div>
-                  <b>{rupiah(Math.max(item.total - item.dibayar, 0))}</b>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-
-      <div className="dashboard-grid" style={{ marginTop: 16 }}>
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Modal awal & untung/rugi</h2>
-              <p>Uangmu bertambah atau berkurang?</p>
-            </div>
-            <button onClick={() => onPindah("Modal Awal")}>Buka</button>
-          </div>
-          <p className="form-note" style={{ marginTop: 16 }}>
-            Isi modal awal sekali, lalu aplikasi membandingkan dengan posisi
-            sekarang: nilai stok + laba kotor + piutang pelanggan.
-          </p>
-        </section>
-
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Tutup buku</h2>
-              <p>Ringkasan harian, siap dikirim</p>
-            </div>
-            <button onClick={() => onPindah("Tutup Buku")}>Buka</button>
-          </div>
-          <p className="form-note" style={{ marginTop: 16 }}>
-            Satu ringkasan penjualan, laba kotor, utang tua, dan daftar belanja
-            besok — bisa disalin lalu dikirim ke supplier.
-          </p>
-        </section>
-      </div>
+          </>
+        )}
+      </section>
 
       {sinyalMargin.length > 0 && (
-        <section className="panel" style={{ marginTop: 16 }}>
+        <section className="panel" id="margin">
           <div className="panel-heading">
             <div>
               <h2>Margin menyusut</h2>
-              <p>Harga modal naik diam-diam — ini yang baru terasa belakangan</p>
+              <p>Harga modal naik diam-diam. Ini yang baru terasa belakangan.</p>
             </div>
-            <button onClick={() => onPindah("Penjaga Margin")}>Atur harga</button>
+            <button onClick={() => onPindah("Penjaga Margin")}>
+              Atur harga <Icon name="arrow" size={16} />
+            </button>
           </div>
-          <ul className="stock-list">
-            {sinyalMargin.slice(0, 3).map((sinyal) => (
-              <li className="stock-item" key={sinyal.barangId}>
-                <div className="product-code">{sinyal.satuan.slice(0, 2).toUpperCase()}</div>
-                <div className="stock-info">
-                  <div>
-                    <strong>{sinyal.nama}</strong>
-                    <span>naik {sinyal.kenaikanModalPersen}%</span>
-                  </div>
-                  <small>
-                    Margin {sinyal.marginSebelumnya}% → {sinyal.marginSekarang}% · modal{" "}
-                    {rupiah(sinyal.hargaModal)}
-                  </small>
-                </div>
-              </li>
+          <div className="closing-inline">
+            {sinyalMargin.slice(0, 4).map((sinyal) => (
+              <div key={sinyal.barangId}>
+                <small>{sinyal.nama}</small>
+                <strong>
+                  {sinyal.marginSebelumnya}% → {sinyal.marginSekarang}%
+                </strong>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
       )}
 
@@ -293,15 +505,17 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
           </span>
           <h2>AI baca buku dagangmu</h2>
           <p>
-            Angka dihitung dari catatankamu sendiri, lalu AI menyusun sarannya.
-            Tidak ada angka yang dikarang — kalau datanya kurang, AI bilang begitu.
+            Angka dihitung dari catatankamu sendiri, lalu AI menyusun sarannya. Tidak ada angka
+            yang dikarang — kalau datanya kurang, AI bilang begitu.
           </p>
           <button type="button" onClick={() => void mintaAi()} disabled={sibuk}>
             {sibuk ? "Membaca..." : "Minta AI membaca"}
             <Icon name="arrow" size={17} />
           </button>
           {galat && (
-            <p style={{ marginTop: 12, color: "#ffd9a8", fontSize: 12 }}>{galat}</p>
+            <p className="advisor-note" style={{ marginTop: 12, color: "#ffd9a8", fontSize: 12 }}>
+              {galat}
+            </p>
           )}
         </div>
         <div className="recommendation">
@@ -336,22 +550,48 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
               <p>Dari catatan 30 hari terakhir</p>
             </div>
           </div>
-          <ul className="stock-list">
+          <div className="transaction-list">
             {tips.map((tip, index) => (
-              <li className="stock-item" key={index}>
-                <div className="product-code">
-                  <Icon name="spark" size={17} />
-                </div>
-                <div className="stock-info">
+              <div className="transaction-item" key={index}>
+                <span className="transaction-icon green">
+                  <Icon name="spark" size={19} />
+                </span>
+                <div>
                   <strong>{tip.text}</strong>
                   <small>{tip.reason}</small>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
       )}
-    </div>
+    </>
   )
 }
 
+/** Tanggal panjang berbahasa Indonesia, contoh "Sabtu, 14 November 2026". */
+function tanggalLengkap(): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date())
+}
+
+function hariLalu(tanggal: string): string {
+  const selisih = selisihHari(tanggal)
+  if (selisih <= 0) return "hari ini"
+  if (selisih === 1) return "kemarin"
+  return `${selisih} hari lalu`
+}
+
+function inisial(nama: string): string {
+  return nama
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((kata) => kata[0]?.toUpperCase() ?? "")
+    .join("")
+}

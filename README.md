@@ -114,14 +114,34 @@ Alur demo (±3 menit) ada di [`docs/demo.md`](docs/demo.md).
 
 ```
 src/
-  lib/          mesin hitung, parser, tipe, lapisan API
-  pages/        Beranda, CatatSuara, PindaiNota, TanyaAi, StokBarang
+  lib/          mesin hitung, parser, kalender, tipe, lapisan API
+  pages/        Beranda, Kasir, Stok Barang, Simpen Dulu, Penjaga Margin,
+                Cek Stok, Pelanggan, Harga Pasar, Modal Awal, Tutup Buku,
+                Riwayat, Pengaturan, Catat Suara, Pindai Nota, Tanya AI
 supabase/
   migrations/   skema + RLS per pemilik warung
   functions/    Edge Function AI (kunci hanya di server)
   seed.sql      data simulasi
 docs/           kontrak AI, skrip demo
 ```
+
+### Sistem desain
+
+Satu set kelas CSS untuk semua layar, jadi tampilan konsisten dari dashboard
+sampai layar konfirmasi.
+
+| Token | Terang | Gelap |
+| --- | --- | --- |
+| `--green` (warna utama) | `#006494` | `#4fc3f7` |
+| `--orange` (aksen) | `#00a6fb` | `#00a6fb` |
+| `--ink` (teks) | `#051923` | `#e8f1f8` |
+| `--muted` | `#5b6b78` | `#93a4b2` |
+| `--line` | `#dbe4ec` | `#1e3346` |
+| `--cream` (latar) | `#f5f9fc` | `#051923` |
+
+Turunan token dihitung supaya semua pasangan teks/latar lolos **WCAG AA**
+di mode terang dan gelap. Warna accent dan status memakai token yang sama,
+jadi tidak ada hex yang ditulis manual di komponen.
 
 ### Mesin hitung
 
