@@ -18,6 +18,7 @@
  */
 
 import { selisihHari } from "./calendar"
+import { round2 } from "./inventory"
 import type { BarisTransaksi, Transaksi } from "./types"
 
 /* --------------------------------------------------------------------- tipe */
@@ -453,7 +454,3 @@ export function ringkasUtang(
   }))
 }
 
-/** Pembulatan 2 desimal, menghindari galat floating point. */
-function round2(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100
-}

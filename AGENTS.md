@@ -93,12 +93,24 @@ Jangan merge pull request milik orang lain — ini yang membuat review berarti.
 ## Struktur
 
 ```
-src/lib/      logika murni + lapisan data. Tidak boleh menyentuh DOM.
+src/lib/      logika murni + lapisan data. Tidak boleh menyentuh DOM, tidak
+              boleh mengimpor React.
+src/hooks/    hook React (mis. jam berjalan).
 src/pages/    satu layar per file.
 supabase/
   migrations/ skema. Nomor migration tidak boleh dipakai ulang.
   functions/  Edge Function. Kunci API hanya dari Deno.env.
 ```
+
+Satu angka satu tempat. Kalau dua layar menghitung hal yang sama, harus
+pakai fungsi yang sama — kalau tidak, angkanya bisa berbeda untuk warung
+yang sama. `src/lib/inventory.ts` (mesin restok), `src/lib/capital.ts` (modal
+awal), dan `src/lib/margin.ts` (margin) adalah sumbernya.
+
+Daftar satuan harus sama di `src/lib/types.ts` dan
+`supabase/functions/_shared/normalize.ts`. Kalau berbeda, AI mengubah satuan
+yang tidak dikenal jadi "pcs" dan stoknya tidak cocok dengan katalog. Ada
+test yang menjaganya: `src/lib/satuan.test.ts`.
 
 ## Migrasi
 

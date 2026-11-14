@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { useWarung } from "../lib/store"
 import { Icon } from "../components/Icon"
 import { hariIniWib, jamWib, selisihHari, tanggalWib } from "../lib/calendar"
+import { useSekarang } from "../hooks/useSekarang"
 import { angka, rupiah, sapaan } from "../lib/format"
 import { labaKotor, perluRestok as perluRestokSet, round2 } from "../lib/inventory"
 import {
@@ -21,6 +22,7 @@ import type { TipsAi } from "../lib/types"
  * mau catat apa -> tutup buku -> pengeluaran -> utang -> saran AI.
  */
 export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
+  const sekarang = useSekarang()
   const { sesi, transaksi, baris, stok, saranBeli, utang, sinyalMargin } = useWarung()
   const [tips, setTips] = useState<TipsAi[]>([])
   const [sibuk, setSibuk] = useState(false)
@@ -104,7 +106,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
       utangJalan,
       totalBarang: stok.length,
     }
-  }, [transaksi, baris, stok, utang, modalAwal])
+  }, [transaksi, baris, stok, utang, modalAwal, sekarang])
 
   async function mintaAi() {
     setSibuk(true)

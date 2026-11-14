@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Icon } from "../components/Icon"
 import { useWarung } from "../lib/store"
 import { hariIniWib, jamWib, selisihHari, tanggalWib } from "../lib/calendar"
+import { useSekarang } from "../hooks/useSekarang"
 import { angka, angkaRapi, rupiah, tanggalPanjang, tanggalShort } from "../lib/format"
 import { labaKotor, perluRestok as perluRestokSet, round2 } from "../lib/inventory"
 import type { NavLabel } from "../lib/nav"
@@ -68,6 +69,7 @@ function nilaiLaci(item: CatatanLaci): { label: string; nada: "sesuai" | "kurang
 
 export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
   const { transaksi, baris, stok, saranBeli, utang } = useWarung()
+  const sekarang = useSekarang()
   const [tersalin, setTersalin] = useState(false)
   const [uangLaci, setUangLaci] = useState("")
   const [riwayatLaci, setRiwayatLaci] = useState<CatatanLaci[]>(() => bacaLaci())
@@ -198,7 +200,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
       totalSaran: round2(totalSaran),
       teks,
     }
-  }, [transaksi, baris, stok, saranBeli, utang])
+  }, [transaksi, baris, stok, saranBeli, utang, sekarang])
 
   // Uang yang seharusnya ada di laci: penjualan hari ini dikurangi bagian
   // yang disimpan dulu dan belanja yang dibayar hari ini.

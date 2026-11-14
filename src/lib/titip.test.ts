@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest"
 import {
   hitungPenjualanTitip,
   omzetTitip,
-  persen,
   sisaTitip,
   statistikTitip,
   saranTitip,
   teksPembayaranTitip,
 } from "./titip"
+import { persen } from "./format"
 import type { Titip } from "./types"
 
 function titip(keadian: Partial<Titip> = {}): Titip {

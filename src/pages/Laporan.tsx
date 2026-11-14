@@ -2,7 +2,8 @@ import { useMemo, useState } from "react"
 import { Icon } from "../components/Icon"
 import { useWarung } from "../lib/store"
 import { angka, rupiah, rupiahRingkas } from "../lib/format"
-import { hariIniWib, tanggalWib, transaksiHariIni } from "../lib/calendar"
+import { hariIniWib, tanggalWib } from "../lib/calendar"
+import { useSekarang } from "../hooks/useSekarang"
 import { labaKotor, round2 } from "../lib/inventory"
 import type { NavLabel } from "../lib/nav"
 
@@ -18,6 +19,7 @@ const PERIODE: Periode[] = ["7 hari", "30 hari", "3 bulan"]
  */
 export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
   const { transaksi, baris, stok } = useWarung()
+  const sekarang = useSekarang()
   const [periode, setPeriode] = useState<Periode>("7 hari")
   const [barTerpilih, setBarTerpilih] = useState<number | null>(null)
 
@@ -37,7 +39,7 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
       hasil.push(d.toISOString().slice(0, 10))
     }
     return hasil
-  }, [periode])
+  }, [periode, sekarang])
 
   const data = useMemo(() => {
     const hargaModal = new Map(stok.map((s) => [s.barang_id, s.harga_modal]))
@@ -65,10 +67,6 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
       perBarang.set(nama, entry)
     }
 
-    const omzetHariIni = transaksi
-      .filter((t) => t.tipe === "jual" && transaksiHariIni(t.tanggal))
-      .reduce((sum, t) => sum + t.total, 0)
-
     // Deret harian untuk grafik.
     const seri = hari.map((tanggal) => {
       const harian = penjualan.filter((t) => tanggalWib(t.tanggal) === tanggal)
@@ -92,7 +90,6 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
       transaksi: penjualan.length,
       barangTerjual: round2(barangTerjual),
       produkTeratas,
-      omzetHariIni: round2(omzetHariIni),
     }
   }, [transaksi, baris, stok, hari])
 

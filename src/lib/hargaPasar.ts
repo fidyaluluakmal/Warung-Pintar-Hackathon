@@ -15,7 +15,8 @@
  */
 
 import { rupiah } from "./format"
-import { MARGIN_TARGET, hargaJualUntukMargin, marginPersen, round2 } from "./margin"
+import { MARGIN_TARGET, hargaJualUntukMargin, marginPersen } from "./margin"
+import { round2 } from "./inventory"
 
 /** Batas selisih yang masih dianggap "sepat" (hampir sama). */
 export const TOLERANSI_SEPAK_PERSEN = 1

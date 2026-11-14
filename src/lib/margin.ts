@@ -8,6 +8,7 @@
  */
 
 import { persen, rupiah } from "./format"
+import { round2 } from "./inventory"
 import type { MarginBarang } from "./types"
 
 /** Bulat ke kelipatan 100, ke atas. Harga jual selalu terlihat rapi. */
@@ -162,7 +163,3 @@ export function bagiPembayaran(baris: BarisBayar[], uangDibayar: number): HasilB
   }
 }
 
-/** Pembulatan 2 desimal, menghindari galat floating point. */
-export function round2(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100
-}

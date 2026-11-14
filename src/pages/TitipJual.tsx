@@ -3,11 +3,10 @@ import { Icon } from "../components/Icon"
 import { Modal } from "../components/Modal"
 import { useWarung } from "../lib/store"
 import { pesanUntukUser } from "../lib/pesan"
-import { angka, rupiah } from "../lib/format"
+import { angka, persen, rupiah } from "../lib/format"
 import {
   hitungPenjualanTitip,
   omzetTitip,
-  persen,
   saranTitip,
   sisaTitip,
   statistikTitip,

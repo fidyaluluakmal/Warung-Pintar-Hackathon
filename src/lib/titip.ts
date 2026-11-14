@@ -8,7 +8,7 @@
  * Modul ini murni: tanpa React, tanpa jaringan, bisa diuji sendiri.
  */
 
-import { angka, rupiah } from "./format"
+import { angka, persen, rupiah } from "./format"
 import type { Titip } from "./types"
 /** Hasil penjualan barang titipan sebanyak sejumlah tertentu. */
 export interface PenjualanTitip {
@@ -127,15 +127,6 @@ export function teksPembayaranTitip(rows: Titip[]): string {
   return lines.join("\n")
 }
 
-/**
- * Persen dengan maksimal satu desimal, tanpa ",0" di ekor.
- *
- * 10 -> "10%", 12.5 -> "12,5%".
- */
-export function persen(nilai: number): string {
-  const bulat = Number.isInteger(nilai)
-  return `${angka(nilai, bulat ? 0 : 1)}%`
-}
 
 /**
  * Saran tindakan untuk satu titipan.
