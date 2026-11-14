@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "./Icon"
 import { UserAvatar } from "./UserAvatar"
 import { useWarung } from "../lib/store"
+import { perluRestok } from "../lib/inventory"
 import { rupiah } from "../lib/format"
 
 export function AppHeader({
@@ -25,12 +26,15 @@ export function AppHeader({
   onGantiTema: () => void
   onBukaMenu: () => void
 }) {
-  const { stok, utang, sinyalMargin } = useWarung()
+  const { stok, saranBeli, utang, sinyalMargin } = useWarung()
   const [notice, setNotice] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const stokTipis = useMemo(
-    () => stok.filter((barang) => barang.stok <= barang.min_stok),
+    () => {
+      const perlu = perluRestok(saranBeli)
+      return stok.filter((barang) => perlu.has(barang.barang_id))
+    },
     [stok],
   )
   const utangJalan = useMemo(

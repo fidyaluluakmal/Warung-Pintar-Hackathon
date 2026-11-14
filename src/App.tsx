@@ -61,7 +61,7 @@ function Kerangka() {
       setModal("nota")
       return
     }
-    if (navigasi === "Tanya AI") {
+    if (navigasi === "Tanya AI" || navigasi === "Asisten AI") {
       setAsisten(true)
       return
     }
@@ -127,7 +127,7 @@ function Kerangka() {
           {nav === "Simpen Dulu" && <SimpenDulu />}
           {nav === "Penjaga Margin" && <PenjagaMargin />}
           {nav === "Cek Stok" && <CekStok />}
-          {nav === "Pelanggan" && <Pelanggan />}
+          {nav === "Pelanggan" && <Pelanggan onPindah={buka} />}
           {nav === "Titip Jual" && <TitipJual />}
           {nav === "Harga Pasar" && <HargaPasar />}
           {nav === "Modal Awal" && <ModalAwal />}

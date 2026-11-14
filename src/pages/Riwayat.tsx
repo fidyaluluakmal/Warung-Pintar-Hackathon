@@ -11,6 +11,8 @@ interface ItemRiwayat {
   nama: string
   jumlah: number
   satuan: string
+  /** Harga per satuan, supaya nilai penyesuaian bisa ditampilkan. */
+  harga_satuan: number
 }
 
 interface BarisRiwayat {
@@ -54,6 +56,7 @@ export function Riwayat() {
         nama: namaBarang.get(row.barang_id) ?? "Barang",
         jumlah: row.jumlah,
         satuan: row.satuan,
+        harga_satuan: row.harga_satuan,
       }))
 
       if (kunci) {
@@ -158,7 +161,15 @@ export function Riwayat() {
                   : "Penyesuaian stok"
             const nada = trx.tipe === "jual" ? "green" : "orange"
             const ikon = trx.tipe === "jual" ? "up" : trx.tipe === "beli" ? "down" : "edit"
-            const jumlah = trx.tipe === "jual" ? `+${rupiah(trx.total)}` : trx.tipe === "beli" ? `−${rupiah(trx.total)}` : rupiah(trx.total)
+            // Penyesuaian tidak punya total sendiri (selisihnya bisa positif
+            // atau negatif), jadi nilainya dihitung dari baris barangnya.
+            const nilaiSesuaian = trx.tipe === "sesuaikan" ? row.item.reduce((sum, b) => sum + b.jumlah * b.harga_satuan, 0) : 0
+            const jumlah =
+              trx.tipe === "jual"
+                ? `+${rupiah(trx.total)}`
+                : trx.tipe === "beli"
+                  ? `−${rupiah(trx.total)}`
+                  : `${nilaiSesuaian >= 0 ? "+" : "−"}${rupiah(Math.abs(nilaiSesuaian))}`
 
             return (
               <div className="history-item" key={trx.id}>

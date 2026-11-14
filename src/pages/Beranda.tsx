@@ -3,7 +3,7 @@ import { useWarung } from "../lib/store"
 import { Icon } from "../components/Icon"
 import { hariIniWib, jamWib, selisihHari, tanggalWib } from "../lib/calendar"
 import { angka, rupiah, sapaan } from "../lib/format"
-import { labaKotor, round2 } from "../lib/inventory"
+import { labaKotor, perluRestok as perluRestokSet, round2 } from "../lib/inventory"
 import {
   bacaModalAwal,
   simpanModalAwal,
@@ -34,6 +34,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
   const [modalAwalGalat, setModalAwalGalat] = useState("")
 
   const ringkasan = useMemo(() => {
+    const perluRestok = perluRestokSet(saranBeli)
     const hariIni = hariIniWib()
     const penjualanHariIni = transaksi.filter(
       (t) => t.tipe === "jual" && tanggalWib(t.tanggal) === hariIni,
@@ -65,7 +66,7 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
       .reduce((sum, row) => sum + row.jumlah * (hargaModal.get(row.barang_id) ?? 0), 0)
     const omzetTujuhHari = tujuhHari.reduce((sum, t) => sum + t.total, 0)
 
-    const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
+    const stokTipis = stok.filter((s) => perluRestok.has(s.barang_id))
     const utangJalan = utang
     const totalUtang = utangJalan.reduce((sum, u) => sum + Math.max(u.total - u.dibayar, 0), 0)
 

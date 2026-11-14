@@ -47,7 +47,13 @@ export function bacaModalAwal(): ModalAwal | null {
     if (!mentah) return null
     const parsed = JSON.parse(mentah) as ModalAwal
     if (!parsed || !Number.isFinite(parsed.amount) || parsed.amount <= 0) return null
-    return { amount: parsed.amount, since: parsed.since }
+    // Tanggal yang tidak sah membuat halaman Modal Awal mati total, jadi
+    // dikembalikan sebagai kosong — artinya "sejak awal".
+    const since =
+      typeof parsed.since === "string" && /\d{4}-\d{2}-\d{2}$/.test(parsed.since)
+        ? parsed.since
+        : ""
+    return { amount: parsed.amount, since }
   } catch {
     return null
   }

@@ -4,6 +4,7 @@ import { useWarung } from "../lib/store"
 import { callAskWarung } from "../lib/api"
 import type { Transaksi } from "../lib/types"
 import { selisihHari } from "../lib/calendar"
+import { perluRestok as perluRestokSet } from "../lib/inventory"
 
 interface Pesan {
   id: string
@@ -115,7 +116,8 @@ export function ChatDrawer({ onClose }: { onClose: () => void }) {
     const minggu = hitung(mingguIni)
     const hari = hitung(hariIni)
 
-    const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
+    const perluRestok = perluRestokSet(saranBeli)
+    const stokTipis = stok.filter((s) => perluRestok.has(s.barang_id))
     const utangJalan = utang.filter((u) => u.status === "belum_lunas")
     return {
       omzetHariIni: hari.omzet,
@@ -166,26 +168,34 @@ export function ChatDrawer({ onClose }: { onClose: () => void }) {
           hasil?.answer ??
           "AI belum menjawab. Angka di panel lain tetap bisa dipakai.",
       }
-      const denganBalasan: Sesi = {
-        ...sesiBaru,
-        pesan: [...sesiBaru.pesan, balasan],
-      }
-      const semuaAkhir = [
-        denganBalasan,
-        ...sesi.filter((s) => s.id !== idSesi),
-      ]
-      setSesi(semuaAkhir)
-      simpanSesi(semuaAkhir)
+      // Pakai pembarui fungsional, bukan daftar yang dihitung dari `sesi`
+      // sekarang. Kalau sambil menunggu AI pengguna membuat sesi baru atau
+      // mengirim pesan lain, daftar lama menimpa perubahan itu dan pesannya
+      // hilang.
+      setSesi((sekarang) => {
+        const denganBalasan: Sesi = {
+          ...sesiBaru,
+          pesan: [...sesiBaru.pesan, balasan],
+        }
+        const semuaAkhir = [
+          denganBalasan,
+          ...sekarang.filter((s) => s.id !== idSesi),
+        ]
+        simpanSesi(semuaAkhir)
+        return semuaAkhir
+      })
     } catch {
       const gagal: Pesan = {
         id: `p-${Date.now()}-a`,
         role: "assistant",
         text: "AI sedang tidak bisa menjawab. Angka di panel lain tetap bisa dipakai.",
       }
-      const denganGagal: Sesi = { ...sesiBaru, pesan: [...sesiBaru.pesan, gagal] }
-      const semuaAkhir = [denganGagal, ...sesi.filter((s) => s.id !== idSesi)]
-      setSesi(semuaAkhir)
-      simpanSesi(semuaAkhir)
+      setSesi((sekarang) => {
+        const denganGagal: Sesi = { ...sesiBaru, pesan: [...sesiBaru.pesan, gagal] }
+        const semuaAkhir = [denganGagal, ...sekarang.filter((s) => s.id !== idSesi)]
+        simpanSesi(semuaAkhir)
+        return semuaAkhir
+      })
     } finally {
       setSibuk(false)
     }

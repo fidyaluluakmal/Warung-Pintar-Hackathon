@@ -11,6 +11,7 @@
  */
 
 import type { Alias, BarisTransaksi, Barang, Titip, Transaksi, Utang } from "./types"
+import type { DataPelanggan } from "./pelanggan"
 
 export interface DataWarungLokal {
   barang: Barang[]
@@ -19,6 +20,7 @@ export interface DataWarungLokal {
   baris: BarisTransaksi[]
   utang: Utang[]
   titip: Titip[]
+  pelanggan: DataPelanggan[]
 }
 
 interface BibitBarang {
@@ -176,6 +178,33 @@ function utangDemo(): Utang[] {
   ]
 }
 
+/** Buku pelanggan demo: nama panggilan, nomor telepon opsional. */
+function pelangganDemo(): DataPelanggan[] {
+  return [
+    {
+      id: "demo-plg-1",
+      owner_id: OWNER,
+      nama: "Pak Yono",
+      telepon: "0812-3456-7890",
+      catatan: "Langganan tetap, beli barang bulanan saja",
+    },
+    {
+      id: "demo-plg-2",
+      owner_id: OWNER,
+      nama: "Bu Sri",
+      telepon: null,
+      catatan: "Sering beli kopi sachet",
+    },
+    {
+      id: "demo-plg-3",
+      owner_id: OWNER,
+      nama: "Mas Togo",
+      telepon: null,
+      catatan: "Datang sore, suka barang segar",
+    },
+  ]
+}
+
 /**
  * Susun data demo lokal.
  *
@@ -206,5 +235,13 @@ export function dataDemoLokal(): DataWarungLokal {
 
   const { transaksi, baris } = transaksiDemo()
 
-  return { barang, alias, transaksi, baris, utang: utangDemo(), titip: [] }
+  return {
+    barang,
+    alias,
+    transaksi,
+    baris,
+    utang: utangDemo(),
+    titip: [],
+    pelanggan: pelangganDemo(),
+  }
 }

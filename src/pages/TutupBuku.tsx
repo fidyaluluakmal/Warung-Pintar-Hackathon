@@ -3,7 +3,7 @@ import { Icon } from "../components/Icon"
 import { useWarung } from "../lib/store"
 import { hariIniWib, jamWib, selisihHari, tanggalWib } from "../lib/calendar"
 import { angka, angkaRapi, rupiah, tanggalPanjang, tanggalShort } from "../lib/format"
-import { labaKotor, round2 } from "../lib/inventory"
+import { labaKotor, perluRestok as perluRestokSet, round2 } from "../lib/inventory"
 import type { NavLabel } from "../lib/nav"
 
 /**
@@ -73,6 +73,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
   const [riwayatLaci, setRiwayatLaci] = useState<CatatanLaci[]>(() => bacaLaci())
 
   const ringkasan = useMemo(() => {
+    const perluRestok = perluRestokSet(saranBeli)
     const hariIni = hariIniWib()
     const penjualanHariIni = transaksi.filter(
       (t) => t.tipe === "jual" && tanggalWib(t.tanggal) === hariIni,
@@ -129,7 +130,7 @@ export function TutupBuku({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
       .reduce((sum, u) => sum + Math.max(u.total - u.dibayar, 0), 0)
 
     // Stok menipis dan saran beli besok — dari mesin restok yang sama.
-    const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
+    const stokTipis = stok.filter((s) => perluRestok.has(s.barang_id))
     const saran = saranBeli.map((s) => ({
       ...s,
       biaya: s.qty * (hargaModal.get(s.barangId) ?? 0),

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useWarung } from "../lib/store"
+import { pesanUntukUser } from "../lib/pesan"
 
 /**
  * Layar masuk.
@@ -22,7 +23,13 @@ export function LayarMasuk() {
       await masuk(nilaiEmail, nilaiSandi)
     } catch (kesalahan) {
       const pesan = kesalahan instanceof Error ? kesalahan.message : "Gagal masuk."
-      setGalat(pesan.includes("Invalid login") ? "Email atau sandi salah." : pesan)
+      if (/invalid login|invalid credentials/i.test(pesan)) {
+        setGalat("Email atau sandi salah.")
+        return
+      }
+      // Pesan lain (akun belum dikonfirmasi, jaringan putus) tidak
+      // ditampilkan mentah.
+      setGalat(pesanUntukUser(kesalahan, "Gagal masuk. Periksa koneksi, lalu coba lagi."))
     } finally {
       setSibuk(false)
     }

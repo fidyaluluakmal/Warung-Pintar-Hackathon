@@ -211,13 +211,21 @@ export function Laporan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
             <div
               className="donut"
               style={{
-                background: `conic-gradient(${data.produkTeratas
-                  .map((produk, index) => {
-                    const persen =
-                      data.omzet > 0 ? (produk.omzet / data.omzet) * 100 : 0
-                    return `${warna[index] ?? "#8fa3b5"} 0 ${persen}%`
-                  })
-                  .join(", ")})`,
+                // Setiap warna dimulai dari offset sebelumnya, bukan dari 0.
+                // Kalau semua mulai dari 0, warnanya saling menimpa dan
+                // lingkaran tidak cocok dengan legenda di sebelahnya.
+                background: `conic-gradient(${(() => {
+                  let offset = 0
+                  return data.produkTeratas
+                    .map((produk, index) => {
+                      const bagian =
+                        data.omzet > 0 ? (produk.omzet / data.omzet) * 100 : 0
+                      const awal = offset
+                      offset += bagian
+                      return `${warna[index] ?? "#8fa3b5"} ${awal}% ${offset}%`
+                    })
+                    .join(", ")
+                })()})`,
               }}
             >
               <div>

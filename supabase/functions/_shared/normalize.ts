@@ -45,7 +45,11 @@ export function cleanName(value: unknown): string {
 
 /** Satuan yang dikenal. Kalau tidak dikenal, pakai "pcs". */
 const KNOWN_UNITS = new Set([
+  // Harus sama dengan `SATUAN_TERSEDIA` di src/lib/types.ts. Kalau satu
+  // satuan ada di katalog tapi tidak di daftar ini, AI mengubahnya jadi
+  // "pcs" dan stok barangnya jadi tidak cocok dengan katalog.
   "kg",
+  "g",
   "gram",
   "gr",
   "liter",
@@ -62,6 +66,7 @@ const KNOWN_UNITS = new Set([
   "papan",
   "renteng",
   "box",
+  "lusin",
   "karton",
   "biji",
   "tangkai",

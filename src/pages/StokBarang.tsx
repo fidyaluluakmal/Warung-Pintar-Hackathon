@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react"
 import { useWarung } from "../lib/store"
+import { pesanUntukUser } from "../lib/pesan"
 import { Icon } from "../components/Icon"
 import { Modal } from "../components/Modal"
 import { angka, rupiah, rupiahRingkas } from "../lib/format"
-import { round2 } from "../lib/inventory"
+import { perluRestok as perluRestokSet, round2 } from "../lib/inventory"
 import { SATUAN_TERSEDIA, type Satuan } from "../lib/types"
 import type { NavLabel } from "../lib/nav"
 
@@ -68,7 +69,7 @@ export function StokBarang({
 
   const ringkasan = useMemo(() => {
     const nilaiStok = stok.reduce((sum, s) => sum + s.stok * s.harga_modal, 0)
-    const perluRestok = stok.filter((s) => s.stok <= s.min_stok)
+    const perluRestok = stok.filter((s) => perluRestokSet(saranBeli).has(s.barang_id))
     const omzetBulanIni = stok.reduce((sum, s) => sum + s.harga_jual * s.stok, 0)
     return {
       total: stok.length,
@@ -81,7 +82,8 @@ export function StokBarang({
   const daftar = useMemo(() => {
     const kunci = cari.toLowerCase().trim()
     let hasil = [...stok]
-    if (filter === "perlu") hasil = hasil.filter((s) => s.stok <= s.min_stok)
+    if (filter === "perlu")
+      hasil = hasil.filter((s) => perluRestokSet(saranBeli).has(s.barang_id))
     if (filter === "aman") hasil = hasil.filter((s) => s.stok > s.min_stok)
     if (kunci) hasil = hasil.filter((s) => s.nama.toLowerCase().includes(kunci))
     return hasil.sort((a, b) => {
@@ -112,7 +114,7 @@ export function StokBarang({
       })
       setFormBarang(null)
     } catch (kesalahan) {
-      setGalat(kesalahan instanceof Error ? kesalahan.message : "Gagal menambah barang.")
+      setGalat(pesanUntukUser(kesalahan, "Gagal menambah barang. Coba lagi."))
     } finally {
       setSibuk(false)
     }
@@ -131,7 +133,7 @@ export function StokBarang({
       })
       setFormPembelian(null)
     } catch (kesalahan) {
-      setGalat(kesalahan instanceof Error ? kesalahan.message : "Gagal mencatat pembelian.")
+      setGalat(pesanUntukUser(kesalahan, "Gagal mencatat pembelian. Coba lagi."))
     } finally {
       setSibuk(false)
     }
@@ -290,7 +292,7 @@ export function StokBarang({
         )}
 
         {daftar.map((barang) => {
-          const tipis = barang.stok <= barang.min_stok
+          const tipis = perluRestokSet(saranBeli).has(barang.barang_id)
           const saran = saranUntuk(barang.barang_id)
           return (
             <div className="inventory-row" key={barang.barang_id}>

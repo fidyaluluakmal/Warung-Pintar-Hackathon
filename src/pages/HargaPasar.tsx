@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { persen, rupiah } from "../lib/format"
-import { hariIniWIB } from "../lib/inventory"
+import { hariIniWib } from "../lib/calendar"
 import { MARGIN_TARGET } from "../lib/margin"
 import { supabase } from "../lib/supabase"
+import { useWarung } from "../lib/store"
+import { pesanUntukUser } from "../lib/pesan"
 import {
   bandingkanHargaPasar,
   hitungRingkasan,
@@ -25,6 +27,7 @@ import {
  * aplikasi.
  */
 export function HargaPasar() {
+  const { ubahHargaJual } = useWarung()
   const [barang, setBarang] = useState<BarangPasar[]>([])
   const [catatan, setCatatan] = useState<CatatanHargaPasar[]>([])
   const [memuat, setMemuat] = useState(true)
@@ -40,7 +43,7 @@ export function HargaPasar() {
   const [barangId, setBarangId] = useState("")
   const [harga, setHarga] = useState("")
   const [tempat, setTempat] = useState("")
-  const [tanggal, setTanggal] = useState(hariIniWIB())
+  const [tanggal, setTanggal] = useState(hariIniWib())
 
   const muatData = useCallback(async () => {
     if (!supabase) {
@@ -154,7 +157,7 @@ export function HargaPasar() {
       setPesan(`Harga pasar ${namaBarang} tersimpan.`)
       setHarga("")
       setTempat("")
-      setTanggal(hariIniWIB())
+      setTanggal(hariIniWib())
       await muatData()
     } catch (kesalahan) {
       setGalat(pesanGalat(kesalahan))
@@ -171,15 +174,10 @@ export function HargaPasar() {
     setPesanJual("")
 
     try {
-      const { error } = await supabase
-        .from("barang")
-        .update({ harga_jual: hargaJual })
-        .eq("id", barangId)
-      if (error) throw error
-
-      setBarang((prev) =>
-        prev.map((item) => (item.id === barangId ? { ...item, hargaJual } : item)),
-      )
+      // lewat store, bukan langsung ke database. Kalau ditulis langsung ke
+      // tabel, kasir dan stok barang masih memakai harga lama sampai
+      // halaman dimuat ulang.
+      await ubahHargaJual(barangId, hargaJual)
       setPesanJual(`Harga jual ${nama} sudah ${rupiah(hargaJual)}.`)
     } catch (kesalahan) {
       setGalat(pesanGalat(kesalahan))
@@ -471,14 +469,13 @@ function angka(nilai: unknown): number {
 /** Error Supabase diterjemahkan jadi bahasa warung. */
 function pesanGalat(kesalahan: unknown): string {
   const kode = (kesalahan as { code?: string } | null)?.code
-  const pesan = (kesalahan as { message?: string } | null)?.message ?? ""
 
   if (kode === "42P01" || kode === "PGRST205") {
     return "Data harga pasar belum siap di database ini. Muat ulang halaman ini sebentar lagi."
   }
   if (kode === "42501") {
-    return "Kamu belum masuk, jadi data harga pasar tidak bisa disimpan."
+    return "Anda belum masuk, jadi data harga pasar tidak bisa disimpan."
   }
-  if (pesan) return `Gagal menyimpan: ${pesan}`
-  return "Gagal menyimpan data harga pasar. Coba lagi sebentar lagi."
+  // Pesan error database berbahasa Inggris tidak ditampilkan mentah.
+  return pesanUntukUser(kesalahan, "Gagal menyimpan data harga pasar. Coba lagi sebentar lagi.")
 }

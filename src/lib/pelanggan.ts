@@ -6,9 +6,9 @@
  * sebagai identitas, lalu menghitung siapa yang datang, berapa belanja,
  * barang favoritnya, dan berapa utangnya.
  *
- * Isi file ini dua bagian:
- *  1. Logika murni — tanpa React, tanpa jaringan, bisa diuji sendiri.
- *  2. Pembacaan dan penyimpanan data lewat Supabase.
+ * Isi file ini logika murni: tanpa React, tanpa jaringan, tanpa database,
+ * jadi bisa diuji sendiri. Pembacaan dan penyimpanan datanya ada di
+ * `src/lib/store.tsx`.
  *
  * Cara mengaitkan penjualan dengan pelanggan: tabel `transaksi` tidak punya
  * kolom pelanggan. Jadi penjualan dicocokkan dari `teks_mentah` — kalimat
@@ -17,10 +17,7 @@
  * ikut masuk hitungan per pelanggan.
  */
 
-import { supabase } from "./supabase"
-import { ambilSemua } from "./supabaseQuery"
 import { selisihHari } from "./calendar"
-import { pesanUntukUser } from "./pesan"
 import type { BarisTransaksi, Transaksi } from "./types"
 
 /* --------------------------------------------------------------------- tipe */
@@ -193,10 +190,13 @@ export function cocokNamaPelanggan(teks: string | null | undefined, nama: string
  *
  * Aturannya (berturutan):
  *  1. belum pernah datang  -> "Pelanggan baru"
- *  2. kunjungan >= BATAS_RUTIN -> "Rutin datang"
- *  3. terakhir datang lebih dari BATAS_JARANG_HARI hari lalu -> "Jarang datang"
+ *  2. terakhir datang lebih dari BATAS_JARANG_HARI hari lalu -> "Jarang datang"
+ *  3. kunjungan >= BATAS_RUTIN -> "Rutin datang"
  *  4. tepat satu kunjungan -> "Sekali datang"
  *  5. sisanya -> "Kadang datang"
+ *
+ * "Jarang datang" dicek lebih dulu: pelanggan yang dulu datang sering tapi
+ * sudah berbulan-bulan tidak mampir bukan pelanggan rutin.
  */
 export function labelKunjungan(
   jumlahKunjungan: number,
@@ -204,10 +204,10 @@ export function labelKunjungan(
   hariIni: Date = new Date(),
 ): string {
   if (jumlahKunjungan <= 0) return "Pelanggan baru"
-  if (jumlahKunjungan >= BATAS_RUTIN) return "Rutin datang"
   if (kunjunganTerakhir && selisihHari(kunjunganTerakhir, hariIni) > BATAS_JARANG_HARI) {
     return "Jarang datang"
   }
+  if (jumlahKunjungan >= BATAS_RUTIN) return "Rutin datang"
   if (jumlahKunjungan === 1) return "Sekali datang"
   return "Kadang datang"
 }
@@ -431,114 +431,4 @@ function pilihFavorit(
 /** Pembulatan 2 desimal, menghindari galat floating point. */
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
-}
-
-/* ------------------------------------------------------------- akses database */
-
-export interface DataBukuPelanggan {
-  pelanggan: DataPelanggan[]
-  transaksi: Transaksi[]
-  baris: BarisTransaksi[]
-  barang: BarangRingkas[]
-  utang: UtangRingkas[]
-}
-
-export interface HasilSimpanPelanggan {
-  ok: boolean
-  pesan: string
-}
-
-/**
- * Ambil semua data yang dibutuhkan buku pelanggan.
- *
- * Pembacaan memakai `owner_id` dari sesi, dan RLS database yang memastikan
- * satu akun hanya melihat warungnya sendiri.
- */
-export async function muatBukuPelanggan(): Promise<DataBukuPelanggan> {
-  if (!supabase) throw new Error("Supabase belum terhubung.")
-
-  const { data: sesi, error: errorSesi } = await supabase.auth.getUser()
-  if (errorSesi) throw errorSesi
-  const ownerId = sesi.user?.id
-  if (!ownerId) throw new Error("Belum masuk ke akun warung.")
-
-  const [daftarPelanggan, daftarTransaksi, daftarBaris, daftarBarang, daftarUtang] =
-    await Promise.all([
-      supabase.from("pelanggan").select("*").eq("owner_id", ownerId).order("nama"),
-      ambilSemua<Transaksi>("transaksi", "*", "tanggal", false, {
-        kolom: "owner_id",
-        nilai: ownerId,
-      }),
-      ambilSemua<BarisTransaksi>("baris_transaksi", "*", undefined, false, {
-        kolom: "owner_id",
-        nilai: ownerId,
-      }),
-      supabase.from("barang").select("id, nama").eq("owner_id", ownerId),
-      supabase.from("utang_berjalan").select("*").eq("owner_id", ownerId),
-    ])
-
-  if (daftarPelanggan.error) throw daftarPelanggan.error
-  if (daftarBarang.error) throw daftarBarang.error
-  if (daftarUtang.error) throw daftarUtang.error
-
-  const barisUtang = (daftarUtang.data ?? []) as Array<{
-    pelanggan: string
-    total: number
-    dibayar: number
-    tanggal: string | null
-  }>
-
-  return {
-    pelanggan: (daftarPelanggan.data ?? []) as DataPelanggan[],
-    transaksi: daftarTransaksi.filter((t) => t.tipe === "jual") as Transaksi[],
-    baris: daftarBaris,
-    barang: (daftarBarang.data ?? []) as BarangRingkas[],
-    utang: barisUtang.map((row) => ({
-      pelanggan: row.pelanggan,
-      total: Number(row.total),
-      dibayar: Number(row.dibayar),
-      status: "belum_lunas",
-      tanggal: row.tanggal ?? null,
-    })),
-  }
-}
-
-/**
- * Simpan pelanggan baru.
- *
- * `owner_id` selalu ikut di payload insert, sesuai aturan satu akun = satu
- * warung. Nama yang sama untuk pemilik yang sama ditolak database (unik
- * dengan `lower(nama)`), jadi pesan errornya diterjemahkan ke bahasa warung.
- */
-export async function simpanPelanggan(input: {
-  nama: string
-  telepon?: string
-  catatan?: string
-}): Promise<HasilSimpanPelanggan> {
-  const nama = input.nama.trim().replace(/\s+/g, " ")
-  if (!nama) return { ok: false, pesan: "Nama panggilan pelanggan belum diisi." }
-  if (!supabase) {
-    return { ok: false, pesan: "Supabase belum terhubung, jadi pelanggan belum bisa disimpan." }
-  }
-
-  const { data: sesi, error: errorSesi } = await supabase.auth.getUser()
-  if (errorSesi) return { ok: false, pesan: "Gagal membaca sesi masuk. Coba masuk ulang." }
-  const ownerId = sesi.user?.id
-  if (!ownerId) return { ok: false, pesan: "Belum masuk ke akun warung." }
-
-  const { error } = await supabase.from("pelanggan").insert({
-    owner_id: ownerId,
-    nama,
-    telepon: input.telepon?.trim() || null,
-    catatan: input.catatan?.trim() || null,
-  })
-
-  if (error) {
-    if (error.code === "23505") {
-      return { ok: false, pesan: `Sudah ada pelanggan bernama "${nama}".` }
-    }
-    return { ok: false, pesan: pesanUntukUser(error, "Gagal menyimpan pelanggan. Coba lagi.") }
-  }
-
-  return { ok: true, pesan: `${nama} sudah masuk buku pelanggan.` }
 }

@@ -24,7 +24,10 @@ export function SimpenDulu() {
   )
 
   const perPelanggan = useMemo(() => {
-    const peta = new Map<string, { total: number; jumlah: number; terakhir: string }>()
+    const peta = new Map<
+      string,
+      { total: number; jumlah: number; terakhir: string; terlama: string }
+    >()
     for (const item of belumLunas) {
       const entry = peta.get(item.pelanggan)
       const sisa = Math.max(item.total - item.dibayar, 0)
@@ -32,14 +35,29 @@ export function SimpenDulu() {
         entry.total += sisa
         entry.jumlah += 1
         if (item.tanggal > entry.terakhir) entry.terakhir = item.tanggal
+        if (item.tanggal < entry.terlama) entry.terlama = item.tanggal
       } else {
-        peta.set(item.pelanggan, { total: sisa, jumlah: 1, terakhir: item.tanggal })
+        peta.set(item.pelanggan, {
+          total: sisa,
+          jumlah: 1,
+          terakhir: item.tanggal,
+          terlama: item.tanggal,
+        })
       }
     }
     return [...peta.entries()]
       .map(([nama, data]) => ({ nama, ...data }))
       .sort((a, b) => b.total - a.total)
   }, [belumLunas])
+
+  /** Pelanggan dengan utang paling lama — bukan yang utangnya paling besar. */
+  const palingLama = useMemo(() => {
+    let hasil: (typeof perPelanggan)[number] | null = null
+    for (const entry of perPelanggan) {
+      if (!hasil || entry.terlama < hasil.terlama) hasil = entry
+    }
+    return hasil
+  }, [perPelanggan])
 
   const hariLalu = (tanggal: string) => {
     const selisih = selisihHari(tanggal)
@@ -85,10 +103,12 @@ export function SimpenDulu() {
             <span className="trend warning">terlama</span>
           </div>
           <span className="stat-label">Utang terlama</span>
-          <strong>
-            {perPelanggan.length > 0 ? rupiah(perPelanggan[0].total) : rupiah(0)}
-          </strong>
-          <small>{perPelanggan.length > 0 ? perPelanggan[0].nama : "belum ada"}</small>
+          <strong>{palingLama ? rupiah(palingLama.total) : rupiah(0)}</strong>
+          <small>
+            {palingLama
+              ? `${palingLama.nama} · ${selisihHari(palingLama.terlama)} hari`
+              : "belum ada"}
+          </small>
         </article>
       </div>
 

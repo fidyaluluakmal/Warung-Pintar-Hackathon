@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Icon } from "../components/Icon"
 import { Modal } from "../components/Modal"
 import { useWarung } from "../lib/store"
+import { pesanUntukUser } from "../lib/pesan"
 import { angka, rupiah } from "../lib/format"
 import {
   hitungPenjualanTitip,
@@ -79,7 +80,7 @@ export function TitipJual() {
       })
       setBaruTerbuka(false)
     } catch (kesalahan) {
-      setGalat(kesalahan instanceof Error ? kesalahan.message : "Gagal menambah titipan.")
+      setGalat(pesanUntukUser(kesalahan, "Gagal menambah titipan. Coba lagi."))
     } finally {
       setSibuk(false)
     }
@@ -99,7 +100,7 @@ export function TitipJual() {
       setJualUntuk(null)
       setJumlahJual("")
     } catch (kesalahan) {
-      setGalat(kesalahan instanceof Error ? kesalahan.message : "Gagal mencatat penjualan.")
+      setGalat(pesanUntukUser(kesalahan, "Gagal mencatat penjualan titipan. Coba lagi."))
     } finally {
       setSibuk(false)
     }

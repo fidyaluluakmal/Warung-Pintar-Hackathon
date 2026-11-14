@@ -76,12 +76,26 @@ const TANGGAL_SHORT = new Intl.DateTimeFormat("id-ID", {
   month: "short",
 })
 
+/**
+ * Tanggal panjang, mis. "Sabtu, 14 November 2026".
+ *
+ * Tanggal yang rusak tidak boleh membuat halaman mati. `Intl.DateTimeFormat`
+ * melempar RangeError untuk tanggal tidak valid, dan satu tanggal rusak sudah
+ * cukup untuk membuat seluruh layar kosong. Jadi dikembalikan sebagai teks
+ * apa adanya.
+ */
 export function tanggalPanjang(iso: string): string {
-  return TANGGAL_PANJANG.format(new Date(iso))
+  return formatTanggal(TANGGAL_PANJANG, iso)
 }
 
 export function tanggalShort(iso: string): string {
-  return TANGGAL_SHORT.format(new Date(iso))
+  return formatTanggal(TANGGAL_SHORT, iso)
+}
+
+function formatTanggal(format: Intl.DateTimeFormat, iso: string): string {
+  const tanggal = new Date(iso)
+  if (Number.isNaN(tanggal.getTime())) return iso || "tanggal tidak diketahui"
+  return format.format(tanggal)
 }
 
 /** Sapaan sesuai jam warung. */

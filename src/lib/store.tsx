@@ -23,6 +23,7 @@ import { ambilSemua } from "./supabaseQuery"
 import { hitungStok, hitungSaranBeli, round2 } from "./inventory"
 import { bagiPembayaran, cariSinyalMargin, type SinyalMargin } from "./margin"
 import { dataDemoLokal, type DataWarungLokal } from "./dataDemo"
+import type { DataPelanggan } from "./pelanggan"
 import type {
   Alias,
   BarisTransaksi,
@@ -134,6 +135,8 @@ interface WarungContext {
   saranBeli: SaranBeli[]
   /** Utang pelanggan yang masih berjalan. */
   utang: UtangBerjalan[]
+  /** Buku pelanggan: nama panggilan, nomor telepon opsional. */
+  pelanggan: DataPelanggan[]
   /** Barang yang margin-nya menyusut karena harga modal naik. */
   sinyalMargin: SinyalMargin[]
   /** Margin per barang, untuk layar penjaga margin. */
@@ -148,6 +151,8 @@ interface WarungContext {
   lunasiUtang: (id: string) => Promise<void>
   /** Perbarui harga jual barang (dipakai penjaga margin). */
   ubahHargaJual: (barangId: string, hargaJual: number) => Promise<void>
+  /** Simpan pelanggan baru ke buku pelanggan. */
+  simpanPelanggan: (input: { nama: string; telepon?: string; catatan?: string }) => Promise<void>
   /** Catat barang titipan baru. */
   simpanTitip: (input: SimpanTitipInput) => Promise<void>
   /** Tambah barang baru ke katalog. */
@@ -177,6 +182,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
   const [transaksi, setTransaksi] = useState<Transaksi[]>([])
   const [baris, setBaris] = useState<BarisTransaksi[]>([])
   const [utang, setUtang] = useState<UtangBerjalan[]>([])
+  const [pelanggan, setPelanggan] = useState<DataPelanggan[]>([])
   const [margin, setMargin] = useState<MarginBarang[]>([])
   const [titip, setTitip] = useState<Titip[]>([])
 
@@ -189,6 +195,9 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       setTransaksi(lokal.transaksi)
       setBaris(lokal.baris)
       const namaBarang = new Map(lokal.barang.map((b) => [b.id, b.nama]))
+      setPelanggan(
+        lokal.pelanggan.map((p) => ({ ...p, owner_id: sesi?.userId ?? "lokal" })),
+      )
       setUtang(
         lokal.utang.map((u) => ({
           ...u,
@@ -218,7 +227,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       return
     }
 
-    const [b, a, t, br, ut, mg, tp] = await Promise.all([
+    const [b, a, t, br, ut, mg, tp, pl] = await Promise.all([
       supabase.from("barang").select("*").order("nama"),
       supabase.from("alias_barang").select("*"),
       ambilSemua<Transaksi>("transaksi", "*", "tanggal", false),
@@ -226,6 +235,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       supabase.from("utang_berjalan").select("*").order("tanggal", { ascending: false }),
       supabase.from("margin_barang").select("*").order("nama"),
       supabase.from("titip").select("*").order("dibuat_pada", { ascending: false }),
+      supabase.from("pelanggan").select("*").order("nama"),
     ])
 
     if (b.error) throw b.error
@@ -233,6 +243,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     if (ut.error) throw ut.error
     if (mg.error) throw mg.error
     if (tp.error) throw tp.error
+    if (pl.error) throw pl.error
 
     setBarang((b.data ?? []) as Barang[])
     setAlias((a.data ?? []) as Alias[])
@@ -241,6 +252,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
     setUtang((ut.data ?? []) as UtangBerjalan[])
     setMargin((mg.data ?? []) as MarginBarang[])
     setTitip((tp.data ?? []) as Titip[])
+    setPelanggan((pl.data ?? []) as DataPelanggan[])
   }, [])
 
   // Sesi: Supabase Auth, atau akun lokal sederhana.
@@ -365,6 +377,9 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
           transaksi: [transaksiBaru, ...lokal.transaksi],
           baris: [...barisBaru, ...lokal.baris],
         })
+        if (input.tipe === "beli") {
+          await catatPerubahanHargaModal(input.baris, barang, sesi.userId, true)
+        }
         setTransaksi((prev) => [transaksiBaru, ...prev])
         setBaris((prev) => [...barisBaru, ...prev])
         return
@@ -397,6 +412,11 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
 
       const { error: errorBaris } = await supabase.from("baris_transaksi").insert(barisBaru)
       if (errorBaris) throw errorBaris
+
+      // Pembelian: remember harga modal lama kalau harga belinya berubah.
+      if (input.tipe === "beli") {
+        await catatPerubahanHargaModal(input.baris, barang, sesi.userId, false)
+      }
 
       await muatData()
     },
@@ -441,7 +461,9 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
         // Utangnya ikut dicatat di mode lokal. Kalau tidak, penjualan
         // "simpen dulu" jadi hilang utangnya: barang keluar, uang tidak
         // masuk, dan buku utang selalu kosong.
-        const rowsUtangLokal = hitungBarisUtang(input, dibayar, sesi.userId)
+        const rowsUtangLokal = hitungBarisUtang(input, dibayar, sesi.userId).map(
+          (u, index) => ({ ...u, id: idLokal(`utang-${index}`) }),
+        )
 
         const lokal = bacaLokal()
         simpanLokal({
@@ -554,6 +576,54 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       await muatData()
     },
     [sesi, muatData],
+  )
+
+  /**
+   * Simpan pelanggan baru ke buku pelanggan.
+   *
+   * Nama panggilan jadi identitas. Nomor telepon dan catatan opsional —
+   * banyak pelanggan warung cuma punya nama.
+   */
+  const simpanPelanggan = useCallback(
+    async (input: { nama: string; telepon?: string; catatan?: string }) => {
+      if (!sesi) throw new Error("Belum masuk.")
+      const nama = input.nama.trim().replace(/\s+/g, " ")
+      if (!nama) throw new Error("Nama panggilan pelanggan belum diisi.")
+
+      const sudahAda = pelanggan.find(
+        (p) => p.nama.toLowerCase() === nama.toLowerCase(),
+      )
+      if (sudahAda) throw new Error(`Sudah ada pelanggan bernama "${nama}".`)
+
+      if (modeDemoLokal || !supabase) {
+        const baru: DataPelanggan = {
+          id: idLokal("plg"),
+          owner_id: sesi.userId,
+          nama,
+          telepon: input.telepon?.trim() || null,
+          catatan: input.catatan?.trim() || null,
+        }
+        const lokal = bacaLokal()
+        simpanLokal({ ...lokal, pelanggan: [...lokal.pelanggan, baru] })
+        setPelanggan((prev) => [...prev, baru])
+        return
+      }
+
+      const { error } = await supabase.from("pelanggan").insert({
+        owner_id: sesi.userId,
+        nama,
+        telepon: input.telepon?.trim() || null,
+        catatan: input.catatan?.trim() || null,
+      })
+      if (error) {
+        if (error.code === "23505") {
+          throw new Error(`Sudah ada pelanggan bernama "${nama}".`)
+        }
+        throw error
+      }
+      await muatData()
+    },
+    [sesi, pelanggan, muatData],
   )
 
   /**
@@ -748,33 +818,10 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
         ],
       })
 
-      // Harga modal berubah: simpan yang lama sebagai riwayat, lalu pakai yang baru.
-      if (row.harga_modal > 0 && round2(row.harga_modal) !== round2(input.hargaSatuan)) {
-        if (modeDemoLokal || !supabase) {
-          setBarang((prev) =>
-            prev.map((b) =>
-              b.id === row.id ? { ...b, harga_modal: round2(input.hargaSatuan) } : b,
-            ),
-          )
-        } else {
-          const { error: errorRiwayat } = await supabase.from("harga_modal_riwayat").insert({
-            owner_id: sesi.userId,
-            barang_id: row.id,
-            harga_modal: row.harga_modal,
-            tanggal: new Date().toISOString(),
-          })
-          if (errorRiwayat) throw errorRiwayat
-
-          const { error: errorBarang } = await supabase
-            .from("barang")
-            .update({ harga_modal: round2(input.hargaSatuan) })
-            .eq("id", row.id)
-          if (errorBarang) throw errorBarang
-        }
-        await muatData()
-      }
+      // Perubahan harga modal dicatat di dalam simpanTransaksi, jadi pembelian
+      // manual dan hasil pindai nota diperlakukan sama.
     },
-    [sesi, barang, simpanTransaksi, muatData],
+    [sesi, barang, simpanTransaksi],
   )
 
   /** Catat penjualan barang titipan sebanyak `qty`. */
@@ -915,6 +962,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       stok,
       saranBeli,
       utang,
+      pelanggan,
       sinyalMargin,
       margin,
       titip,
@@ -923,6 +971,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       simpanSimpenDulu,
       lunasiUtang,
       ubahHargaJual,
+      simpanPelanggan,
       simpanTitip,
       simpanBarang,
       catatPembelian,
@@ -942,6 +991,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       stok,
       saranBeli,
       utang,
+      pelanggan,
       sinyalMargin,
       margin,
       titip,
@@ -950,6 +1000,7 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
       simpanSimpenDulu,
       lunasiUtang,
       ubahHargaJual,
+      simpanPelanggan,
       simpanTitip,
       simpanBarang,
       catatPembelian,
@@ -962,6 +1013,61 @@ export function PenyediaWarung({ children }: { children: ReactNode }) {
   return <Konteks.Provider value={nilai}>{children}</Konteks.Provider>
 }
 
+
+
+/**
+ * Catat perubahan harga modal setelah pembelian.
+ *
+ * Dua hal terjadi:
+ *  1. Harga modal LAMA disimpan sebagai riwayat.
+ *  2. Harga modal barang diupdate ke harga beli yang baru.
+ *
+ * Tanpa ini, Penjaga Margin tidak pernah tahu harga modal naik — fitur itu
+ * diam-diam tidak jalan. Dan karena laba kotor memakai harga modal dari
+ * katalog, laba kotornya juga ikut salah.
+ *
+ * Dipanggil dari `simpanTransaksi`, jadi pembelian manual dan hasil pindai
+ * nota diperlakukan sama.
+ */
+async function catatPerubahanHargaModal(
+  baris: Array<{ barangId: string; hargaSatuan: number }>,
+  barang: Barang[],
+  ownerId: string,
+  modeLokal: boolean,
+): Promise<void> {
+  const hargaModalBarang = new Map(barang.map((b) => [b.id, b.harga_modal]))
+
+  for (const row of baris) {
+    const hargaLama = hargaModalBarang.get(row.barangId)
+    if (hargaLama === undefined) continue
+    if (hargaLama <= 0) continue
+    if (round2(hargaLama) === round2(row.hargaSatuan)) continue
+
+    if (modeLokal || !supabase) {
+      const lokal = bacaLokal()
+      simpanLokal({
+        ...lokal,
+        barang: lokal.barang.map((b) =>
+          b.id === row.barangId ? { ...b, harga_modal: round2(row.hargaSatuan) } : b,
+        ),
+      })
+    } else {
+      const { error: errorRiwayat } = await supabase.from("harga_modal_riwayat").insert({
+        owner_id: ownerId,
+        barang_id: row.barangId,
+        harga_modal: hargaLama,
+        tanggal: new Date().toISOString(),
+      })
+      if (errorRiwayat) throw errorRiwayat
+
+      const { error: errorBarang } = await supabase
+        .from("barang")
+        .update({ harga_modal: round2(row.hargaSatuan) })
+        .eq("id", row.barangId)
+      if (errorBarang) throw errorBarang
+    }
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* Mode lokal                                                                 */
@@ -990,7 +1096,7 @@ function hitungBarisUtang(
   input: SimpenDuluInput,
   dibayar: number,
   ownerId: string,
-): Utang[] {
+): Array<Omit<Utang, "id">> {
   const bagi = bagiPembayaran(
     input.baris.map((b) => ({
       barangId: b.barangId,
@@ -1003,16 +1109,23 @@ function hitungBarisUtang(
   const pelanggan = input.pelanggan.trim() || "Tanpa nama"
   return bagi.perBaris
     .filter((row) => row.utang > 0)
-    .map((row, index) => {
+    .map((row) => {
       // Pakai baris asal sesuai posisinya, bukan mencari nama barang pertama.
       // Kalau barang yang sama muncul dua kali, qty dan harganya bisa tertukar.
       const asal = input.baris[row.index]
+      // Qty ikut bagian yang belum dibayar, bukan seluruh qty baris.
+      // Kalau qty-nya penuh tapi totalnya cuma sebagian, isi baris utang
+      // tidak konsisten: qty x harga tidak sama dengan total.
+      const hargaBaris = (asal?.jumlah ?? 0) * (asal?.hargaSatuan ?? 0)
+      const qtyUtang =
+        hargaBaris > 0
+          ? round2(((asal?.jumlah ?? 0) * row.utang) / hargaBaris)
+          : asal?.jumlah ?? 0
       return {
-        id: idLokal(`utang-${index}`),
         owner_id: ownerId,
         pelanggan,
         barang_id: row.barangId,
-        qty: asal?.jumlah ?? 0,
+        qty: qtyUtang,
         satuan: (asal?.satuan ?? "pcs") as Satuan,
         harga_satuan: asal?.hargaSatuan ?? 0,
         total: row.utang,
@@ -1033,6 +1146,7 @@ const KOSONG: DataWarungLokal = {
   baris: [],
   utang: [],
   titip: [],
+  pelanggan: [],
 }
 
 function bacaLokal(): DataLokal {
@@ -1054,6 +1168,7 @@ function bacaLokal(): DataLokal {
       baris: data.baris ?? [],
       utang: data.utang ?? [],
       titip: data.titip ?? [],
+      pelanggan: data.pelanggan ?? [],
     }
   } catch {
     return KOSONG

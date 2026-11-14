@@ -36,20 +36,41 @@ export function CekStok() {
    * juga di mode demo lokal. Angkanya tetap sama dengan kasir karena
    * sumbernya sama: stok yang dihitung dari history transaksi.
    */
-  const muatStok = useCallback(() => {
-    setGalat("")
-    const daftar = stok.map((row) => ({
-      barangId: row.barang_id,
-      nama: row.nama,
-      satuan: row.satuan,
-      stokSistem: row.stok,
-      hargaModal: row.harga_modal,
-    }))
-    setSesi(mulaiSesiOpname(daftar))
-  }, [stok])
+  /**
+   * Mulai sesi hitung.
+   *
+   * Sesi hanya dibuat ulang kalau memang belum ada, atau kalau daftar barang
+   * berubah. Kalau dibuat ulang setiap kali data store berubah, semua
+   * hitungan fisik yang sudah diketik hilang tanpa pemberitahuan.
+   */
+  const muatStok = useCallback(
+    (paksa: boolean) => {
+      setGalat("")
+      const daftar = stok.map((row) => ({
+        barangId: row.barang_id,
+        nama: row.nama,
+        satuan: row.satuan,
+        stokSistem: row.stok,
+        hargaModal: row.harga_modal,
+      }))
+      setSesi((sekarang) => {
+        // Sesi yang sudah ada tetap dipakai; barang yang baru saja muncul
+        // ditambahkan ke sesi yang sedang berjalan.
+        if (!sekarang || paksa) return mulaiSesiOpname(daftar)
+        const dikenal = new Set(sekarang.barang.map((b) => b.barangId))
+        const tambahan = daftar.filter((b) => !dikenal.has(b.barangId))
+        if (tambahan.length === 0) return sekarang
+        return {
+          ...sekarang,
+          barang: [...sekarang.barang, ...tambahan],
+        }
+      })
+    },
+    [stok],
+  )
 
   useEffect(() => {
-    muatStok()
+    muatStok(false)
   }, [muatStok])
 
   const hasil = useMemo(() => (sesi ? hitungOpname(sesi) : []), [sesi])
@@ -102,7 +123,7 @@ export function CekStok() {
       setSukses(
         `Penyesuaian tersimpan: ${baris.length} barang diubah. Stok di kasir sekarang ikut menyesuaikan.`,
       )
-      await muatStok()
+      muatStok(true)
     } catch (kesalahan) {
       setGalatSimpan(
         kesalahan instanceof Error
@@ -146,7 +167,7 @@ export function CekStok() {
         <section className="panel">
           <p className="form-error">{galat}</p>
           <div style={{ marginTop: 12 }}>
-            <button type="button" className="secondary-action" onClick={() => muatStok()}>
+            <button type="button" className="secondary-action" onClick={() => muatStok(true)}>
               Coba lagi
             </button>
           </div>

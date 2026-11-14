@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { Icon } from "../components/Icon"
 import { useWarung } from "../lib/store"
+import { pesanUntukUser } from "../lib/pesan"
 import { angka, rupiah } from "../lib/format"
 import { round2 } from "../lib/inventory"
 import { bagiPembayaran } from "../lib/margin"
@@ -210,7 +211,7 @@ export function Kasir() {
       setDibayar("")
     } catch (kesalahan) {
       setGalat(
-        kesalahan instanceof Error ? kesalahan.message : "Gagal menyimpan penjualan.",
+        pesanUntukUser(kesalahan, "Gagal menyimpan penjualan. Coba lagi."),
       )
     } finally {
       setSibuk(false)

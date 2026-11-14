@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useWarung } from "../lib/store"
+import { pesanUntukUser } from "../lib/pesan"
 import { persen, rupiah } from "../lib/format"
 import { MARGIN_TARGET } from "../lib/margin"
 
@@ -21,7 +22,7 @@ export function PenjagaMargin() {
     try {
       await ubahHargaJual(barangId, harga)
     } catch (kesalahan) {
-      setGalat(kesalahan instanceof Error ? kesalahan.message : "Gagal menyimpan harga.")
+      setGalat(pesanUntukUser(kesalahan, "Gagal menyimpan harga jual. Coba lagi."))
     } finally {
       setSibuk("")
     }

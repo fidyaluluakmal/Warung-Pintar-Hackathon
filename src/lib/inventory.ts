@@ -58,19 +58,32 @@ export function hitungSaranBeli(
     const jualRows = rows.filter((row) => tipeById.get(row.transaksi_id) === "jual")
     if (jualRows.length === 0) continue
 
-    const qtyTerjual = jualRows.reduce((sum, row) => sum + row.jumlah, 0)
-
-    // Hari aktif: sejak penjualan pertama, dibatasi 30 hari.
-    // Dihitung dari tanggal warung (Asia/Jakarta), bukan selisih milidetik.
-    // Kalau pakai milidetik mentah, penjualan jam 23:30 dihitung masih
-    // "hari yang sama" — laju jualan jadi terlalu besar dan saran beli berlebihan.
+    // Penjualan yang dipakai: hanya 30 hari terakhir.
+    //
+    // Pembagi dan pembilang harus memakai jendela yang sama. Kalau pembilang
+    // seluruh riwayat (90 hari) tapi pembaginya 30 hari, lajunya jadi tiga
+    // kali lipat dan saran belinya berlebihan.
     const tanggalJual = jualRows
       .map((row) => findTanggal(row.transaksi_id, transaksi))
       .filter((value): value is string => value !== null)
       .sort()
     const pertama = tanggalJual[0]
     if (!pertama) continue
+
+    // Hari aktif: sejak penjualan pertama, dibatasi 30 hari.
+    // Dihitung dari tanggal warung (Asia/Jakarta), bukan selisih milidetik.
+    // Kalau pakai milidetik mentah, penjualan jam 23:30 dihitung masih
+    // "hari yang sama" — laju jualan jadi terlalu besar dan saran beli berlebihan.
     const hariAktif = Math.min(30, Math.max(1, selisihHari(pertama, hariIni) + 1))
+
+    const qtyTerjual = jualRows.reduce((sum, row) => {
+      const tanggal = findTanggal(row.transaksi_id, transaksi)
+      if (!tanggal) return sum
+      // Penjualan sebelum jendela 30 hari tidak ikut dihitung.
+      if (selisihHari(tanggal, hariIni) >= 30) return sum
+      return sum + row.jumlah
+    }, 0)
+    if (qtyTerjual <= 0) continue
 
     const dasarPerHari = qtyTerjual / hariAktif
     const musim = faktorMusim[barang.barang_id] ?? 1
@@ -104,6 +117,18 @@ function findTanggal(
   return found ? found.tanggal : null
 }
 
+/**
+ * Barang yang perlu dibeli.
+ *
+ * Satu aturan untuk semua layar: barang yang perlu restok = barang yang
+ * punya saran beli dari mesin restok. Kalau layar memakai aturan sendiri
+ * (misal "stok <= minimum"), angkanya bisa berbeda dari saran di halaman
+ * yang sama — dan dua layar jadiappeared berbeda untuk warung yang sama.
+ */
+export function perluRestok(saranBeli: SaranBeli[]): Set<string> {
+  return new Set(saranBeli.map((saran) => saran.barangId))
+}
+
 /** Pembulatan 2 desimal, menghindari galat floating point. */
 export function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
@@ -112,14 +137,4 @@ export function round2(value: number): number {
 /** Laba kotor = penjualan - modal barang terjual. */
 export function labaKotor(penjualan: number, modalTerjual: number): number {
   return round2(penjualan - modalTerjual)
-}
-
-/** Ambil "hari ini" dalam zona waktu warung, bukan zona waktu perangkat. */
-export function hariIniWIB(now: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now)
 }

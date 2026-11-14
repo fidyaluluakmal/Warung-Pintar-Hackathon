@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { Icon } from "../components/Icon"
 import { Modal } from "../components/Modal"
 import { angkaRapi, rupiah, tanggalShort } from "../lib/format"
 import {
   hitungRingkasanPelanggan,
   inisialPelanggan,
-  muatBukuPelanggan,
   rataRataBelanja,
-  simpanPelanggan,
   urutPelanggan,
   type UrutanPelanggan,
 } from "../lib/pelanggan"
 import { selisihHari } from "../lib/calendar"
+import { pesanUntukUser } from "../lib/pesan"
+import { useWarung } from "../lib/store"
 import type { NavLabel } from "../lib/nav"
 
 type Filter = "semua" | "utang" | "lunas"
@@ -24,13 +24,7 @@ type Filter = "semua" | "utang" | "lunas"
  * telepon opsional.
  */
 export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) {
-  const [buku, setBuku] = useState<{
-    pelanggan: Parameters<typeof hitungRingkasanPelanggan>[0]
-    transaksi: Parameters<typeof hitungRingkasanPelanggan>[1]
-    baris: Parameters<typeof hitungRingkasanPelanggan>[2]
-    barang: Parameters<typeof hitungRingkasanPelanggan>[3]
-    utang: Parameters<typeof hitungRingkasanPelanggan>[4]
-  } | null>(null)
+  const { pelanggan, transaksi, baris, barang, utang, simpanPelanggan } = useWarung()
   const [cari, setCari] = useState("")
   const [filter, setFilter] = useState<Filter>("semua")
   const [urutan, setUrutan] = useState<UrutanPelanggan>("utang")
@@ -41,31 +35,28 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
   const [galat, setGalat] = useState("")
   const [dipilih, setDipilih] = useState<string | null>(null)
 
-  // Muat daftar pelanggan dari database sekali, lalu hitung di memori.
-  useEffect(() => {
-    let batal = false
-    void muatBukuPelanggan()
-      .then((data) => {
-        if (!batal) setBuku(data)
-      })
-      .catch(() => {
-        if (!batal) setGalat("Buku pelanggan belum bisa dimuat.")
-      })
-    return () => {
-      batal = true
-    }
-  }, [])
-
-  const ringkasan = useMemo(() => {
-    if (!buku) return []
-    return hitungRingkasanPelanggan(
-      buku.pelanggan,
-      buku.transaksi,
-      buku.baris,
-      buku.barang,
-      buku.utang,
-    )
-  }, [buku])
+  /**
+   * Ringkasan per pelanggan.
+   *
+   * Dihitung dari data store, bukan dibaca langsung dari database — jadi
+   * halaman ini jalan juga di mode demo lokal.
+   */
+  const ringkasan = useMemo(
+    () =>
+      hitungRingkasanPelanggan(
+        pelanggan,
+        transaksi.filter((t) => t.tipe === "jual"),
+        baris,
+        barang.map((b) => ({ id: b.id, nama: b.nama })),
+        utang.map((u) => ({
+          pelanggan: u.pelanggan,
+          total: u.total,
+          dibayar: u.dibayar,
+          status: u.status,
+        })),
+      ),
+    [pelanggan, transaksi, baris, barang, utang],
+  )
 
   const detail = useMemo(
     () => ringkasan.find((p) => p.nama === dipilih) ?? null,
@@ -95,21 +86,15 @@ export function Pelanggan({ onPindah }: { onPindah?: (nav: NavLabel) => void }) 
     setGalat("")
     setPesan("")
     try {
-      const hasil = await simpanPelanggan({
+      await simpanPelanggan({
         nama: nama.trim(),
         telepon: telepon.trim() || undefined,
       })
-      if (hasil.ok) {
-        setNama("")
-        setTelepon("")
-        setPesan(hasil.pesan)
-        const data = await muatBukuPelanggan()
-        setBuku(data)
-      } else {
-        setGalat(hasil.pesan)
-      }
-    } catch {
-      setGalat("Gagal menyimpan pelanggan.")
+      setNama("")
+      setTelepon("")
+      setPesan(`${nama.trim()} sudah masuk buku pelanggan.`)
+    } catch (kesalahan) {
+      setGalat(pesanUntukUser(kesalahan, "Gagal menyimpan pelanggan. Coba lagi."))
     } finally {
       setSibuk(false)
     }
