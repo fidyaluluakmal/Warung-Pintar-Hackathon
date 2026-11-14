@@ -46,7 +46,7 @@ sebelum disimpan.
 | Titip Jual — komisi warung untuk barang milik orang lain | Berjalan |
 | Harga Pasar — bandingkan harga barang di tempat lain | Berjalan |
 | Riwayat — jejak transaksi beserta sumbernya | Berjalan |
-| Asisten Warung — drawer tanya-jawab dari catatan warung | Berjalan |
+| Asisten Warung — halaman tanya-jawab dengan sesi & proyek | Berjalan |
 | Tema terang/gelap, menu HP, panel notifikasi | Berjalan |
 
 ## Prinsip yang dijaga
@@ -129,9 +129,9 @@ src/
   lib/          mesin hitung, parser, kalender, tipe, lapisan API
   pages/        Beranda, Kasir, Stok Barang, Simpen Dulu, Penjaga Margin,
                 Cek Stok, Pelanggan, Titip Jual, Harga Pasar, Modal Awal,
-                Tutup Buku, Laporan, Riwayat, Pengaturan
-  components/   Sidebar, AppHeader, MobileNav, MobileMenu, Modal, ChatDrawer,
-                Icon, UserAvatar
+                Tutup Buku, Laporan, Riwayat, Pengaturan, AsistenAi
+  components/   Sidebar, AppHeader, MobileNav, MobileMenu, Modal,
+                AsistenSidebar, Icon, UserAvatar
 supabase/
   migrations/   skema + RLS per pemilik warung
   functions/    Edge Function AI (kunci hanya di server)
@@ -167,6 +167,7 @@ jadi tidak ada hex yang ditulis manual di komponen.
 | `src/lib/supabaseQuery.ts` | Ambil tabel bertahap, tanpa terpotong 1000 baris |
 | `src/lib/margin.ts` | Deteksi margin menyusut, pembagian "simpen dulu" |
 | `src/lib/titip.ts` | Hitungan komisi dan bagian pemilik barang titipan |
+| `src/lib/asisten.ts` | Sesi, proyek, sapaan, dan konteks angka untuk AI |
 | `src/lib/parser.ts` | Parser kalimat Indonesia (lokal, tanpa AI) |
 | `src/lib/format.ts` | Format rupiah dan tanggal (WIB) |
 

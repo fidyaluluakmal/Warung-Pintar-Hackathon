@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { PenyediaWarung, useWarung } from "./lib/store"
 import { AppHeader } from "./components/AppHeader"
-import { ChatDrawer } from "./components/ChatDrawer"
 import { MobileMenu } from "./components/MobileMenu"
 import { MobileNav } from "./components/MobileNav"
 import { Sidebar } from "./components/Sidebar"
 import { LayarMasuk } from "./pages/LayarMasuk"
 import { Beranda } from "./pages/Beranda"
+import { AsistenAi } from "./pages/AsistenAi"
 import { CekStok } from "./pages/CekStok"
 import { HargaPasar } from "./pages/HargaPasar"
 import { Pelanggan } from "./pages/Pelanggan"
@@ -39,7 +39,6 @@ function Kerangka() {
   const { siap, sesi } = useWarung()
   const [nav, setNav] = useState<NavLabel>("Beranda")
   const [modal, setModal] = useState<"suara" | "nota" | null>(null)
-  const [asisten, setAsisten] = useState(false)
   const [menuHp, setMenuHp] = useState(false)
   const [cari, setCari] = useState("")
   const { aktif, ganti } = useTema()
@@ -61,8 +60,10 @@ function Kerangka() {
       setModal("nota")
       return
     }
+    // Tanya AI dan Asisten AI membuka halaman yang sama.
     if (navigasi === "Tanya AI" || navigasi === "Asisten AI") {
-      setAsisten(true)
+      setNav("Asisten AI")
+      window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
     setNav(navigasi)
@@ -112,7 +113,7 @@ function Kerangka() {
           query={cari}
           onQueryChange={setCari}
           onNavigate={buka}
-          onBukaAi={() => setAsisten(true)}
+          onBukaAi={() => buka("Asisten AI")}
           nama={nama}
           warung={warung}
           tema={aktif}
@@ -120,7 +121,7 @@ function Kerangka() {
           onBukaMenu={() => setMenuHp(true)}
         />
 
-        <div className="content">
+        <div className={nav === "Asisten AI" ? "content content-penuh" : "content"}>
           {nav === "Beranda" && <Beranda onPindah={buka} />}
           {nav === "Kasir" && <Kasir />}
           {nav === "Stok Barang" && <StokBarang cari={cari} onPindah={buka} />}
@@ -135,6 +136,7 @@ function Kerangka() {
           {nav === "Riwayat" && <Riwayat />}
           {nav === "Laporan" && <Laporan onPindah={buka} />}
           {nav === "Pengaturan" && <Pengaturan />}
+          {nav === "Asisten AI" && <AsistenAi />}
         </div>
       </main>
 
@@ -144,7 +146,6 @@ function Kerangka() {
         <MobileMenu activeNav={nav} onNavigate={buka} onClose={() => setMenuHp(false)} />
       )}
 
-      {asisten && <ChatDrawer onClose={() => setAsisten(false)} />}
 
       {modal === "suara" && <CatatSuara onClose={() => setModal(null)} />}
       {modal === "nota" && <PindaiNota onClose={() => setModal(null)} />}

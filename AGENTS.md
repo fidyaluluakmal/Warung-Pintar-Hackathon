@@ -62,6 +62,8 @@ Jangan merge pull request milik orang lain — ini yang membuat review berarti.
   alias — jangan buat barang baru.
 - Satu akun = satu warung. Semua baris yang ditulis aplikasi harus punya
   `owner_id`. Jangan pernah insert tanpa `owner_id`.
+- Angka yang dikirim ke AI selalu dihitung di `src/lib/asisten.ts`. Model
+  cuma menyusun kalimatnya, tidak pernah menghitung ulang.
 - **Barang titipan bukan milik warung.** Barang titipan tidak boleh masuk
   hitungan stok atau laba warung. Yang dihitung cuma komisi warung dan
   bagian yang harus dibayar ke pemilik barang (`src/lib/titip.ts`).
@@ -89,6 +91,7 @@ Jangan merge pull request milik orang lain — ini yang membuat review berarti.
 | Laporan | Tren penjualan, komposisi omzet, produk terlaris |
 | Riwayat | Jejak transaksi beserta sumbernya |
 | Pengaturan | Tema, akun, data demo |
+| Asisten Ai | Sesi tanya-jawab + proyek (seperti ChatGPT) |
 
 ## Struktur
 
@@ -96,6 +99,7 @@ Jangan merge pull request milik orang lain — ini yang membuat review berarti.
 src/lib/      logika murni + lapisan data. Tidak boleh menyentuh DOM, tidak
               boleh mengimpor React.
 src/hooks/    hook React (mis. jam berjalan).
+src/components/AsistenSidebar.tsx  kolom sesi & proyek.
 src/pages/    satu layar per file.
 supabase/
   migrations/ skema. Nomor migration tidak boleh dipakai ulang.

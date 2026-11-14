@@ -184,6 +184,10 @@ konteks, jadi model hanya menyusun kalimat — tidak pernah menghitung ulang.
 
 `MingguIni` berarti 7 hari terakhir di kalender warung (Asia/Jakarta).
 
+Kalau percakapan berada di dalam sebuah proyek, `context` juga berisi
+`instruksiProyek` — permintaan pemilik warung untuk sesi itu (mis. "fokus saja
+utang Pak Yono"). AI mengikutinya, tapi angka tetap harus berasal dari DATA.
+
 **Response**
 
 ```json

@@ -201,3 +201,34 @@ export interface Titip {
   dibuat_pada: string
   selesai_pada: string | null
 }
+
+/** Proyek asisten: kelompok percakapan dengan instruksi bersama. */
+export interface Proyek {
+  id: string
+  owner_id: string
+  nama: string
+  /** Instruksi yang berlaku untuk semua pertanyaan di proyek ini. */
+  instruksi: string | null
+  dibuat_pada: string
+}
+
+/** Satu percakapan dengan asisten warung. */
+export interface SesiAsisten {
+  id: string
+  owner_id: string
+  judul: string
+  /** Proyek tempat sesi ini tinggal. Null = tanpa proyek. */
+  proyek_id: string | null
+  dibuat_pada: string
+  diperbarui_pada: string
+}
+
+/** Satu pesan dalam percakapan. */
+export interface PesanAsisten {
+  id: string
+  owner_id: string
+  sesi_id: string
+  role: "user" | "assistant"
+  teks: string
+  dibuat_pada: string
+}

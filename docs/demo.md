@@ -105,14 +105,19 @@ dan bagian yang harus dibayar ke pemilik barang."
 Poin: "Tutup buku dan laporan membaca data yang sama, jadi angkanya selalu
 cocok."
 
-## 9. Tanya AI (20 detik)
+## 9. Asisten warung (25 detik)
 
-1. Tekan ikon kilat di header → drawer **Asisten warung** terbuka.
-2. Tekan chip **Beli apa besok?**.
-3. Tunggu jawabannya. Tunjukkan bahwa angkanya sama dengan panel lain.
+1. Tekan ikon kilat di header → halaman **Asisten warung** terbuka.
+2. Tunjukkan layar kosongnya: "Halo Pak Andi, siap untuk bertanya?" — memakai
+   nama pemilik, bukan generik.
+3. Tekan chip **Beli apa besok?** — kalau perlu, ketik pertanyaan sendiri.
+4. Tunggu jawabannya. Tunjukkan bahwa angkanya sama dengan panel Stok Barang.
+5. Di kolom kiri, perlihat daftar **sesi** (percakapan sebelumnya tersimpan)
+   dan **proyek** — proyek punya instruksi yang ikut ke semua pertanyaannya.
 
 Poin: "AI menjawab dari catatan warung sendiri. Angkanya dihitung
-aplikasi, bukan dikarang AI."
+aplikasi, bukan dikarang AI. Dan percakapannya tersimpan, jadi pemilik
+warung bisa lanjutin besok."
 
 ## 10. Tutup (10 detik)
 
