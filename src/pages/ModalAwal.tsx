@@ -49,9 +49,10 @@ export function ModalAwal() {
       .filter((t) => t.tipe === "jual")
       .reduce((sum, t) => sum + t.total, 0)
 
-    const piutang = utang
-      .filter((u) => u.status === "belum_lunas")
-      .reduce((sum, u) => sum + Math.max(u.total - u.dibayar, 0), 0)
+    const piutang = utang.reduce(
+      (sum, u) => sum + Math.max(u.total - u.dibayar, 0),
+      0,
+    )
 
     return {
       nilaiStok: round2(nilaiStok),

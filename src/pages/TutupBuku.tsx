@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { useWarung } from "../lib/store"
+import { hariIniWib, selisihHari, tanggalWib } from "../lib/calendar"
 import { rupiah, tanggalPanjang } from "../lib/format"
 import { labaKotor, round2 } from "../lib/inventory"
 
@@ -14,9 +15,9 @@ export function TutupBuku() {
   const [tersalin, setTersalin] = useState(false)
 
   const ringkasan = useMemo(() => {
-    const hariIniIso = new Date().toISOString().slice(0, 10)
+    const hariIniIso = hariIniWib()
     const penjualanHariIni = transaksi.filter(
-      (t) => t.tipe === "jual" && t.tanggal.slice(0, 10) === hariIniIso,
+      (t) => t.tipe === "jual" && tanggalWib(t.tanggal) === hariIniIso,
     )
     const omzet = penjualanHariIni.reduce((sum, t) => sum + t.total, 0)
 
@@ -27,11 +28,7 @@ export function TutupBuku() {
       .reduce((sum, row) => sum + row.jumlah * (hargaModal.get(row.barang_id) ?? 0), 0)
 
     const utangLewatTujuh = utang.filter((u) => {
-      if (u.status !== "belum_lunas") return false
-      const hari = Math.floor(
-        (Date.now() - new Date(u.tanggal).getTime()) / 86_400_000,
-      )
-      return hari > 7
+      return selisihHari(u.tanggal) > 7
     })
     const totalUtangTua = utangLewatTujuh.reduce(
       (sum, u) => sum + Math.max(u.total - u.dibayar, 0),

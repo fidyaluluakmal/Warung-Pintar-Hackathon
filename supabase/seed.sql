@@ -42,11 +42,16 @@ begin
   end if;
 
   -- Bersihkan data lama supaya seed bisa dijalankan berulang.
+  -- Urutan penting: anak lebih dulu, karena barang direferensikan oleh
+  -- baris transaksi, utang, dan catatan harga.
   delete from public.baris_transaksi where owner_id = demo_owner;
   delete from public.transaksi where owner_id = demo_owner;
   delete from public.alias_barang where owner_id = demo_owner;
-  delete from public.barang where owner_id = demo_owner;
   delete from public.nota_belanja where owner_id = demo_owner;
+  delete from public.utang where owner_id = demo_owner;
+  delete from public.harga_pasar where owner_id = demo_owner;
+  delete from public.harga_modal_riwayat where owner_id = demo_owner;
+  delete from public.barang where owner_id = demo_owner;
 
   -- Barang: nama, satuan, stok awal, min stok, modal, jual, lead time.
   -- Stok awal sengaja besar supaya penyesuaian opname nanti kelihatan wajar.
@@ -101,12 +106,14 @@ begin
     0
   from (
     select
-      d::date
+      -- Jam warung (WIB) untuk tanggal tersebut, lalu dikonversi ke UTC
+      -- supaya tanggalnya tetap benar saat dibaca di zona waktu warung.
+      (d::date
         + time '08:00'
-        + (random() * interval '10 hours') as tanggal
+        + (random() * interval '10 hours')) at time zone 'Asia/Jakarta' as tanggal
     from generate_series(
-      (now() - interval '90 days')::date,
-      (now() - interval '1 day')::date,
+      (now() at time zone 'Asia/Jakarta')::date - interval '90 days',
+      (now() at time zone 'Asia/Jakarta')::date,
       '1 day'
     ) as d
   ) hari

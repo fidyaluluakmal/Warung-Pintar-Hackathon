@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { useWarung } from "../lib/store"
+import { hariIniWib, tanggalWib } from "../lib/calendar"
 import { Icon } from "../components/Icon"
 import { hariIni, rupiah, sapaan } from "../lib/format"
 import { labaKotor, round2 } from "../lib/inventory"
@@ -19,9 +20,9 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
   const [galat, setGalat] = useState("")
 
   const ringkasan = useMemo(() => {
-    const hariIniIso = new Date().toISOString().slice(0, 10)
+    const hariIniIso = hariIniWib()
     const penjualanHariIni = transaksi.filter(
-      (t) => t.tipe === "jual" && t.tanggal.slice(0, 10) === hariIniIso,
+      (t) => t.tipe === "jual" && tanggalWib(t.tanggal) === hariIniIso,
     )
     const omzet = penjualanHariIni.reduce((sum, t) => sum + t.total, 0)
 
@@ -32,7 +33,8 @@ export function Beranda({ onPindah }: { onPindah: (nav: NavLabel) => void }) {
       .reduce((sum, row) => sum + row.jumlah * (hargaModal.get(row.barang_id) ?? 0), 0)
 
     const stokTipis = stok.filter((s) => s.stok <= s.min_stok)
-    const utangJalan = utang.filter((u) => u.status === "belum_lunas")
+    // View `utang_berjalan` sudah hanya memuat yang belum lunas.
+    const utangJalan = utang
     const totalUtang = utangJalan.reduce(
       (sum, u) => sum + Math.max(u.total - u.dibayar, 0),
       0,

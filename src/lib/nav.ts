@@ -7,6 +7,8 @@ export type NavLabel =
   | "Simpen Dulu"
   | "Penjaga Margin"
   | "Cek Stok"
+  | "Pelanggan"
+  | "Harga Pasar"
   | "Catat Suara"
   | "Foto Nota"
   | "Tanya AI"
@@ -29,6 +31,8 @@ export const nav: Array<{ label: NavLabel; icon: IconName }> = [
   { label: "Simpen Dulu", icon: "wallet" },
   { label: "Penjaga Margin", icon: "chart" },
   { label: "Cek Stok", icon: "scan" },
+  { label: "Pelanggan", icon: "user" },
+  { label: "Harga Pasar", icon: "chart" },
 ]
 
 /** Menu kelompok kedua: hal-hal yang dipakai sesekali. */
