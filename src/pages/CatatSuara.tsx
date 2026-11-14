@@ -156,6 +156,9 @@ export function CatatSuara({ onClose }: { onClose?: () => void }) {
       })
       setBaris([])
       setTeks("")
+      // Tutup modal setelah tersimpan, supaya pemilik langsung kembali ke
+      // kasir dan bisa lanjut transaksi berikutnya.
+      onClose?.()
     } catch (kesalahan) {
       setGalat(kesalahan instanceof Error ? kesalahan.message : "Gagal menyimpan.")
     } finally {
