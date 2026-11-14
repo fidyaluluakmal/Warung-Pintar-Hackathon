@@ -34,26 +34,26 @@ sebelum disimpan.
 | Saran belanja besok + alasan (dihitung kode) | Berjalan |
 | Tanya warung (AI menjawab dari data warung sendiri) | Berjalan |
 | Akun demo + RLS per pemilik warung | Berjalan |
-| **Simpen Dulu** — pelanggan bayar sebagian, sisanya jadi utang | Berjalan |
-| **Penjaga Margin** — harga modal naik diam-diam, tawarkan harga baru | Berjalan |
+| **Simpen Dulu**: pelanggan bayar sebagian, sisanya jadi utang | Berjalan |
+| **Penjaga Margin**: harga modal naik diam-diam, tawarkan harga baru | Berjalan |
 | Kasir + keranjang, dengan mode simpen dulu | Berjalan |
-| Modal Awal — modal awal dibandingkan posisi sekarang | Berjalan |
-| Tutup Buku — ringkasan harian + pengecekan laci | Berjalan |
-| Laporan — tren penjualan, komposisi omzet, produk terlaris | Berjalan |
-| Cek Stok (opname) — selisih jadi penyesuaian stok | Berjalan |
+| Modal Awal: modal awal dibandingkan posisi sekarang | Berjalan |
+| Tutup Buku: ringkasan harian + pengecekan laci | Berjalan |
+| Laporan: tren penjualan, komposisi omzet, produk terlaris | Berjalan |
+| Cek Stok (opname): selisih jadi penyesuaian stok | Berjalan |
 | Tambah barang & catat pembelian langsung dari Stok Barang | Berjalan |
-| Pelanggan — buku pelanggan, favorit, kunjungan, riwayat belanja | Berjalan |
-| Titip Jual — komisi warung untuk barang milik orang lain | Berjalan |
-| Harga Pasar — bandingkan harga barang di tempat lain | Berjalan |
-| Riwayat — jejak transaksi beserta sumbernya | Berjalan |
-| Asisten Warung — halaman tanya-jawab dengan sesi & proyek | Berjalan |
+| Pelanggan: buku pelanggan, favorit, kunjungan, riwayat belanja | Berjalan |
+| Titip Jual: komisi warung untuk barang milik orang lain | Berjalan |
+| Harga Pasar: bandingkan harga barang di tempat lain | Berjalan |
+| Riwayat: jejak transaksi beserta sumbernya | Berjalan |
+| Asisten Warung: halaman tanya-jawab dengan sesi & proyek | Berjalan |
 | Tema terang/gelap, menu HP, panel notifikasi | Berjalan |
 
 ## Prinsip yang dijaga
 
 1. **AI hanya mengusulkan.** Semua hasil AI masuk ke layar konfirmasi dulu.
 2. **Angka dihitung kode, bukan AI.** AI hanya merapikan bahasa. Saran
-   belanja, stok, dan laba kotor dihitung di `src/lib/inventory.ts` — satu
+   belanja, stok, dan laba kotor dihitung di `src/lib/inventory.ts`, satu
    mesin, jadi dua layar tidak pernah berbeda.
 3. **Laba kotor, bukan laba bersih.** Selalu disebut "laba kotor" di seluruh
    tampilan.
@@ -184,12 +184,12 @@ baru buka dua hari tidak ikut dibagi 30.
 
 ### Dua fitur pembeda
 
-**Simpen Dulu** — di kasir, pelanggan bisa bayar sebagian. Barang tetap keluar
+**Simpen Dulu**: di kasir, pelanggan bisa bayar sebagian. Barang tetap keluar
 seluruhnya (stok turun untuk semua), tapi uang yang belum dibayar dicatat di
 buku utang. Pelanggan warung sering cuma punya nama panggilan ("Pak Yono"),
 jadi buku utang menyimpan nama, bukan kontak.
 
-**Penjaga Margin** — aplikasi menyimpan riwayat harga modal setiap kali ada
+**Penjaga Margin**: aplikasi menyimpan riwayat harga modal setiap kali ada
 pembelian. Kalau harga modal naik diam-diam, margin menyusut, dan aplikasi
 menawarkan harga jual baru supaya owner bisa putuskan sendiri.
 
@@ -219,4 +219,4 @@ Semua pustaka, model AI, dan dataset dicatat di [`CREDITS.md`](CREDITS.md).
 
 ## Lisensi
 
-MIT — lihat [`LICENSE`](LICENSE).
+MIT, lihat [`LICENSE`](LICENSE).

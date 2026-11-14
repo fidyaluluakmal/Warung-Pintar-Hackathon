@@ -1,4 +1,4 @@
-# Skrip Demo — Warung Pintar
+# Skrip Demo: Warung Pintar
 
 Durasi target: ±3 menit. Alur: **buka dengan pencatatan, tutup dengan keputusan.**
 
@@ -14,7 +14,7 @@ Durasi target: ±3 menit. Alur: **buka dengan pencatatan, tutup dengan keputusan
 ## 1. Masalah (15 detik)
 
 "Pak Andi pemilik warung kelontong. Ia catat penjualan di buku tulis, lupa
-stok, dan tidak tahu laba. Kasir digital untuk minimarket tidak membantu —
+stok, dan tidak tahu laba. Kasir digital untuk minimarket tidak membantu:
 warung punya cara jual sendiri: utang pakai nama panggilan, pembeli datang
 saat tanggal tua, harga modal naik diam-diam."
 
@@ -36,7 +36,7 @@ stok berubah karena transaksi, bukan karena diketik."
 
 1. Tekan **Foto nota belanja**. Modalnya terbuka dengan area pindai.
 2. Pilih foto nota uji.
-3. Tunggu tabel koreksi muncul — kolom barang, jumlah, harga, dan total.
+3. Tunggu tabel koreksi muncul: kolom barang, jumlah, harga, dan total.
 4. Koreksi satu baris, lalu **Simpan pembelian**.
 
 Poin: "Nota agen jadi stok dan harga modal. Kalau totalnya beda, kami beri
@@ -49,14 +49,14 @@ tahu sebelum disimpan."
    persediaan, potensi omzet.
 3. Tunjukkan tabel: stok saat ini, nilai stok, status (Aman / Kritis), tombol
    Restok.
-4. Tekan **Catat pembelian** pada satu barang — isi jumlah dan harga beli.
+4. Tekan **Catat pembelian** pada satu barang: isi jumlah dan harga beli.
    Stok langsung naik. Tutup modal.
 5. Tunjukkan filter **Perlu restok**.
 
 Poin: "Stok bukan angka yang diketik. Hitungannya dari history transaksi,
 jadi tidak mungkin melenceng."
 
-## 5. Simpen Dulu — pelanggan bayar sebagian (30 detik)
+## 5. Simpen Dulu: pelanggan bayar sebagian (30 detik)
 
 1. Buka menu **Simpen Dulu**.
 2. Tampilkan buku utang per orang: total belum lunas, catatan per pelanggan,
@@ -64,32 +64,32 @@ jadi tidak mungkin melenceng."
 3. Kembali ke **Kasir**: tambah barang, tekan **Simpen dulu (ngutang)** di baris
    itu, isi nama peminjam dan jumlah yang dibayar, lalu simpan.
 4. Tunjukkan **Pelanggan**: 5 orang, tanggal kapan terakhir datang, barang
-   favorit, dan badge "Ada utang · Rp198.500 · 15 hari". Klik satu kartu —
+   favorit, dan badge "Ada utang · Rp198.500 · 15 hari". Klik satu kartu,
    riwayat pembelian orang itu terbuka.
 
 Poin: "Pelanggan warung sering cuma punya nama panggilan, jadi buku utangnya
 menyimpan nama, bukan nomor telepon. Dan barang tetap keluar untuk seluruh
-jumlah — bukan cuma yang dibayar."
+jumlah, bukan cuma yang dibayar."
 
 ## 6. Penjaga Margin (25 detik)
 
 1. Buka menu **Penjaga Margin**.
 2. Tunjukkan: "Modal naik 8% (Rp15.000 → Rp16.200 per liter), margin menyusut
    11,8% → 4,7%".
-3. Tekan **Atur harga jual** — harga baru terisi. Tekan sekali lagi.
+3. Tekan **Atur harga jual**, harga baru terisi. Tekan sekali lagi.
 4. Tunjukkan baris alasan di bawahnya: kenapa margin dianggap menyusut.
 
 Poin: "Harga modal naik tidak terasa. Yang terasa belakangan: margin
 menyusut. Kasir biasa tidak tahu ini sebelum tutup buku."
 
-## 7. Titip Jual — barang milik orang lain (20 detik)
+## 7. Titip Jual: barang milik orang lain (20 detik)
 
 1. Buka menu **Titip Jual**.
 2. Tunjukkan ringkasan: omzet titipan, komisi warung, dan berapa yang harus
    dibayar ke pemilik barang.
 3. Tunjukkan satu kartu: "Krupuk Udang dari Mas Togo, 15 pcs laku, komisi
-   15% — semua laku, bisa dibayar".
-4. Tekan **Rincian pembayaran** — teks siap salin.
+   15%, semua laku, bisa dibayar".
+4. Tekan **Rincian pembayaran**, teks siap salin.
 
 Poin: "Warung sering jadi etalase barang tetangga. Barang titipan tidak masuk
 stok warung, jadi laba warung tetap bersih. Yang dihitung cuma komisi warung
@@ -97,9 +97,9 @@ dan bagian yang harus dibayar ke pemilik barang."
 
 ## 8. Tutup buku + Laporan (25 detik)
 
-1. Buka menu **Tutup Buku** — ringkasan penjualan, laba kotor, bersih, utang,
+1. Buka menu **Tutup Buku**: ringkasan penjualan, laba kotor, bersih, utang,
    dan yang perlu dibeli besok. Tunjukkan tombol salin.
-2. Buka menu **Laporan** — tren penjualan 7 hari, komposisi omzet, produk
+2. Buka menu **Laporan**: tren penjualan 7 hari, komposisi omzet, produk
    terlaris.
 
 Poin: "Tutup buku dan laporan membaca data yang sama, jadi angkanya selalu
@@ -108,12 +108,12 @@ cocok."
 ## 9. Asisten warung (25 detik)
 
 1. Tekan ikon kilat di header → halaman **Asisten warung** terbuka.
-2. Tunjukkan layar kosongnya: "Halo Pak Andi, siap untuk bertanya?" — memakai
+2. Tunjukkan layar kosongnya: "Halo Pak Andi, siap untuk bertanya?", memakai
    nama pemilik, bukan generik.
-3. Tekan chip **Beli apa besok?** — kalau perlu, ketik pertanyaan sendiri.
+3. Tekan chip **Beli apa besok?**, kalau perlu, ketik pertanyaan sendiri.
 4. Tunggu jawabannya. Tunjukkan bahwa angkanya sama dengan panel Stok Barang.
 5. Di kolom kiri, perlihat daftar **sesi** (percakapan sebelumnya tersimpan)
-   dan **proyek** — proyek punya instruksi yang ikut ke semua pertanyaannya.
+   dan **proyek**: proyek punya instruksi yang ikut ke semua pertanyaannya.
 
 Poin: "AI menjawab dari catatan warung sendiri. Angkanya dihitung
 aplikasi, bukan dikarang AI. Dan percakapannya tersimpan, jadi pemilik
@@ -130,7 +130,7 @@ bertambah atau berkurang? Dan kalau berkurang, mau kulakan apa besok?"
 
 | Kendala | Cadangan |
 | --- | --- |
-| Mikrofon tidak jalan | Ketik kalimatnya di kolom — alurnya sama |
+| Mikrofon tidak jalan | Ketik kalimatnya di kolom, alurnya sama |
 | AI lambat | Tampilkan hasil AI yang sudah tersimpan; jelaskan ini fallback |
 | Internet putus | Mode demo lokal: data di `localStorage`, alur tetap jalan |
 | Aplikasi error | Rekaman video alur lengkap |
@@ -139,7 +139,7 @@ bertambah atau berkurang? Dan kalau berkurang, mau kulakan apa besok?"
 
 ## Angka yang bisa dikutip di presentasi
 
-Angka ini dari data demo dan **tidak berubah** — seed-nya deterministik,
+Angka ini dari data demo dan **tidak berubah**, seed-nya deterministik,
 jadi demo bisa diulang persis.
 
 | Angka | Nilai |

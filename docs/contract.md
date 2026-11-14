@@ -95,7 +95,7 @@ base64: 8 MB.
 | `items[].name` | string | Capitalisasi rapi, apa adanya di nota |
 | `items[].qty` | number | > 0 |
 | `items[].unit` | string | Satuan yang dikenal; default `pcs` |
-| `items[].unitPrice` | number | ≥ 0. 0 kalau tidak terbaca — model tidak menebak |
+| `items[].unitPrice` | number | ≥ 0. 0 kalau tidak terbaca, model tidak menebak |
 | `items[].confidence` | number | 0–1 |
 | `total` | number | Total tertulis di nota; kalau tidak ada, jumlah baris |
 | `totalMismatch` | boolean | `true` kalau total tertulis beda jauh dari jumlah baris |
@@ -121,7 +121,7 @@ Menerima angka yang sudah dihitung aplikasi, mengembalikan saran beralasan.
 **Request**
 
 Semua angka sudah dihitung aplikasi. `MingguIni` berarti 7 hari terakhir di
-kalender warung (Asia/Jakarta) — bukan omzet hari ini.
+kalender warung (Asia/Jakarta), bukan omzet hari ini.
 
 ```json
 {
@@ -160,7 +160,7 @@ dari DATA.
 ## `ai-ask`
 
 Menjawab pertanyaan bebas dari catatan warung sendiri. Angka dikirim sebagai
-konteks, jadi model hanya menyusun kalimat — tidak pernah menghitung ulang.
+konteks, jadi model hanya menyusun kalimat, tidak pernah menghitung ulang.
 
 **Request**
 
@@ -185,7 +185,7 @@ konteks, jadi model hanya menyusun kalimat — tidak pernah menghitung ulang.
 `MingguIni` berarti 7 hari terakhir di kalender warung (Asia/Jakarta).
 
 Kalau percakapan berada di dalam sebuah proyek, `context` juga berisi
-`instruksiProyek` — permintaan pemilik warung untuk sesi itu (mis. "fokus saja
+`instruksiProyek`: permintaan pemilik warung untuk sesi itu (mis. "fokus saja
 utang Pak Yono"). AI mengikutinya, tapi angka tetap harus berasal dari DATA.
 
 **Response**
