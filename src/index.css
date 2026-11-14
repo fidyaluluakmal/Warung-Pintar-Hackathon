@@ -3116,6 +3116,20 @@ header {
   align-items: center;
   gap: 8px;
 }
+/*
+ * Keterangan di bawah pilihan "Ikuti sistem".
+ *
+ * Tanpa ini, pratinjaunya sama persis dengan pilihan "Gelap" kalau
+ * perangkatnya gelap -- jadi tidak ada bedanya, dan pemilik warung tidak
+ * tahu pilihannya itu ikut perangkat atau bukan.
+ */
+.theme-hint {
+  margin-top: 4px;
+  padding-left: 24px;
+  color: var(--muted);
+  font-size: 10.5px;
+  text-align: left;
+}
 .theme-options strong {
   font-size: 11.5px;
 }

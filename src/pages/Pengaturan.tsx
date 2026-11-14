@@ -73,7 +73,7 @@ export function Pengaturan() {
   }> = [
     { nilai: "terang", label: "Terang", ikon: "sun", pratinjau: "light-preview" },
     { nilai: "gelap", label: "Gelap", ikon: "moon", pratinjau: "dark-preview" },
-    { nilai: "sistem", label: "Ikuti sistem", ikon: "settings", pratinjau: "system-preview" },
+    { nilai: "sistem", label: "Ikuti sistem", ikon: "auto", pratinjau: "system-preview" },
   ]
 
   return (
@@ -163,6 +163,11 @@ export function Pengaturan() {
                   <Icon name={opsi.ikon} size={16} />
                   <strong>{opsi.label}</strong>
                 </span>
+                {opsi.nilai === "sistem" && (
+                  <small className="theme-hint">
+                    Perangkatmu {sistemGelap ? "gelap" : "terang"}
+                  </small>
+                )}
                 <i className="theme-check">
                   <Icon name="check" size={13} />
                 </i>
