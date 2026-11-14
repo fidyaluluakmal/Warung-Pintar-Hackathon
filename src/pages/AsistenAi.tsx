@@ -425,6 +425,13 @@ export function AsistenAi() {
         </header>
 
         <div className="asisten-putar" ref={scrollRef}>
+          {/*
+            Wadah transkripnya selalu ada, walau kosong. Kalau baru dibuat
+            waktu jawaban pertama masuk, pembaca layar tidak akan
+           mengumumkan apa-apa: live region harus sudah ada sebelum
+            isinya berubah.
+          */}
+          <div className="asisten-pesan" role="log" aria-live="polite" aria-busy={sibuk}>
           {pesanSesi.length === 0 && !sibuk ? (
             <div className="asisten-kosong-layar">
               <span className="asisten-orb">
@@ -444,12 +451,7 @@ export function AsistenAi() {
               </div>
             </div>
           ) : (
-            <div
-              className="asisten-pesan"
-              role="log"
-              aria-live="polite"
-              aria-busy={sibuk}
-            >
+            <>
               {pesanSesi.map((item) => (
                 <div key={item.id} className={`asisten-pesan-baris ${item.role}`}>
                   {item.role === "assistant" && (
@@ -472,8 +474,9 @@ export function AsistenAi() {
                   </div>
                 </div>
               ))}
-            </div>
+            </>
           )}
+          </div>
           {sibuk && (
             <div className="asisten-pesan-baris assistant">
               <span className="asisten-pesan-avatar">
