@@ -36,7 +36,16 @@ sebelum disimpan.
 | Akun demo + RLS per pemilik warung | Berjalan |
 | **Simpen Dulu** — pelanggan bayar sebagian, sisanya jadi utang | Berjalan |
 | **Penjaga Margin** — harga modal naik diam-diam, tawarkan harga baru | Berjalan |
-| Kasir desktop + panel notifikasi + tema gelap | Berjalan |
+| Kasir + keranjang, dengan mode simpen dulu | Berjalan |
+| Modal Awal — modal awal dibandingkan posisi sekarang | Berjalan |
+| Tutup Buku — ringkasan harian + pengecekan laci | Berjalan |
+| Laporan — tren penjualan, komposisi omzet, produk terlaris | Berjalan |
+| Cek Stok (opname) — selisih jadi penyesuaian stok | Berjalan |
+| Pelanggan — buku pelanggan, favorit, kunjungan | Berjalan |
+| Harga Pasar — bandingkan harga barang di tempat lain | Berjalan |
+| Riwayat — jejak transaksi beserta sumbernya | Berjalan |
+| Asisten Warung — drawer tanya-jawab dari catatan warung | Berjalan |
+| Tema terang/gelap, menu HP, panel notifikasi | Berjalan |
 
 ## Prinsip yang dijaga
 
@@ -117,7 +126,9 @@ src/
   lib/          mesin hitung, parser, kalender, tipe, lapisan API
   pages/        Beranda, Kasir, Stok Barang, Simpen Dulu, Penjaga Margin,
                 Cek Stok, Pelanggan, Harga Pasar, Modal Awal, Tutup Buku,
-                Riwayat, Pengaturan, Catat Suara, Pindai Nota, Tanya AI
+                Laporan, Riwayat, Pengaturan
+  components/   Sidebar, AppHeader, MobileNav, MobileMenu, Modal, ChatDrawer,
+                Icon, UserAvatar
 supabase/
   migrations/   skema + RLS per pemilik warung
   functions/    Edge Function AI (kunci hanya di server)
@@ -148,6 +159,9 @@ jadi tidak ada hex yang ditulis manual di komponen.
 | Modul | Tugas |
 | --- | --- |
 | `src/lib/inventory.ts` | Stok dari history, saran beli, laba kotor |
+| `src/lib/calendar.ts` | Tanggal & jam warung (Asia/Jakarta) |
+| `src/lib/capital.ts` | Posisi modal: nilai stok + laba + piutang |
+| `src/lib/supabaseQuery.ts` | Ambil tabel bertahap, tanpa terpotong 1000 baris |
 | `src/lib/margin.ts` | Deteksi margin menyusut, pembagian "simpen dulu" |
 | `src/lib/parser.ts` | Parser kalimat Indonesia (lokal, tanpa AI) |
 | `src/lib/format.ts` | Format rupiah dan tanggal (WIB) |

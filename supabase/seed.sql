@@ -58,7 +58,7 @@ begin
   insert into public.barang
     (owner_id, nama, satuan, stok_awal, min_stok, harga_modal, harga_jual, lead_time_hari)
   values
-    (demo_owner, 'Beras Premium',   'kg',      30, 40,  14000, 16000, 2),
+    (demo_owner, 'Beras Premium',   'kg',      30, 45,  14000, 16000, 2),
     (demo_owner, 'Gula Pasir',       'kg',      45, 30,  17000, 19000, 2),
     (demo_owner, 'Minyak Goreng',    'liter',   60, 25,  15000, 17000, 3),
     (demo_owner, 'Telur Ayam',       'kg',      34, 20,  28000, 32000, 1),
@@ -95,22 +95,25 @@ begin
   -- 3. Riwayat 90 hari
   --
   -- Setiap hari buka (kecuali Minggu) dibuat beberapa transaksi penjualan.
-  -- Jam transaksi diacak antara 08:00 dan 18:00 supaya grafiknya terlihat hidup.
+  -- Jam transaksi antara 08:00 dan 18:00, dihitung deterministik supaya
+  -- data contoh selalu sama setiap seed diulang.
   -- -------------------------------------------------------------------------
   insert into public.transaksi (owner_id, tipe, tanggal, sumber, total)
   select
     demo_owner,
     'jual',
-    hari.tanggal,
+    -- Jam warung (WIB) lalu dikonversi ke UTC, supaya tanggalnya tetap benar
+    -- saat dibaca di zona waktu warung. Dihitung dari hash tanggal + nomor
+    -- urut, bukan acak, supaya data contoh selalu sama setiap seed diulang
+    -- dan demo bisa diulang persis.
+    (hari.tanggal::date
+      + time '08:00'
+      + (abs(hashtext(hari.tanggal::text || '-' || n::text)) % 600) * interval '1 minute')
+      at time zone 'Asia/Jakarta' as tanggal,
     case when extract(doy from hari.tanggal)::int % 4 = 0 then 'nota' else 'suara' end,
     0
   from (
-    select
-      -- Jam warung (WIB) untuk tanggal tersebut, lalu dikonversi ke UTC
-      -- supaya tanggalnya tetap benar saat dibaca di zona waktu warung.
-      (d::date
-        + time '08:00'
-        + (random() * interval '10 hours')) at time zone 'Asia/Jakarta' as tanggal
+    select d::date as tanggal
     from generate_series(
       (now() at time zone 'Asia/Jakarta')::date - interval '90 days',
       (now() at time zone 'Asia/Jakarta')::date,
@@ -127,10 +130,19 @@ begin
     t.owner_id,
     t.id,
     b.id,
-    (1 + (abs(hashtext(t.id::text || 'q')) % 4))::numeric,
+    (1 + (abs(hashtext(kunci || 'q')) % 4))::numeric,
     b.satuan,
     b.harga_jual
-  from public.transaksi t
+  from (
+    select t.*,
+      -- Kunci stabil per transaksi: jamnya sudah deterministik, jadi id acak
+      -- tidak ikut memengaruhi hasil. Dengan begitu seed yang diulang
+      -- menghasilkan data contoh yang persis sama.
+      to_char(t.tanggal at time zone 'Asia/Jakarta', 'YYYYMMDDHH24MISS') as kunci
+    from public.transaksi t
+    where t.owner_id = demo_owner
+      and t.tipe = 'jual'
+  ) t
   cross join lateral (
     select bb.id, bb.satuan, bb.harga_jual
     from public.barang bb
@@ -138,11 +150,11 @@ begin
     -- Urutan dari hash transaksi + barang. Dengan `random()` di dalam
     -- lateral, Postgres bisa menilai nilainya sekali untuk seluruh
     -- pernyataan, sehingga semua transaksi memilih barang yang sama.
-    order by md5(t.id::text || bb.id::text)
-    limit 1 + (abs(hashtext(t.id::text)) % 3)
-  ) b
-  where t.owner_id = demo_owner
-    and t.tipe = 'jual';
+    -- Pakai nama barang, bukan id: id dibuat acak setiap kali, jadi
+    -- hash-nya berubah tiap seed dan hasilnya tidak pernah sama.
+    order by md5(t.kunci || bb.nama)
+    limit 1 + (abs(hashtext(t.kunci)) % 3)
+  ) b;
 
   -- Total transaksi = jumlah baris x harga satuan.
   update public.transaksi t
@@ -152,7 +164,7 @@ begin
   )
   where t.owner_id = demo_owner and t.tipe = 'jual';
 
-  -- Pembelian: kira-kira tiap 10 hari, untuk mengisi barang yang laku.
+  -- Pembelian berkala: kira-kira tiap 10 hari, untuk mengisi barang yang laku.
   insert into public.transaksi (owner_id, tipe, tanggal, sumber, total, agen)
   select
     demo_owner,
@@ -169,12 +181,13 @@ begin
   where extract(doy from t.tanggal)::int % 10 = 0;
 
   -- Jumlah pembelian mengikuti barang yang benar-benar terjual, supaya stok
-  -- akhir tetap waras: barang laris stoknya masih positif, barang sepi
+  -- akhir tetap waras: barang laku stoknya masih positif, barang sepi
   -- tidak menumpuk.
   --
-  -- Total terjual per barang dibagi rata ke semua nota pembelian, lalu
-  -- Pembelian sama dengan penjualan, jadi stok mengurus seperti warung
-  -- sungguhan: barang laku tinggal sedikit dan perlu restok.
+  -- Tiap nota memuat seluruh katalog, jadi jumlah pembelian per barang
+  -- dibagi rata dengan jumlah nota. Hasilnya: total pembelian persis sama
+  -- dengan total penjualan, jadi stok berubah karena jualan, bukan karena
+  -- angka yang diketik.
   with penjualan_per_barang as (
     select bt.barang_id, sum(bt.jumlah) as total_terjual
     from public.baris_transaksi bt
@@ -191,7 +204,7 @@ begin
     btrans.owner_id,
     btrans.id,
     b.id,
-    greatest(10, ceil(coalesce(p.total_terjual, 0) / greatest(j.n, 1)))::numeric,
+    greatest(5, ceil(coalesce(p.total_terjual, 0) / greatest(j.n, 1)))::numeric,
     b.satuan,
     b.harga_modal
   from public.transaksi btrans
@@ -199,8 +212,29 @@ begin
   cross join jumlah_nota j
   left join penjualan_per_barang p on p.barang_id = b.id
   where btrans.owner_id = demo_owner
-    and btrans.tipe = 'beli'
-    and b.owner_id = demo_owner;
+    and btrans.tipe = 'beli';
+
+  -- Satu pembelian kecil hari ini: dua barang dari vendors yang keliling.
+  -- Tanpa ini, pengeluaran belanja hari ini nol dan "marjin bersih" selalu
+  -- 100% -- kelihatan seperti data salah, bukan data benar.
+  insert into public.transaksi (owner_id, tipe, tanggal, sumber, total, agen)
+  values (demo_owner, 'beli',
+    (now() at time zone 'Asia/Jakarta')::date + time '16:30',
+    'nota', 0, 'Vendors keliling');
+
+  insert into public.baris_transaksi (owner_id, transaksi_id, barang_id, jumlah, satuan, harga_satuan)
+  select
+    demo_owner,
+    (select t.id from public.transaksi t
+      where t.owner_id = demo_owner and t.tipe = 'beli'
+        and (t.tanggal at time zone 'Asia/Jakarta')::date = (now() at time zone 'Asia/Jakarta')::date
+      order by t.tanggal desc limit 1),
+    b.id,
+    5::numeric,
+    b.satuan,
+    b.harga_modal
+  from public.barang b
+  where b.owner_id = demo_owner and b.nama in ('Beras Premium', 'Gula Pasir');
 
   update public.transaksi t
   set total = coalesce(
