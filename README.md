@@ -2,6 +2,8 @@
 
 **Cytech National AI Hackathon 2026 | Telkom AI Center Padang**
 
+**Demo live:** https://warung-pintar-hackathon.vercel.app
+
 Asisten pencatatan warung: catat penjualan lewat suara, pindai nota belanja,
 lalu dapat saran belanja besok yang ada alasannya.
 
