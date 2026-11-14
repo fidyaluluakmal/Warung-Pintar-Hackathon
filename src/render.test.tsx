@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from "vitest"
 import { renderToString } from "react-dom/server"
 import App from "./App"
+import { bacaTemaTersimpan, terapkanTema } from "./lib/theme"
 
 /**
  * Uji asap: aplikasi harus bisa dirender tanpa error.
@@ -19,5 +21,23 @@ describe("render aplikasi", () => {
     // Sesi dimuat di efek, jadi render pertama selalu menampilkan keadaan
     // awal. Efeknya tidak jalan di renderToString.
     expect(html).toContain("Menyiapkan warung")
+  })
+})
+
+describe("tema", () => {
+  it("menerapkan tema gelap ke elemen html", () => {
+    const hasil = terapkanTema("gelap")
+    expect(hasil).toBe("gelap")
+    expect(document.documentElement.dataset.theme).toBe("dark")
+  })
+
+  it("menerapkan tema terang ke elemen html", () => {
+    const hasil = terapkanTema("terang")
+    expect(hasil).toBe("terang")
+    expect(document.documentElement.dataset.theme).toBe("light")
+  })
+
+  it("bacaTemaTersimpan mengembalikan sistem saat belum ada pilihan", () => {
+    expect(bacaTemaTersimpan()).toBe("sistem")
   })
 })

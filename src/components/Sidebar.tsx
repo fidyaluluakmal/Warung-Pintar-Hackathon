@@ -1,6 +1,6 @@
 import { Icon } from "./Icon"
 import { UserAvatar } from "./UserAvatar"
-import { nav, type NavLabel } from "../lib/nav"
+import { nav, navLain, type NavLabel } from "../lib/nav"
 
 export function Sidebar({
   activeNav,
@@ -42,6 +42,17 @@ export function Sidebar({
       <nav className="side-nav" aria-label="Navigasi utama">
         <p>Menu utama</p>
         {nav.map((item) => (
+          <button
+            className={activeNav === item.label ? "active" : ""}
+            onClick={() => onNavigate(item.label)}
+            key={item.label}
+          >
+            <Icon name={item.icon} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+        <p className="second-label">Lainnya</p>
+        {navLain.map((item) => (
           <button
             className={activeNav === item.label ? "active" : ""}
             onClick={() => onNavigate(item.label)}

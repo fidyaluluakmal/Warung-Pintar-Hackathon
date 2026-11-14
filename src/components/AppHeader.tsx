@@ -11,6 +11,8 @@ export function AppHeader({
   onBukaAi,
   nama,
   warung,
+  tema,
+  onGantiTema,
 }: {
   query: string
   onQueryChange: (value: string) => void
@@ -18,6 +20,8 @@ export function AppHeader({
   onBukaAi: () => void
   nama: string
   warung: string
+  tema: "terang" | "gelap"
+  onGantiTema: () => void
 }) {
   const { stok, utang, sinyalMargin } = useWarung()
   const [notice, setNotice] = useState(false)
@@ -68,6 +72,14 @@ export function AppHeader({
       </div>
 
       <div className="header-actions">
+        <button
+          className="notification"
+          aria-label={tema === "terang" ? "Ganti ke mode gelap" : "Ganti ke mode terang"}
+          title={tema === "terang" ? "Mode gelap" : "Mode terang"}
+          onClick={onGantiTema}
+        >
+          <Icon name={tema === "terang" ? "moon" : "sun"} size={18} />
+        </button>
         <button className="notification" aria-label="Tanya AI" onClick={onBukaAi}>
           <Icon name="spark" />
         </button>

@@ -9,6 +9,10 @@ export type NavLabel =
   | "Catat Suara"
   | "Foto Nota"
   | "Tanya AI"
+  | "Modal Awal"
+  | "Tutup Buku"
+  | "Riwayat"
+  | "Pengaturan"
 
 /**
  * Menu sidebar (desktop).
@@ -23,6 +27,14 @@ export const nav: Array<{ label: NavLabel; icon: IconName }> = [
   { label: "Stok Barang", icon: "box" },
   { label: "Simpen Dulu", icon: "wallet" },
   { label: "Penjaga Margin", icon: "chart" },
+]
+
+/** Menu kelompok kedua: hal-hal yang dipakai sesekali. */
+export const navLain: Array<{ label: NavLabel; icon: IconName }> = [
+  { label: "Modal Awal", icon: "chart" },
+  { label: "Tutup Buku", icon: "clock" },
+  { label: "Riwayat", icon: "clock" },
+  { label: "Pengaturan", icon: "settings" },
 ]
 
 /** Menu bawah (mobile) — 4 menu utama. */

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { PenyediaWarung, useWarung } from "./lib/store"
 import { AppHeader } from "./components/AppHeader"
 import { MobileNav } from "./components/MobileNav"
@@ -12,10 +12,14 @@ import { PenjagaMargin } from "./pages/PenjagaMargin"
 import { SimpenDulu } from "./pages/SimpenDulu"
 import { StokBarang } from "./pages/StokBarang"
 import { TanyaAi } from "./pages/TanyaAi"
+import { ModalAwal } from "./pages/ModalAwal"
+import { Pengaturan } from "./pages/Pengaturan"
+import { Riwayat } from "./pages/Riwayat"
+import { TutupBuku } from "./pages/TutupBuku"
 import type { NavLabel } from "./lib/nav"
+import { useTema } from "./lib/theme"
 
 const SIDEBAR_KEY = "warung-pintar-sidebar"
-const TEMA_KEY = "warung-pintar-tema"
 
 export default function App() {
   return (
@@ -29,6 +33,7 @@ function Kerangka() {
   const { siap, sesi } = useWarung()
   const [nav, setNav] = useState<NavLabel>("Beranda")
   const [cari, setCari] = useState("")
+  const { aktif, ganti } = useTema()
   const [sidebarCiut, setSidebarCiut] = useState(() => {
     try {
       return window.localStorage.getItem(SIDEBAR_KEY) === "collapsed"
@@ -36,23 +41,6 @@ function Kerangka() {
       return false
     }
   })
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)")
-    const terapkan = () => {
-      let tersimpan: string | null = null
-      try {
-        tersimpan = window.localStorage.getItem(TEMA_KEY)
-      } catch {
-        tersimpan = null
-      }
-      const pilihan = tersimpan === "dark" ? "dark" : media.matches ? "dark" : "light"
-      document.documentElement.dataset.theme = pilihan
-    }
-    terapkan()
-    media.addEventListener("change", terapkan)
-    return () => media.removeEventListener("change", terapkan)
-  }, [])
 
   function buka(navigasi: NavLabel) {
     setNav(navigasi)
@@ -105,6 +93,8 @@ function Kerangka() {
           onBukaAi={() => buka("Tanya AI")}
           nama={nama}
           warung={warung}
+          tema={aktif}
+          onGantiTema={() => ganti(aktif === "terang" ? "gelap" : "terang")}
         />
 
         <div className="content">
@@ -116,6 +106,10 @@ function Kerangka() {
           {nav === "Stok Barang" && <StokBarang cari={cari} />}
           {nav === "Simpen Dulu" && <SimpenDulu />}
           {nav === "Penjaga Margin" && <PenjagaMargin />}
+          {nav === "Modal Awal" && <ModalAwal />}
+          {nav === "Tutup Buku" && <TutupBuku />}
+          {nav === "Riwayat" && <Riwayat />}
+          {nav === "Pengaturan" && <Pengaturan />}
         </div>
       </main>
 

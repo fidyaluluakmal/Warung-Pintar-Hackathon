@@ -132,6 +132,9 @@
   letter-spacing: 0.6px;
   text-transform: uppercase;
 }
+.side-nav p.second-label {
+  margin-top: 22px;
+}
 .side-nav button {
   position: relative;
   height: 44px;
