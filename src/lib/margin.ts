@@ -7,7 +7,7 @@
  * Modul ini murni: masuk dan keluar sama, tanpa database atau jaringan.
  */
 
-import { persen, rupiahRingkas } from "./format"
+import { persen, rupiah } from "./format"
 import type { MarginBarang } from "./types"
 
 /** Bulat ke kelipatan 100, ke atas. Harga jual selalu terlihat rapi. */
@@ -99,7 +99,7 @@ export function cariSinyalMargin(barang: MarginBarang[]): SinyalMargin[] {
       marginSebelumnya,
       kenaikanModalPersen: kenaikan,
       hargaJualSaran,
-      alasan: `Modal naik ${persen(kenaikan)} (${rupiahRingkas(modalSebelumnya)} → ${rupiahRingkas(modalSekarang)} per ${item.satuan}), margin menyusut ${persen(marginSebelumnya)} → ${persen(marginSekarang)}.`,
+      alasan: `Modal naik ${persen(kenaikan)} (${rupiah(modalSebelumnya)} → ${rupiah(modalSekarang)} per ${item.satuan}), margin menyusut ${persen(marginSebelumnya)} → ${persen(marginSekarang)}.`,
     })
   }
 

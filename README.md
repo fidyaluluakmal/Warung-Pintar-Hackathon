@@ -41,7 +41,8 @@ sebelum disimpan.
 | Tutup Buku — ringkasan harian + pengecekan laci | Berjalan |
 | Laporan — tren penjualan, komposisi omzet, produk terlaris | Berjalan |
 | Cek Stok (opname) — selisih jadi penyesuaian stok | Berjalan |
-| Pelanggan — buku pelanggan, favorit, kunjungan | Berjalan |
+| Tambah barang & catat pembelian langsung dari Stok Barang | Berjalan |
+| Pelanggan — buku pelanggan, favorit, kunjungan, riwayat belanja | Berjalan |
 | Titip Jual — komisi warung untuk barang milik orang lain | Berjalan |
 | Harga Pasar — bandingkan harga barang di tempat lain | Berjalan |
 | Riwayat — jejak transaksi beserta sumbernya | Berjalan |
@@ -67,8 +68,9 @@ pnpm dev
 ```
 
 Tanpa environment Supabase, aplikasi jalan dalam **mode demo lokal**: data
-disimpan di `localStorage`, tanpa perlu akun. Supabase hanya perlu kalau mau
-menguji pemanggilan AI sungguhan.
+disimpan di `localStorage`, tanpa perlu akun, dan sudah berisi katalog serta
+transaksi contoh supaya alurnya bisa langsung dicoba. Supabase hanya perlu
+kalau mau menguji pemanggilan AI sungguhan.
 
 ### Dengan Supabase
 

@@ -49,7 +49,9 @@ tahu sebelum disimpan."
    persediaan, potensi omzet.
 3. Tunjukkan tabel: stok saat ini, nilai stok, status (Aman / Kritis), tombol
    Restok.
-4. Tunjukkan filter **Perlu restok**.
+4. Tekan **Catat pembelian** pada satu barang — isi jumlah dan harga beli.
+   Stok langsung naik. Tutup modal.
+5. Tunjukkan filter **Perlu restok**.
 
 Poin: "Stok bukan angka yang diketik. Hitungannya dari history transaksi,
 jadi tidak mungkin melenceng."
@@ -62,7 +64,8 @@ jadi tidak mungkin melenceng."
 3. Kembali ke **Kasir**: tambah barang, tekan **Simpen dulu (ngutang)** di baris
    itu, isi nama peminjam dan jumlah yang dibayar, lalu simpan.
 4. Tunjukkan **Pelanggan**: 5 orang, tanggal kapan terakhir datang, barang
-   favorit, dan badge "Ada utang · Rp198.500 · 15 hari".
+   favorit, dan badge "Ada utang · Rp198.500 · 15 hari". Klik satu kartu —
+   riwayat pembelian orang itu terbuka.
 
 Poin: "Pelanggan warung sering cuma punya nama panggilan, jadi buku utangnya
 menyimpan nama, bukan nomor telepon. Dan barang tetap keluar untuk seluruh
@@ -71,8 +74,10 @@ jumlah — bukan cuma yang dibayar."
 ## 6. Penjaga Margin (25 detik)
 
 1. Buka menu **Penjaga Margin**.
-2. Tunjukkan: "Modal naik 8% (15 rb → 16,2 rb), margin menyusut 11,8% → 4,7%".
+2. Tunjukkan: "Modal naik 8% (Rp15.000 → Rp16.200 per liter), margin menyusut
+   11,8% → 4,7%".
 3. Tekan **Atur harga jual** — harga baru terisi. Tekan sekali lagi.
+4. Tunjukkan baris alasan di bawahnya: kenapa margin dianggap menyusut.
 
 Poin: "Harga modal naik tidak terasa. Yang terasa belakangan: margin
 menyusut. Kasir biasa tidak tahu ini sebelum tutup buku."
@@ -148,5 +153,5 @@ jadi demo bisa diulang persis.
 | Pelanggan tercatat | 5 orang, semuanya punya riwayat belanja |
 | Omzet titipan | Rp601.000, komisi warung Rp76.250 |
 | Harus dibayar ke pemilik barang | Rp524.750 |
-| Modal naik | Beras Premium Rp14.000 → Rp15.120, margin 12,5% → 5,5% |
-| Modal naik | Telur Ayam Rp28.000 → Rp31.360, margin 12,5% → 2% |
+| Modal naik | Beras Premium Rp14.000 → Rp15.120 per kg, margin 12,5% → 5,5% |
+| Modal naik | Telur Ayam Rp28.000 → Rp31.360 per kg, margin 12,5% → 2% |
