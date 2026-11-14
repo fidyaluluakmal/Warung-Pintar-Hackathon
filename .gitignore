@@ -12,3 +12,6 @@ supabase/.temp/
 *-debug.log*
 logs/
 *.log
+.vercel/
+.env*
+!.env.example
