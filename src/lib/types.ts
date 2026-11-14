@@ -129,3 +129,46 @@ export interface SaranBeli {
   qty: number
   alasan: string
 }
+
+/** Utang pelanggan dari penjualan "simpen dulu". */
+export interface Utang {
+  id: string
+  owner_id: string
+  pelanggan: string
+  barang_id: string
+  qty: number
+  satuan: Satuan
+  harga_satuan: number
+  total: number
+  tanggal: string
+  status: "belum_lunas" | "lunas"
+  dibayar: number
+  lunas_pada: string | null
+}
+
+/** Utang yang masih berjalan, dengan sisa yang harus dibayar. */
+export interface UtangBerjalan extends Utang {
+  nama_barang: string
+  sisa: number
+}
+
+/** Margin per barang, dari view `margin_barang`. */
+export interface MarginBarang {
+  barang_id: string
+  owner_id: string
+  nama: string
+  satuan: Satuan
+  harga_jual: number
+  harga_modal: number
+  modal_sebelumnya: number
+  margin_persen: number
+}
+
+/** Satu baris riwayat harga modal. */
+export interface HargaModalRiwayat {
+  id: string
+  owner_id: string
+  barang_id: string
+  harga_modal: number
+  tanggal: string
+}

@@ -29,27 +29,34 @@ export function LayarMasuk() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <p className="text-3xl">🏪</p>
-          <h1 className="mt-2 text-xl font-semibold">Warung Pintar</h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--teks-lembut)" }}>
-            Cukup bicara dan foto. Stok ikut keurus.
-          </p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <div className="brand-mark">
+            <span>W</span>
+          </div>
+          <div>
+            <strong>Warung</strong>
+            <b>Pintar</b>
+          </div>
         </div>
 
+        <span className="auth-kicker">Asisten pencatatan warung</span>
+        <h1>Cukup bicara dan foto.</h1>
+        <p className="auth-copy">
+          Catat penjualan lewat suara, pindai nota agen, lalu dapat saran
+          belanja besok yang ada alasannya. Semua angka bisa dicek sebelum
+          disimpan.
+        </p>
+
         <form
-          className="kartu space-y-4 p-5"
           onSubmit={(event) => {
             event.preventDefault()
             void kirim(email, sandi)
           }}
         >
-          <div>
-            <label className="label" htmlFor="email">
-              {modeLokal ? "Nama warung" : "Email"}
-            </label>
+          <div className="auth-field">
+            <span>{modeLokal ? "Nama warung" : "Email"}</span>
             <input
               id="email"
               className="input"
@@ -60,10 +67,8 @@ export function LayarMasuk() {
             />
           </div>
 
-          <div>
-            <label className="label" htmlFor="sandi">
-              {modeLokal ? "Nama penjual" : "Sandi"}
-            </label>
+          <div className="auth-field">
+            <span>{modeLokal ? "Nama penjual" : "Sandi"}</span>
             <input
               id="sandi"
               type={modeLokal ? "text" : "password"}
@@ -75,27 +80,18 @@ export function LayarMasuk() {
             />
           </div>
 
-          {galat && (
-            <p className="text-sm" style={{ color: "var(--bahaya)" }}>
-              {galat}
-            </p>
-          )}
+          {galat && <p className="form-error">{galat}</p>}
 
-          <button type="submit" className="tombol-utama w-full" disabled={sibuk}>
+          <button type="submit" className="auth-submit" disabled={sibuk}>
             {sibuk ? "Membuka…" : "Masuk"}
           </button>
 
           {!modeLokal && (
             <>
-              <div className="flex items-center gap-3 text-xs" style={{ color: "var(--teks-lembut)" }}>
-                <span className="h-px flex-1" style={{ background: "var(--garis)" }} />
-                atau
-                <span className="h-px flex-1" style={{ background: "var(--garis)" }} />
-              </div>
-
               <button
                 type="button"
-                className="tombol-sekunder w-full"
+                className="secondary-action"
+                style={{ width: "100%", marginTop: 10 }}
                 disabled={sibuk}
                 onClick={() => void kirim("demo@warungpintar.app", "warungpintar2026")}
               >
@@ -104,6 +100,10 @@ export function LayarMasuk() {
             </>
           )}
         </form>
+
+        <p className="auth-footnote">
+          Akun demo dipakai bersama-sama. Jangan pakai untuk data sungguhan.
+        </p>
       </div>
     </div>
   )
