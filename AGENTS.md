@@ -40,11 +40,12 @@ Jangan merge pull request milik orang lain — ini yang membuat review berarti.
 `main` dilindungi dengan:
 
 - Wajib pull request, minimal 1 persetujuan kode dari pemilik repo.
-- Admin juga tidak bisa bypass (`enforce_admins`).
+- Admin (pemilik repo) boleh merge langsung pakai `--admin`, tapi anggota tim
+  lain tidak: mereka tetap butuh persetujuan pemilik.
 - Push baru setelah persetujuan harus diulang (`require_last_push_approval`).
 - Persetujuan lama dibatalkan kalau ada commit baru (`dismiss_stale_reviews`).
 - Semua komentar harus dijawab sebelum merge.
-- Force push dan delete branch dilarang.
+- Auto-merge tidak dinyalakan, force push dan delete branch dilarang.
 - CI (`check` + `edge-functions`) harus hijau.
 
 ## Aturan produk
@@ -61,6 +62,33 @@ Jangan merge pull request milik orang lain — ini yang membuat review berarti.
   alias — jangan buat barang baru.
 - Satu akun = satu warung. Semua baris yang ditulis aplikasi harus punya
   `owner_id`. Jangan pernah insert tanpa `owner_id`.
+- **Barang titipan bukan milik warung.** Barang titipan tidak boleh masuk
+  hitungan stok atau laba warung. Yang dihitung cuma komisi warung dan
+  bagian yang harus dibayar ke pemilik barang (`src/lib/titip.ts`).
+- **Pelanggan warung cuma punya nama panggilan.** Identitasnya nama, bukan
+  nomor telepon. Nomor telepon opsional.
+- Data contoh harus deterministik: hash, bukan `random()`. Kalau seed
+  diulang, hasilnya harus persis sama — jurit yang datang kedua kali
+  tidak boleh melihat angka berbeda.
+
+## Layar yang ada
+
+| Layar | Isi |
+| --- | --- |
+| Beranda | Ringkasan hari ini, modal awal, kartu aksi |
+| Kasir | Keranjang, mode "simpen dulu" |
+| Stok Barang | Stok dari history, saran beli, filter perlu restok |
+| Simpen Dulu | Buku utang pelanggan per orang |
+| Penjaga Margin | Barang yang margin-nya menyusut, saran harga jual |
+| Cek Stok | Hitung fisik vs catatan, selisih jadi penyesuaian |
+| Pelanggan | Buku pelanggan, riwayat belanja, barang favorit |
+| Titip Jual | Barang titipan, komisi warung, bagian pemilik barang |
+| Harga Pasar | Perbandingan harga di tempat lain |
+| Modal Awal | Posisi modal sekarang vs modal awal |
+| Tutup Buku | Ringkasan harian + pengecekan laci |
+| Laporan | Tren penjualan, komposisi omzet, produk terlaris |
+| Riwayat | Jejak transaksi beserta sumbernya |
+| Pengaturan | Tema, akun, data demo |
 
 ## Struktur
 
