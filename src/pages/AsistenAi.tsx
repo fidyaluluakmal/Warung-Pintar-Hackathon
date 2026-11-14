@@ -91,6 +91,27 @@ export function AsistenAi() {
     if (node) node.scrollTop = node.scrollHeight
   }, [pesanSesi.length, sibuk])
 
+  // Escape menutup kolom sesi di HP.
+  useEffect(() => {
+    if (!koloTerbuka) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        setKoloTerbuka(false)
+      }
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [koloTerbuka])
+
+  // Area ketik ikut melebar mengikuti isinya, sampai batas maksimumnya.
+  useEffect(() => {
+    const node = inputRef.current
+    if (!node) return
+    node.style.height = "auto"
+    node.style.height = `${node.scrollHeight}px`
+  }, [input])
+
   async function kirim(pertanyaan: string) {
     const teks = pertanyaan.trim()
     if (!teks || sibuk) return
